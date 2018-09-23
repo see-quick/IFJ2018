@@ -1,5 +1,15 @@
-SRC=string.c scanner.c main.c
-CFLAGS=-std=c99
+NAME = ifj
 
-ALL: $(SRC)
-	gcc -o ifj $^ $(CFLAGS)
+CC = gcc
+CFLAGS = -std=c11
+LDFLAGS =
+
+$(NAME): compileAll
+	$(CC) $(CFLAGS) *.o -o $(NAME) $(LDFLAGS)
+	rm -f *.o
+compileAll:
+	$(CC) $(CFLAGS) -c *.c $(LDFLAGS)
+clean:
+	rm -f *.o
+remove:
+	rm $(NAME)
