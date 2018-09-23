@@ -15,7 +15,7 @@
 */
 
 #include <stdio.h>
-#include "Hashmap.h"
+#include "hashtable.h"
 
 /**
  * Hashovacia funckia, moznost vylepsenia...

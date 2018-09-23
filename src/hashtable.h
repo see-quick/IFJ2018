@@ -15,11 +15,12 @@
 
 */
 
-#ifnde _HASHMAP_H_
+#ifndef  _HASHMAP_H_
 #define  _HASHMAP_H_
 
 #include <stdlib.h>
 #include <string.h>
+#include <stdbool.h>
 
 #define MAX_SIZE_OF_HASH_TABLE 101 // cislo musi byt prvocislo
 
