@@ -36,6 +36,10 @@ int parse();
 **/
 int prog(void);
 int main_p(void);
+int st_list(void);
+int stat(void);
+int parse_expr(void);
+int sth(void);
 
 #endif
 
