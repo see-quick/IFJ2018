@@ -46,8 +46,8 @@ void returnToken(){
 }
 
 void resetToken(){
-    //strFree(&(gToken.data));
-    strClear(&(gToken.data));
+    strFree(&(gToken.data));
+    //strClear(&(gToken.data));
     strInit(&(gToken.data));
 }
 
@@ -85,9 +85,9 @@ int getToken(){
     //Reset tokenu do pocatecniho stavu
     resetToken();
 
-    int x;
-
     int state = S_START;
+
+    bool flag = false;
 
     int c, ascii_cnt;
     char ascii_val[2];
@@ -129,28 +129,116 @@ int getToken(){
                 else if(c == '.') { pushToken(c); return LEX_DOT; }            // tecka
                 else if(c == ';') { pushToken(c); return LEX_SEMICOLON;}       // strednik
     
-                else if(c == '!') { state = S_AS_EXCM; }                       // vykricnik
-                else if(c == '>') { state = S_GREATER; }                       // vetsitko
-                else if(c == '<') { state = S_LESSER; }                        // mensitko
+                else if(c == '!') { pushToken(c); state = S_AS_EXCM; }                       // vykricnik
+                else if(c == '>') { pushToken(c); state = S_GREATER; }                       // vetsitko
+                else if(c == '<') { pushToken(c); state = S_LESSER; }                        // mensitko
                 else if(c == '\"'){ state = S_STRING; }
 
 
-                else if(c == '#'){ state = S_COMMENT_ROW; }                    // radkovy komentar
+                else if(c == '#'){ pushToken(c); state = S_COMMENT_ROW; }                    // radkovy komentar
 
                 
-                else if(isdigit(c) ){ state = S_NUMBER; }                       // Cislo
-                else if(islower(c) || c == '_'){ state = S_ID; }               // Identifikator (a-z, '_')
+                else if (isdigit(c)) { 
+                    if ( c == '0' ){
+                        flag = true;
+                    }
+                    pushToken(c);
+                    state = S_NUMBER;
+                }                     // Cislo             
+                else if(islower(c) || c == '_'){ pushToken(c); state = S_ID; }               // Identifikator (a-z, '_')
                 else{
                     pushToken(c);                                              //Chybny znak
                     return ERROR_LEX;
                 }
 
-                pushToken(c);
+
                 break;
+
+            case S_COMMENT_BLOCK_B:
+                if (c == 'e'){
+                    state = S_COMMENT_BLOCK_E;
+                }
+                else {
+                    ungetc(c, stdin);
+                    return ERROR_LEX;
+                }
+            break;
+
+            case S_COMMENT_BLOCK_E:
+                if (c == 'g'){
+                    state = S_COMMENT_BLOCK_G;
+                }
+                else {
+                    ungetc(c, stdin);
+                    return ERROR_LEX;
+                }
+            break;
+
+            case S_COMMENT_BLOCK_G:
+                if (c == 'i'){
+                    state = S_COMMENT_BLOCK_I;
+                }
+                else {
+                    ungetc(c, stdin);
+                    return ERROR_LEX;
+                }
+            break;
+
+            case S_COMMENT_BLOCK_I:
+                if (c == 'n'){
+                    state = S_COMMENT_BLOCK_N;
+                }
+                else{
+                    ungetc(c, stdin);
+                    return ERROR_LEX;
+                }
+            break;
+
+            case S_COMMENT_BLOCK_N:
+                if(c == EOF){
+                    return ERROR_LEX;
+                } 
+                else if( c == '\n'){ gToken.row++; }
+                else if( c == '=') state = S_COMMENT_END;
+                else{
+                    state = S_COMMENT_BLOCK_N;
+                }
+            break;
+
+            case S_COMMENT_END:
+                if (c == 'e'){
+                    state = S_COMMENT_END_E;
+                }
+                else{
+                    ungetc(c, stdin);
+                    return ERROR_LEX;
+                }
+            break;
+
+            case S_COMMENT_END_E:
+                if (c == 'n') {state = S_COMMENT_END_N;}
+                else {
+                    ungetc(c, stdin);
+                    return ERROR_LEX;
+                }
+            break;
+
+            case S_COMMENT_END_N:
+                if (c == 'd'){state = S_START;}
+                    else{
+                        ungetc(c, stdin);
+                        return ERROR_LEX;
+                    }
+            break;
 
             case S_EQUAL:
                 if (c == '='){
+                    pushToken(c);
                     return LEX_DOUBLE_EQUAL;
+                }
+                else if (c == 'b'){
+                    resetToken();
+                    state = S_COMMENT_BLOCK_B;
                 }
                 else{
                     ungetc(c, stdin);
@@ -168,6 +256,7 @@ int getToken(){
                         return LEX_EOL;
                     }
             break;
+
             //Cislo - cela cast
             case S_NUMBER:
                     if(isdigit(c)){
@@ -183,8 +272,13 @@ int getToken(){
                         pushToken(c);
                     }
                     else{
-                        ungetc(c,stdin);
-                        return LEX_NUMBER;
+                        ungetc(c, stdin);
+                        if (flag){
+                            return ERROR_LEX;
+                        }
+                        else{
+                            return LEX_NUMBER;
+                        }
                     }
                     break;
 
@@ -220,7 +314,12 @@ int getToken(){
                 }
                 else{
                     ungetc(c, stdin);
-                    return S_REAL;
+                    if (flag){
+                        return ERROR_LEX;
+                    }
+                    else{
+                        return LEX_REAL_NUMBER;
+                    }
                 }
                 break;
 
@@ -230,10 +329,10 @@ int getToken(){
                   pushToken(c);
                   state = S_ID;
                 }
-                // else if(c == '!' || c == "?"){
-                //     pushToken(c);
-
-                // }
+                 else if(c == '!' || c == '?'){
+                    pushToken(c);
+                    state = S_ID_END;
+                }
                 else{
                   ungetc(c, stdin);
                   if ( (temp = isKeyword(&(gToken.data))) != SUCCESS)
@@ -242,6 +341,20 @@ int getToken(){
                 }
                 break;
 
+
+            // dodelat
+            case S_ID_END:
+                if (isalnum(c)){
+                    pushToken(c);
+                    state = S_ID;
+                }
+                else{
+                    ungetc(c, stdin);
+                    return LEX_ID;
+                }
+
+
+            break;
             // Radkovy komentar
             case S_COMMENT_ROW:
                 if( c == EOF )
@@ -257,8 +370,10 @@ int getToken(){
 
             //Mensi nez nebo mensi nebo rovno
             case S_LESSER:
-                if(c == '=')
+                if(c == '='){
+                    pushToken(c);
                     return LEX_LESSER_EQUAL;
+                }
                 else{
                     ungetc(c, stdin);
                     return LEX_LESSER;
@@ -267,8 +382,10 @@ int getToken(){
 
             //Vetsi nez nebo vetsi nebo rovno
             case S_GREATER:
-                if(c == '=')
+                if(c == '='){
+                    pushToken(c);
                     return LEX_GREATER_EQUAL;
+                }
                 else{
                     ungetc(c, stdin);
                     return LEX_GREATER;
@@ -355,6 +472,7 @@ int getToken(){
          
             case S_AS_EXCM:
                 if(c == '='){
+                    pushToken(c);
                     return LEX_UNEQUAL;
                 }
                 else{
