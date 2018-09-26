@@ -53,23 +53,36 @@ elif [[ ! -z "$1" && ! -z "$2" ]]; then
 
       if [ "$testtype" == "error1" ]; then  #vsetky testy obsahujuce chybu maju na zaciatku error. Error1 znaci ocakavanu navratovu hodnotu 1(LEXerror)
         $prog < $testpath/$currentdir/$testfile > /dev/null 2>&1  #presmerovanie vystupu lexeru
-        if [ $? -eq "1" ]; then
+        retval=$(echo $?)
+        if [ "$retval" -eq "1" ]; then
           ((testsucc++))
           echo "${green}[TEST PASSED]${reset}"
         else
           ((testfail++))
           echo "${red}[TEST FAILED]${reset} : $currentdir/$testfile"
-          echo "  expected return value = 1. Returned value = $?"
+          echo "  expected return value = 1. Returned value = $retval"
+        fi
+      elif [ "$testtype" == "error2" ]; then #testy oznacene error2 --> SyntaxError
+        $prog < $testpath/$currentdir/$testfile > /dev/null 2>&1
+        retval=$(echo $?)
+        if [ "$retval" -eq "2" ]; then
+          ((testsucc++))
+          echo "${green}[TEST PASSED]${reset}"
+        else
+          ((testfail++))
+          echo "${red}[TEST FAILED]${reset} : $currentdir/$testfile"
+          echo "  expected return value = 2. Returned value = $retval"
         fi
       else
         $prog < $testpath/$currentdir/$testfile > /dev/null 2>&1
-        if [ $? -eq "0" ]; then
+        retval=$(echo $?)
+        if [ "$retval" -eq "0" ]; then
           ((testsucc++))
           echo "${green}[TEST PASSED]${reset}"
         else
           ((testfail++))
           echo "${red}[TEST FAILED]${reset} : $currentdir/$testfile"
-          echo "  expected return value = 0. Returned value = $?"
+          echo "  expected return value = 0. Returned value = $retval"
         fi
       fi
     done
