@@ -27,7 +27,7 @@
 #include <stdlib.h>
 #include <ctype.h>
 #include <string.h>
-
+#include <stdbool.h>
 #include "string.h"
 
 /* Koncove stavy konecneho automatu Lexilakniho analyzatoru */
@@ -109,7 +109,15 @@
 #define    S_EOF                68
 #define    S_EQUAL              69
 #define    S_EOL                70 
-
+#define    S_ID_END             71
+#define    S_COMMENT_BLOCK_B    72
+#define    S_COMMENT_BLOCK_E    73
+#define    S_COMMENT_BLOCK_G    74
+#define    S_COMMENT_BLOCK_I    75
+#define    S_COMMENT_BLOCK_N    76
+#define    S_COMMENT_END        77
+#define    S_COMMENT_END_E      78
+#define    S_COMMENT_END_N      79
  
 
 
