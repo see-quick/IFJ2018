@@ -40,6 +40,9 @@ int st_list(void);
 int stat(void);
 int parse_expr(void);
 int sth(void);
+int fn_list(void);
+int pm_list(void);
+int pm_list2(void);
 
 #endif
 

@@ -21,9 +21,9 @@
 #include "parser.h"
 #include "scanner.h"
 #include "error.h"
+#include "hashtable.h"
 
 int token;        // aktualni token
-
 
 
 int error_lex(void){
@@ -367,6 +367,237 @@ int st_list(void){
 	return result;
 }
 
+int pm_list2(void){
+	printf("----- In <pm-list2> --- \n");
+
+	switch(token){
+		case LEX_COMMA:
+			token = getToken();
+
+			if(!error_lex()){
+				return ERROR_LEX;
+			} else if (!error_int()){
+				return INT_ERR;
+			}
+
+			// SEMANTICKE AKCE pridat
+			if(!checkTokenType(LEX_ID)){
+				fprintf(stderr, "Ocekavno 'id' na radku %d\n", gToken.row);
+				resetToken();
+				return ERROR_LEX;
+			}
+
+			token = getToken();
+
+			if(!error_lex()){
+				return ERROR_LEX;
+			} else if (!error_int()){
+				return INT_ERR;
+			}
+
+			return pm_list2();
+		break;
+
+		case LEX_R_BRACKET:
+			return SUCCESS;
+		break;
+	}
+
+	token = getToken();
+	if(!error_lex()){
+		return ERROR_LEX;
+	} else if(!error_int()){
+		return INT_ERR;
+	}
+
+	return SUCCESS;
+}
+
+
+int pm_list(void){
+	int result = SUCCESS;
+
+
+	if (token == LEX_ID){
+		token = getToken();
+
+		// SEMANTICKE AKCE
+
+		if(!error_lex()){
+			return ERROR_LEX;
+		} else if (!error_int()){
+			return INT_ERR;
+		}
+
+		return pm_list2();
+	}
+	else{
+		return SUCCESS;
+	}
+
+	return result;
+}
+
+int func(void){
+	int result;
+	//pravidlo <func> -> def ID ( <pm_list> ) eol <ST-LIST> end
+
+	//dalsi token musi byt typu LEX_ID
+	token = getToken();
+	if(!error_lex()){
+		return ERROR_LEX;
+	} else if(!error_int()){
+		return INT_ERR;
+	}
+
+	if(!checkTokenType(LEX_ID)){
+		fprintf(stderr, "Ocekavan identifikator na radku %d \n", gToken.row);
+		resetToken();
+		return SYN_ERR;
+	}
+
+	// SEMANTICKA AKCE
+	// tmp = global_map_get_item(*globalTS, gToken.data);
+
+ //    if (tmp == NULL) {
+ //    	// neni v tabulce -> vlozeni deklarace funkce do globalni TS
+ //    	result = global_map_put(globalTS, gToken.data, tmp.globalData);
+ //    }
+
+
+    // else {} Semanticka kontrola - funkce jiz byla deklarovana. 
+
+
+   	//dalsi token musi byt '('
+	token = getToken();
+	if(!error_lex()){
+		return ERROR_LEX;
+	} else if (!error_int()){
+		return INT_ERR;
+	}
+
+	if(!checkTokenType(LEX_L_BRACKET)){
+		fprintf(stderr, "Ocekavana '(' na radku %d\n", gToken.row);
+		resetToken();
+		return SYN_ERR;
+	}
+
+	//po kontrole dalsiho tokenu volane pm_list()
+
+	token = getToken();
+	if(!error_lex()){
+		return ERROR_LEX;
+	} else if (!error_int()){
+		return INT_ERR;
+	}
+
+	result = pm_list();
+	if(result != SUCCESS){
+		resetToken();
+		return result;
+	}
+
+	//dalsi token mame z fce pm_list(), musi byt ')'
+
+	if(!error_lex()){
+		return ERROR_LEX;
+	} else if (!error_int()){
+		return INT_ERR;
+	}
+
+	if(!checkTokenType(LEX_R_BRACKET)){
+		fprintf(stderr, "Ocekavana ')' na radku %d\n", gToken.row);
+		resetToken();
+		return SYN_ERR;
+	}
+
+	token = getToken();
+	if(!error_lex()){
+		return ERROR_LEX;
+	} else if (!error_int()){
+		return INT_ERR;
+	}
+
+	if(!checkTokenType(LEX_EOL)){
+		fprintf(stderr, "Ocekavan 'eol' na radku %d \n", gToken.row);
+		resetToken();
+		return SYN_ERR;
+	}
+
+	//dalsi token pude do funce ST-LIST
+	token = getToken();
+	if(!error_lex()){
+		return ERROR_LEX;
+	} else if (!error_int()){
+		return INT_ERR;
+	}
+
+	result = st_list();
+	if(result != SUCCESS){
+		resetToken();
+		return result;
+	}
+
+	//dalsi token je nacten, musi = KW_END
+
+	if(!error_lex()){
+		return ERROR_LEX;
+	} else if (!error_int()){
+		return INT_ERR;
+	}
+
+	if(!(checkTokenType(KW_END))){
+		fprintf(stderr,"Ocekavan 'end' na radku %d", gToken.row);
+		resetToken();
+		return SYN_ERR;
+	}
+
+	//nacteni a kontrola dalsiho tokenu
+	token = getToken();
+	if(!error_lex()){
+		return ERROR_LEX;
+	} else if (!error_int()){
+		return INT_ERR;
+	}
+
+	return SUCCESS;
+
+}
+
+
+int fn_list(void){
+	// pravidlo <fn-list> -> <func> eol <fn-list>
+
+	int result;
+
+	if (token == KW_DEF){
+
+		result = func();
+			if(result != SUCCESS){
+				resetToken();
+				return result;
+			}
+
+			//dalsi token je nacteny z function()
+			if(!checkTokenType(LEX_EOL)){
+				fprintf(stderr, "Ocekavan 'eol' na radku %d\n", gToken.row);
+				resetToken();
+				return SYN_ERR;
+			}
+
+			//rekurzivni volani teto fce, podle pravidla
+			token = getToken();
+			if(!error_lex()){
+				return ERROR_LEX;
+			} else if (!error_int()){
+				return INT_ERR;
+			}
+			return fn_list();
+	}
+
+	return SUCCESS;
+}
+
 
 int main_p(void){
 
@@ -424,8 +655,27 @@ int main_p(void){
 			return SUCCESS;
 		break;
 
-		// case KW_DEF:
-		// break;
+		case KW_DEF:
+
+			// volani dc_list()
+			result = fn_list();
+			if(result != SUCCESS){
+				resetToken();
+				return result;
+			}
+
+			token = getToken();
+			if(!error_lex()){
+				return ERROR_LEX;
+			} else if (!error_int()){
+				return INT_ERR;
+			}
+
+			printf("def: Konec main_p, navratova hodnota je %d\n", result);
+
+			return SUCCESS;
+
+		break;
 	}
 
 	//neco jineho = chyba!
@@ -472,7 +722,6 @@ int prog(){
 int parse() {
 
 	int result = SUCCESS;
-
 
 	if(initToken() == INT_ERR){
 		fprintf(stderr, "Nepodařilo se inicializovat strukturu pro token \n");
