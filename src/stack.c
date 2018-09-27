@@ -110,10 +110,19 @@ tToken stack_pop(tStack *stack){
     printf("Popujes prazdny zasobnik\n");;
 }
 
+/**
+ * Funkcia, ktora nam vrati hodnotu celeho stacku
+ * @param stack konkretny stack
+ * @return hodnota stacku
+ */
 int stack_get_size(tStack *stack){
     return stack->memory;
 }
 
+/**
+ * Pomocna debugovacia funkcia
+ * @param stack konkretny stack
+ */
 void stack_print(tStack *stack){
     printf("[------------> STACK BEGIN <-------------]\n");
     for(int i = 0; i < stack_get_size(stack); i++){
@@ -122,6 +131,10 @@ void stack_print(tStack *stack){
     printf("[-------------> STACK END <--------------]\n");
 }
 
+/**
+ * Vzdy pouzi tuto funckiu pred funkciou stack_free(), sluzi iniciliazivanie vsetkych poli na NULL
+ * @param stack konkretny stack
+ */
 void stack_refresh(tStack *stack){
     for(int i = 0; i < stack_get_size(stack); i++){
         stack->array[i].data.data = NULL;
@@ -130,6 +143,10 @@ void stack_refresh(tStack *stack){
     stack->finderOfParenthesis = -1;
 }
 
+/**
+ * Funkcia, ktora uvolni cely stack
+ * @param stack konkretny stack
+ */
 void stack_free(tStack *stack)
 {
     stack->memory = 0;
@@ -137,7 +154,10 @@ void stack_free(tStack *stack)
     free(stack);
 }
 
-
+/**
+ * Funckia, pomocou ktorej sa bude hladat znamienko <, na redukovanie pravidiel E -> E + E a podobne
+ * @param stack konkretny stack
+ */
 void stack_search_for_theorem(tStack *stack) {
     /* this will be testing code */
     /*
