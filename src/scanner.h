@@ -122,6 +122,7 @@
 #define    S_COMMENT_BLOCK_IN_E 81
 #define    S_COMMENT_BLOCK_IN_N 82
 #define    S_COMMENT_BLOCK_N_NEWLINE   83
+#define    S_NEG_NUMBER         84
 
 
 
