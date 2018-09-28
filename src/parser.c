@@ -59,9 +59,190 @@ int parse_expr(void){
 	return SUCCESS;
 }
 
+int term(void){
+	int result = SUCCESS;
+
+	switch(token){
+		case LEX_ID:
+		case LEX_NUMBER:
+		case LEX_REAL_NUMBER:
+		case LEX_STRING:
+			//  semanticka kontrola dalsich parametru 
+			// kontrola, zda je dana promenna deklarovana
+			// jinak vytvor vnitrni promennou s hodnotou
+
+			// semanticka chyba nesouhlas pocet parametru funkce
+			token = getToken();
+			if(!error_lex()){
+				return ERROR_LEX;
+			} else if (!error_int()){
+				return INT_ERR;
+			}
+			return SUCCESS;
+		break;
+
+		default:
+			//jiny token = chyba!
+			fprintf(stderr, "Ocekavano 'identifikator' 'konstanta' na radku %d \n", gToken.row);
+			resetToken();
+			return SYN_ERR;
+	}
+
+	return result;
+}
+
+int term_list2(void){
+	int result;
+
+	switch(token){
+		//<PM-LIST2> -> , id/lex_number/lex_real_number/lex_string <PM-LIST2>
+		// UDELAT STAV PRO ID/LEX_NUMBER/LEX_REAL_NUMBER/LEX_STRING ????
+		case LEX_COMMA:
+			token = getToken();
+			if(!error_lex()){
+				return ERROR_LEX;
+			} else if (!error_int()){
+				return INT_ERR;
+			}
+
+			result = term();
+
+			if(result != SUCCESS){
+				resetToken();
+				return result;
+			}
+
+			//nacteno z param()
+			return term_list2();
+		break;
+
+		case LEX_R_BRACKET:
+			// SEMANTICKA KONTROLA souhlas pocet parametru funkce
+			return SUCCESS;
+		break;
+
+		default:
+			//cokoliv jineho = chyba
+			fprintf(stderr, "Ocekavano ',' 'identifikator' 'konstanta' ')' na radku %d \n", gToken.row);
+			resetToken();
+			return SYN_ERR;
+	}
+}
+
+int term_list(void){
+	int result = SUCCESS;
+
+	switch(token){
+		case LEX_ID:
+		case LEX_NUMBER:
+		case LEX_REAL_NUMBER:
+		case LEX_STRING:
+			// semanticka akce 
+			// if LEX_ID -> zkontrolovat zda je promenna definovana 
+			// pokud je to LEX_ID, LEX_NUMBER, LEX_REAL, LEX_STRING , podle typu vytvorit vnitrni promennou s hodnotou argumentu
+
+			//nacteni a volani pm_list2()
+			token = getToken();
+			if(!error_lex()){
+				return ERROR_LEX;
+			} else if (!error_int()){
+				return INT_ERR;
+			}
+
+
+			return term_list2();
+		break;
+
+		case LEX_R_BRACKET:
+			// semanticka akce, nesouhlasi pocet paramtru funkci
+
+			return SUCCESS;
+		break;
+
+		default:
+			fprintf(stderr, "Ocekavano 'identifikator' 'konstanta' ')' na radku %d\n", gToken.row);
+			resetToken();
+			return SYN_ERR; 
+	}
+
+	token = getToken();
+	if(!error_lex()){
+		return ERROR_LEX;
+	} else if (!error_int()){
+		return INT_ERR;
+	}
+
+
+	return result;
+
+}
+
 
 int sth(void){
+	int result;
 	printf("Pravidlo pro <id = sth> \n");
+	switch(token){
+		// case LEX_ID_F:
+		case LEX_ID:
+				// SEMANTICKA AKCE, KONTROLA DEFINICE FUNKCE
+
+    //     	    token = getToken();
+				// if(!isErrorLex()){
+				// 	return ERROR_LEX;
+				// } else if (!isErrorComp()){
+				// 	return INT_ERR;
+				// }
+
+				token = getToken();
+				if(!error_lex()){
+					return ERROR_LEX;
+				} else if (!error_int()){
+					return INT_ERR;
+				}
+
+				if(!checkTokenType(LEX_L_BRACKET)){
+					fprintf(stderr, "Ocekavano '(' na radku %d\n", gToken.row);
+					resetToken();
+					return SYN_ERR;
+				}
+
+
+				token = getToken();
+				if(!error_lex()){
+					return ERROR_LEX;
+				} else if (!error_int()){
+					return INT_ERR;
+				}
+
+
+				//volane term_list()
+				result = term_list();
+				if(result != SUCCESS){
+					resetToken();
+					return result;
+				}
+
+				//dalsi token je nacten, musi = ')'
+
+				if(!checkTokenType(LEX_R_BRACKET)){
+					fprintf(stderr, "CHYBA_P: Ocekavana ')' na radku %d \n", gToken.row);
+					resetToken();
+					return SYN_ERR;
+				}
+
+		break;
+
+		// semanticka chyba prirazeni
+		case LEX_EOL:
+			fprintf(stderr, "Ocekavan vyraz v prirazeni na radku %d \n", gToken.row);
+			return SEM_ERR;
+		break;
+
+		//pokud neni token LEX_ID_F, prozenem to precedencni SA
+		default:
+			return parse_expr();
+		
+	}
 	return SUCCESS;
 }
 
@@ -638,7 +819,6 @@ int main_p(void){
 		// case KW_INPUTI:
 		//case KW_INPUTF:
 		//case KW_LENGTH:
-		// case KW_PRINT:
 		//case KW_CHR:
 		//case KW_ORD:
 		//case KW_SUBSTR:

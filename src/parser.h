@@ -43,6 +43,8 @@ int sth(void);
 int fn_list(void);
 int pm_list(void);
 int pm_list2(void);
+int term_list(void);
+int term_list2(void);
 
 #endif
 
