@@ -179,11 +179,13 @@ int term_list(void){
 
 
 int sth(void){
-	int result;
+	int result = SUCCESS;
 	printf("Pravidlo pro <id = sth> \n");
 	switch(token){
 		// case LEX_ID_F:
 		case LEX_ID:
+
+		printf("function\n");
 				// SEMANTICKA AKCE, KONTROLA DEFINICE FUNKCE
 
     //     	    token = getToken();
@@ -193,42 +195,42 @@ int sth(void){
 				// 	return INT_ERR;
 				// }
 
-				token = getToken();
-				if(!error_lex()){
-					return ERROR_LEX;
-				} else if (!error_int()){
-					return INT_ERR;
-				}
+				// token = getToken();
+				// if(!error_lex()){
+				// 	return ERROR_LEX;
+				// } else if (!error_int()){
+				// 	return INT_ERR;
+				// }
 
-				if(!checkTokenType(LEX_L_BRACKET)){
-					fprintf(stderr, "Ocekavano '(' na radku %d\n", gToken.row);
-					resetToken();
-					return SYN_ERR;
-				}
-
-
-				token = getToken();
-				if(!error_lex()){
-					return ERROR_LEX;
-				} else if (!error_int()){
-					return INT_ERR;
-				}
+				// if(!checkTokenType(LEX_L_BRACKET)){
+				// 	fprintf(stderr, "Ocekavano '(' na radku %d\n", gToken.row);
+				// 	resetToken();
+				// 	return SYN_ERR;
+				// }
 
 
-				//volane term_list()
-				result = term_list();
-				if(result != SUCCESS){
-					resetToken();
-					return result;
-				}
+				// token = getToken();
+				// if(!error_lex()){
+				// 	return ERROR_LEX;
+				// } else if (!error_int()){
+				// 	return INT_ERR;
+				// }
 
-				//dalsi token je nacten, musi = ')'
 
-				if(!checkTokenType(LEX_R_BRACKET)){
-					fprintf(stderr, "CHYBA_P: Ocekavana ')' na radku %d \n", gToken.row);
-					resetToken();
-					return SYN_ERR;
-				}
+				// //volane term_list()
+				// result = term_list();
+				// if(result != SUCCESS){
+				// 	resetToken();
+				// 	return result;
+				// }
+
+				// //dalsi token je nacten, musi = ')'
+
+				// if(!checkTokenType(LEX_R_BRACKET)){
+				// 	fprintf(stderr, "CHYBA_P: Ocekavana ')' na radku %d \n", gToken.row);
+				// 	resetToken();
+				// 	return SYN_ERR;
+				// }
 
 		break;
 
@@ -240,10 +242,12 @@ int sth(void){
 
 		//pokud neni token LEX_ID_F, prozenem to precedencni SA
 		default:
-			return parse_expr();
+
+			printf("prirazeni\n");
+			//return parse_expr();
 		
 	}
-	return SUCCESS;
+	return result;
 }
 
 int stat(void){
@@ -276,7 +280,6 @@ int stat(void){
 			} else if (!error_int()){
 				return INT_ERR;
 			}
-
 
 			// volani pravidla sth()
 			result = sth();
@@ -392,20 +395,6 @@ int stat(void){
 				return SYN_ERR;
 			}
 
-			//dalsi = IF
-			token = getToken();
-			if(!error_lex()){
-				return ERROR_LEX;
-			} else if (!error_int()){
-				return INT_ERR;
-			}
-
-
-			if(!checkTokenType(KW_IF)){
-				fprintf(stderr, "Ocekavano 'if' na radku %d \n", gToken.row);
-				resetToken();
-				return SYN_ERR;
-			}
 
 			return SUCCESS;
 		break;
@@ -416,7 +405,7 @@ int stat(void){
 			printf("While pravidlo -> \n");
 
 			
-			//vyrazova SA
+			//vyrazova SA, pro precedencni analyzu
 			token = getToken();
 			if(!error_lex()){
 				return ERROR_LEX;
@@ -473,7 +462,7 @@ int stat(void){
 				return result;
 			}
 
-			//dalsi token je zase nacten z fce, musi byt end
+			//dalsi token je zase nacten z fce, musi byt END
 			if(!checkTokenType(KW_END)){
 				fprintf(stderr, "Ocekavan 'end' na radku %d\n", gToken.row);
 				resetToken();
@@ -482,12 +471,18 @@ int stat(void){
 
 			return result;
 		break;
+
+		// case KW_PRINT
+
+		default:
+			fprintf(stderr, "Ocekavano 'while' 'id' 'if' 'print' na radku %d \n", gToken.row); // dopsat
+			resetToken();
+			return SYN_ERR;
 	}
 
-	//cokoliv jineho = chyba!
-	fprintf(stderr, "Ocekavano 'while' 'id' 'if' 'print' na radku %d \n", gToken.row); // dopsat
-	resetToken();
-	return SYN_ERR;
+	return result;
+
+	
 }
 
 
@@ -504,41 +499,8 @@ int st_list(void){
 
 		case KW_IF:
 		case KW_WHILE:
-
-			//podle pravidla zavolame stat()
-			result = stat();
-			if(result != SUCCESS){
-				resetToken();
-				return result;
-			}
-
-			token = getToken();
-
-			if(!checkTokenType(LEX_EOL)){
-				fprintf(stderr, "1 Ocekavan 'eol' na radku %d\n", gToken.row);
-				resetToken();
-				return SYN_ERR;
-			}
-
-
-			//dalsi token a znova volame st_list()
-			token = getToken();
-			if(!error_lex()){
-				return ERROR_LEX;
-			} else if (!error_int()){
-				return INT_ERR;
-			}
-
-
-			token = getToken();
-			if(!error_lex()){
-				return ERROR_LEX;
-			} else if (!error_int()){
-				return INT_ERR;
-			}
-
-			return st_list();
 		case LEX_ID:
+
 			//podle pravidla zavolame stat()
 			result = stat();
 			if(result != SUCCESS){
@@ -547,7 +509,11 @@ int st_list(void){
 			}
 
 			token = getToken();
-
+			if(!error_lex()){
+				return ERROR_LEX;
+			} else if (!error_int()){
+				return INT_ERR;
+			}
 
 			if(!checkTokenType(LEX_EOL)){
 				fprintf(stderr, "1 Ocekavan 'eol' na radku %d\n", gToken.row);
@@ -555,7 +521,6 @@ int st_list(void){
 				return SYN_ERR;
 			}
 
-			//dalsi token a znova volame st_list()
 			token = getToken();
 			if(!error_lex()){
 				return ERROR_LEX;
@@ -565,13 +530,42 @@ int st_list(void){
 
 			return st_list();
 
-		break;
+		// case KW_PRINT
 
 		//<ST-LIST> -> nic
       case KW_ELSE:
       case KW_END:
+      		return SUCCESS;
+      		break;
 
-      	return SUCCESS;
+      case KW_DEF:
+
+			// volani dc_list()
+			result = func();
+			if(result != SUCCESS){
+				resetToken();
+				return result;
+			}
+			// dalsi token je nacteny z func()
+
+			if(!checkTokenType(LEX_EOL)){
+				fprintf(stderr, "1 Ocekavan 'eol' na radku %d\n", gToken.row);
+				resetToken();
+				return SYN_ERR;
+			}
+
+			token = getToken();
+			if(!error_lex()){
+				return ERROR_LEX;
+			} else if (!error_int()){
+				return INT_ERR;
+			}
+
+			return st_list();
+
+			return SUCCESS;
+
+
       break;
 	}
 
@@ -767,39 +761,6 @@ int func(void){
 }
 
 
-int fn_list(void){
-	// pravidlo <fn-list> -> <func> eol <fn-list>
-
-	int result;
-
-	if (token == KW_DEF){
-
-		result = func();
-			if(result != SUCCESS){
-				resetToken();
-				return result;
-			}
-
-			//dalsi token je nacteny z function()
-			if(!checkTokenType(LEX_EOL)){
-				fprintf(stderr, "Ocekavan 'eol' na radku %d\n", gToken.row);
-				resetToken();
-				return SYN_ERR;
-			}
-
-			//rekurzivni volani teto fce, podle pravidla
-			token = getToken();
-			if(!error_lex()){
-				return ERROR_LEX;
-			} else if (!error_int()){
-				return INT_ERR;
-			}
-			return fn_list();
-	}
-
-	return SUCCESS;
-}
-
 
 int main_p(void){
 
@@ -815,6 +776,8 @@ int main_p(void){
 		case KW_IF:
 		case LEX_ID:
 		case KW_WHILE:
+		case KW_PRINT:
+		case KW_DEF:
 		//case KW_INPUTS:
 		// case KW_INPUTI:
 		//case KW_INPUTF:
@@ -830,7 +793,7 @@ int main_p(void){
 				return result;
 			}
 
-			//dalsi musi byt EOL
+			//dalsi musi byt EOL / EOF
 			token = getToken();
 
 			if(!error_lex()){
@@ -838,51 +801,18 @@ int main_p(void){
 			} else if (!error_int()){
 				return INT_ERR;
 			}
-			if((!checkTokenType(LEX_EOL)) && (!checkTokenType(LEX_EOF))) {
-				fprintf(stderr, "Ocekavano 'eol' 'eof' na radku %d \n", gToken.row);
-				resetToken();
-				return SYN_ERR;
-			} 
-
-			token = getToken();
-			if(!error_lex()){
-				return ERROR_LEX;
-			} else if (!error_int()){
-				return INT_ERR;
-			}
-
-			printf("Konec main_p, navratova hodnota je %d\n", result);
 
 			return SUCCESS;
 		break;
 
-		case KW_DEF:
 
-			// volani dc_list()
-			result = fn_list();
-			if(result != SUCCESS){
-				resetToken();
-				return result;
-			}
-
-			token = getToken();
-			if(!error_lex()){
-				return ERROR_LEX;
-			} else if (!error_int()){
-				return INT_ERR;
-			}
-
-			printf("def: Konec main_p, navratova hodnota je %d\n", result);
-
-			return SUCCESS;
-
-		break;
+		default:
+			fprintf(stderr, "Ocekavano zacatek programu na radku %d\n", gToken.row);
+			resetToken();
+			return SYN_ERR;
 	}
 
-	//neco jineho = chyba!
-	fprintf(stderr, "Ocekavano zacatek programu na radku %d\n", gToken.row);
-	resetToken();
-	return SYN_ERR;
+	return result;
 
 }
 
@@ -895,18 +825,21 @@ int prog(){
 		case KW_IF:
 		case KW_WHILE:
 		case LEX_ID:
+		case KW_PRINT:
 			result = main_p();
 			if(result != SUCCESS){
 				resetToken();
 				return result;
 			}
 
-			//token nacten z main_p() = EOL
-			if((!checkTokenType(LEX_EOL)) && (!checkTokenType(LEX_EOF))) {
+			//token nacten z main_p() = EOF
+			if(!checkTokenType(LEX_EOF)) {
 				fprintf(stderr, "Ocekavano 'eof' 'eol' na radku %d \n", gToken.row);
 				resetToken();
 				return SYN_ERR;
 			}
+
+			printf("Konec prog, navratova hodnota je %d\n", result);
     		return SUCCESS;
     	break;
 	}
