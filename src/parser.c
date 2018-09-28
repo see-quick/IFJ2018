@@ -185,52 +185,47 @@ int sth(void){
 		// case LEX_ID_F:
 		case LEX_ID:
 
-		printf("function\n");
-				// SEMANTICKA AKCE, KONTROLA DEFINICE FUNKCE
+				//SEMANTICKA AKCE, KONTROLA DEFINICE FUNKCE
 
-    //     	    token = getToken();
-				// if(!isErrorLex()){
-				// 	return ERROR_LEX;
-				// } else if (!isErrorComp()){
-				// 	return INT_ERR;
-				// }
+				printf("Volani funkce\n");
 
-				// token = getToken();
-				// if(!error_lex()){
-				// 	return ERROR_LEX;
-				// } else if (!error_int()){
-				// 	return INT_ERR;
-				// }
-
-				// if(!checkTokenType(LEX_L_BRACKET)){
-				// 	fprintf(stderr, "Ocekavano '(' na radku %d\n", gToken.row);
-				// 	resetToken();
-				// 	return SYN_ERR;
-				// }
+        	    token = getToken();
+				if(!error_lex()){
+					return ERROR_LEX;
+				} else if (!error_int()){
+					return INT_ERR;
+				}
 
 
-				// token = getToken();
-				// if(!error_lex()){
-				// 	return ERROR_LEX;
-				// } else if (!error_int()){
-				// 	return INT_ERR;
-				// }
+				if(!checkTokenType(LEX_L_BRACKET)){
+					fprintf(stderr, "Ocekavano '(' na radku %d\n", gToken.row);
+					resetToken();
+					return SYN_ERR;
+				}
 
 
-				// //volane term_list()
-				// result = term_list();
-				// if(result != SUCCESS){
-				// 	resetToken();
-				// 	return result;
-				// }
+				token = getToken();
+				if(!error_lex()){
+					return ERROR_LEX;
+				} else if (!error_int()){
+					return INT_ERR;
+				}
 
-				// //dalsi token je nacten, musi = ')'
 
-				// if(!checkTokenType(LEX_R_BRACKET)){
-				// 	fprintf(stderr, "CHYBA_P: Ocekavana ')' na radku %d \n", gToken.row);
-				// 	resetToken();
-				// 	return SYN_ERR;
-				// }
+				//volane term_list()
+				result = term_list();
+				if(result != SUCCESS){
+					resetToken();
+					return result;
+				}
+
+				//dalsi token je nacten, musi = ')'
+
+				if(!checkTokenType(LEX_R_BRACKET)){
+					fprintf(stderr, "CHYBA_P: Ocekavana ')' na radku %d \n", gToken.row);
+					resetToken();
+					return SYN_ERR;
+				}
 
 		break;
 
@@ -242,9 +237,8 @@ int sth(void){
 
 		//pokud neni token LEX_ID_F, prozenem to precedencni SA
 		default:
-
-			printf("prirazeni\n");
-			//return parse_expr();
+			//printf("prirazeni\n");
+			return parse_expr();
 		
 	}
 	return result;
