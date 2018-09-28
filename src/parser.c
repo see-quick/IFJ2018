@@ -26,6 +26,7 @@
 int token;        // aktualni token
 
 
+/*Funkce pro vypsani lexikalni chyby na standardni chybovy vystup*/
 int error_lex(void){
 	if(token == ERROR_LEX){
 		fprintf(stderr, "Lexikalni chyba na radku %d\n", gToken.row);
@@ -36,6 +37,8 @@ int error_lex(void){
 	return 1;
 }
 
+
+/*Funkce pro vypsani interni chyby na standardni chybovy vystup*/
 int error_int(void){
 	if(token == INT_ERR){
 		fprintf(stderr, "Interni chyba\n");
@@ -59,7 +62,6 @@ int parse_expr(void){
 
 int sth(void){
 	printf("Pravidlo pro <id = sth> \n");
-
 	return SUCCESS;
 }
 
@@ -67,7 +69,7 @@ int stat(void){
 	int result = SUCCESS;
 
 	switch(token){
-		//<STAT> -> id = <STH> 
+		//<STAT> -> id = <STH>
 		case LEX_ID:
 			printf("Identifikator pravidlo -> \n");
 
@@ -86,7 +88,7 @@ int stat(void){
 			}
 
 
-			//volani sth()
+			// nacteni dalsiho tokenu , musi byt identifikator nebo vyraz
 			token = getToken();
 			if(!error_lex()){
 				return ERROR_LEX;
@@ -95,6 +97,7 @@ int stat(void){
 			}
 
 
+			// volani pravidla sth()
 			result = sth();
 			if(result != SUCCESS){
 				return result;
@@ -296,14 +299,6 @@ int stat(void){
 				return SYN_ERR;
 			}
 
-
-			token = getToken();
-			if(!error_lex()){
-				return ERROR_LEX;
-			} else if (!error_int()){
-				return INT_ERR;
-			}
-
 			return result;
 		break;
 	}
@@ -327,9 +322,42 @@ int st_list(void){
 	switch(token){
 
 		case KW_IF:
-		case LEX_ID:
 		case KW_WHILE:
 
+			//podle pravidla zavolame stat()
+			result = stat();
+			if(result != SUCCESS){
+				resetToken();
+				return result;
+			}
+
+			token = getToken();
+
+			if(!checkTokenType(LEX_EOL)){
+				fprintf(stderr, "1 Ocekavan 'eol' na radku %d\n", gToken.row);
+				resetToken();
+				return SYN_ERR;
+			}
+
+
+			//dalsi token a znova volame st_list()
+			token = getToken();
+			if(!error_lex()){
+				return ERROR_LEX;
+			} else if (!error_int()){
+				return INT_ERR;
+			}
+
+
+			token = getToken();
+			if(!error_lex()){
+				return ERROR_LEX;
+			} else if (!error_int()){
+				return INT_ERR;
+			}
+
+			return st_list();
+		case LEX_ID:
 			//podle pravidla zavolame stat()
 			result = stat();
 			if(result != SUCCESS){
@@ -355,11 +383,13 @@ int st_list(void){
 			}
 
 			return st_list();
+
 		break;
 
 		//<ST-LIST> -> nic
       case KW_ELSE:
       case KW_END:
+
       	return SUCCESS;
       break;
 	}
@@ -456,17 +486,8 @@ int func(void){
 		return SYN_ERR;
 	}
 
-	// SEMANTICKA AKCE
-	// tmp = global_map_get_item(*globalTS, gToken.data);
-
- //    if (tmp == NULL) {
- //    	// neni v tabulce -> vlozeni deklarace funkce do globalni TS
- //    	result = global_map_put(globalTS, gToken.data, tmp.globalData);
- //    }
-
-
-    // else {} Semanticka kontrola - funkce jiz byla deklarovana. 
-
+	
+    // SEMANTICKA AKCE
 
    	//dalsi token musi byt '('
 	token = getToken();
