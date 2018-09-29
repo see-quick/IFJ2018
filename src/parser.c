@@ -24,7 +24,8 @@
 
 int token;        	         // aktualni token
 GlobalMap* gMap;		     // globalni tabulka symbolu
-tDataFunction gData;	     // uzel globalni tabulky symbolu
+tDataFunction *gDataptr;	 // ukazatel na uzel globalni tabulky symbolu
+tDataFunction gData;
 
 /*Funkce pro vypsani lexikalni chyby na standardni chybovy vystup*/
 int error_lex(void){
@@ -750,6 +751,22 @@ int func(void){
 	
     // SEMANTICKA AKCE
 
+
+    // ukladam do GTS definice funkce
+    // pokud tam ID neni tak vepsat
+
+    gDataptr = global_map_get_pointer_to_value(gMap, gToken.data.data);
+    if (gDataptr == NULL){
+    	printf("v GTS neni -> ulozit\n");
+    	global_map_put(gMap, gToken.data.data, gData);
+    }else {
+        // uz byla definovana
+        fprintf(stderr, "Radek %d: Semanticka chyba, funkce '%s' jiz byla definovana.\n", gToken.row, gToken.data.data);
+        return SEM_ERR;
+    }
+
+
+
    	//dalsi token musi byt '('
 	token = getToken();
 	if(!error_lex()){
@@ -941,6 +958,13 @@ int parse(GlobalMap* globalMap) {
 	int result = SUCCESS;
 
 	gMap = globalMap;
+
+	gDataptr = &gData;
+
+	gData.defined = 0;
+    gData.functionParametersNames.data = "";
+    gData.type = 500;
+    gData.returnType = 500;
 
 	if(initToken() == INT_ERR){
 		fprintf(stderr, "Nepodařilo se inicializovat strukturu pro token \n");
