@@ -18,6 +18,8 @@
 #ifndef IFJ_SYNTACTICANALYZER_H
 #define IFJ_SYNTACTICANALYZER_H
 
+#include "hashtable.h"
+
 
 int error_lex(void);
 int error_int(void);
@@ -28,7 +30,7 @@ int error_int(void);
 **/
 int checkTokenType(int);
 
-int parse();
+int parse(GlobalMap* );
 
 /**
 ** Pocatecni stav pruchodu
@@ -45,6 +47,7 @@ int pm_list2(void);
 int term_list(void);
 int term_list2(void);
 int func(void);
+int one_term(void);
 
 #endif
 

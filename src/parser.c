@@ -21,10 +21,10 @@
 #include "parser.h"
 #include "scanner.h"
 #include "error.h"
-#include "hashtable.h"
 
-int token;        // aktualni token
-
+int token;        	         // aktualni token
+GlobalMap* gMap;		     // globalni tabulka symbolu
+tDataFunction gData;	     // uzel globalni tabulky symbolu
 
 /*Funkce pro vypsani lexikalni chyby na standardni chybovy vystup*/
 int error_lex(void){
@@ -141,7 +141,7 @@ int term_list(void){
 			// if LEX_ID -> zkontrolovat zda je promenna definovana 
 			// pokud je to LEX_ID, LEX_NUMBER, LEX_REAL, LEX_STRING , podle typu vytvorit vnitrni promennou s hodnotou argumentu
 
-			//nacteni a volani pm_list2()
+			//nacteni a volani term_list2()
 			token = getToken();
 			if(!error_lex()){
 				return ERROR_LEX;
@@ -222,7 +222,7 @@ int sth(void){
 				//dalsi token je nacten, musi = ')'
 
 				if(!checkTokenType(LEX_R_BRACKET)){
-					fprintf(stderr, "CHYBA_P: Ocekavana ')' na radku %d \n", gToken.row);
+					fprintf(stderr, "Ocekavana ')' na radku %d \n", gToken.row);
 					resetToken();
 					return SYN_ERR;
 				}
@@ -466,10 +466,9 @@ int stat(void){
 			return result;
 		break;
 
-		// case KW_PRINT
 
 		default:
-			fprintf(stderr, "Ocekavano 'while' 'id' 'if' 'print' na radku %d \n", gToken.row); // dopsat
+			fprintf(stderr, "Ocekavano 'while' 'id' 'if' na radku %d \n", gToken.row); // dopsat
 			resetToken();
 			return SYN_ERR;
 	}
@@ -530,20 +529,18 @@ int st_list(void){
       case KW_ELSE:
       case KW_END:
       		return SUCCESS;
-      		break;
+      	break;
 
-      case KW_DEF:
-
-			// volani dc_list()
-			result = func();
-			if(result != SUCCESS){
-				resetToken();
-				return result;
+      case KW_PRINT:
+      		token = getToken();
+			if(!error_lex()){
+				return ERROR_LEX;
+			} else if (!error_int()){
+				return INT_ERR;
 			}
-			// dalsi token je nacteny z func()
 
-			if(!checkTokenType(LEX_EOL)){
-				fprintf(stderr, "1 Ocekavan 'eol' na radku %d\n", gToken.row);
+			if(!checkTokenType(LEX_L_BRACKET)){
+				fprintf(stderr, "Ocekavana '(' na radku %d\n", gToken.row);
 				resetToken();
 				return SYN_ERR;
 			}
@@ -555,12 +552,107 @@ int st_list(void){
 				return INT_ERR;
 			}
 
+			result = term_list();
+
+			if(result != SUCCESS){
+				resetToken();
+				return result;
+			}
+
+			// dalsi token pro st_list
+			token = getToken();
+			if(!error_lex()){
+				return ERROR_LEX;
+			} else if (!error_int()){
+				return INT_ERR;
+			}
+
 			return st_list();
 
-			return SUCCESS;
+      break;
 
+      case KW_LENGTH:
+      		token = getToken();
+			if(!error_lex()){
+				return ERROR_LEX;
+			} else if (!error_int()){
+				return INT_ERR;
+			}
+
+			if(!checkTokenType(LEX_L_BRACKET)){
+				fprintf(stderr, "Ocekavana '(' na radku %d\n", gToken.row);
+				resetToken();
+				return SYN_ERR;
+			}
+
+			token = getToken();
+			if(!error_lex()){
+				return ERROR_LEX;
+			} else if (!error_int()){
+				return INT_ERR;
+			}
+
+			if(!checkTokenType(LEX_ID)){
+				fprintf(stderr, "Ocekavana 'id' na radku %d\n", gToken.row);
+				resetToken();
+				return SYN_ERR;
+			}
+
+			token = getToken();
+			if(!error_lex()){
+				return ERROR_LEX;
+			} else if (!error_int()){
+				return INT_ERR;
+			}
+
+			if(!checkTokenType(LEX_R_BRACKET)){
+				fprintf(stderr, "Ocekavana ')' na radku %d\n", gToken.row);
+				resetToken();
+				return SYN_ERR;
+			}
+
+			// dalsi token pro st_list
+			token = getToken();
+			if(!error_lex()){
+				return ERROR_LEX;
+			} else if (!error_int()){
+				return INT_ERR;
+			}
+
+			return st_list();
 
       break;
+
+      case KW_DEF:
+
+			result = func();
+			if(result != SUCCESS){
+				resetToken();
+				return result;
+			}
+			// dalsi token je nacteny z func()
+			if(!checkTokenType(LEX_EOL)){
+				fprintf(stderr, "Ocekavan 'eol' na radku %d\n", gToken.row);
+				resetToken();
+				return SYN_ERR;
+			}
+
+			// dalsi token pro st_list
+			token = getToken();
+			if(!error_lex()){
+				return ERROR_LEX;
+			} else if (!error_int()){
+				return INT_ERR;
+			}
+
+			return st_list();
+
+      break;
+
+      default:
+      	fprintf(stderr, "Ocekavano statement na radku %d\n", gToken.row);
+      	return SYN_ERR;
+
 	}
 
 	return result;
@@ -763,9 +855,6 @@ int main_p(void){
 
 	int result = SUCCESS;
 
-
-	//printf("Token : %d\n", token);
-
 	switch(token){
 		case KW_IF:
 		case LEX_ID:
@@ -775,7 +864,7 @@ int main_p(void){
 		//case KW_INPUTS:
 		// case KW_INPUTI:
 		//case KW_INPUTF:
-		//case KW_LENGTH:
+		case KW_LENGTH:
 		//case KW_CHR:
 		//case KW_ORD:
 		//case KW_SUBSTR:
@@ -847,9 +936,11 @@ int prog(){
 
 
 
-int parse() {
+int parse(GlobalMap* globalMap) {
 
 	int result = SUCCESS;
+
+	gMap = globalMap;
 
 	if(initToken() == INT_ERR){
 		fprintf(stderr, "Nepodařilo se inicializovat strukturu pro token \n");
