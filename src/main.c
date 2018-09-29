@@ -39,7 +39,7 @@ int main(int argc, char** argv) {
 			fprintf(stderr, "Interni chyba\n");
 		}
 		else{
-			printf("Token c: %d %s\n", token, gToken.data.data);
+			printf("Token c: %d %s\n", token, gToken.data.str);
 			//printf("Radek c: %d\n", gToken.row);
 		}
 	} while(token != LEX_EOF);

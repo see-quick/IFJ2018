@@ -41,7 +41,7 @@ void pushToken(int character){
 }
 
 void returnToken(){
-    char* word = gToken.data.data;
+    char* word = gToken.data.str;
     int length = gToken.data.length;
     int i;
     for ( i = 0; i < length; i++){
@@ -74,7 +74,7 @@ const char* keyWords[] = {
 int isKeyword(tString *word){
     int i;
     for(i = 0; i < KEYWORD_COUNT; i++){
-        if(strcmp(keyWords[i], word->data) == 0)
+        if(strcmp(keyWords[i], word->str) == 0)
             return i+SHIFT;
     }
     return SUCCESS;
@@ -400,7 +400,7 @@ int getToken(){
                 }
                  else if(c == '!' || c == '?'){
                     pushToken(c);
-                    state = S_ID_END;
+                    state = S_ID_F_END;
                 }
                 else{
                   ungetc(c, stdin);
@@ -421,9 +421,18 @@ int getToken(){
                     ungetc(c, stdin);
                     return LEX_ID;
                 }
-
-
-            break;
+                break;
+            
+            case S_ID_F_END:
+                if (c == '?' || c == '!'){
+                    pushToken(c);
+                    state = S_ID;
+                }
+                else{
+                    ungetc(c, stdin);
+                    return LEX_ID_F;
+                }
+                break;
             // Radkovy komentar
             case S_COMMENT_ROW:
                 if( c == EOF )

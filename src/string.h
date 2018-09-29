@@ -23,7 +23,7 @@
 /*******Struktury*********/
 /*************************/
 typedef struct{
-  char *data;
+  char *str;
   unsigned int length;
   unsigned int memory;
 } tString;
