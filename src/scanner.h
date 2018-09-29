@@ -1,5 +1,5 @@
 /**
- * Predmet:  IFJ 
+ * Predmet:  IFJ
  * Projekt:  Implementace prekladace imperativniho jazyka IFJ18
  * Soubor:   scanner.h
  *
@@ -9,9 +9,9 @@
  * Datum:
  *
  * Autori:   Maros Orsak       vedouci
- *           Polishchuk Kateryna     <xpolis03@fit.vutbr.cz>           
- *           Igor Ignac           
- *           Marek Rohel       
+ *           Polishchuk Kateryna     <xpolis03@fit.vutbr.cz>
+ *           Igor Ignac
+ *           Marek Rohel
 
 */
 
@@ -35,13 +35,13 @@
 /*Klicova slova */
 #define    KW_DEF                10
 #define    KW_DO                 11
-#define    KW_ELSE               12                                          
+#define    KW_ELSE               12
 #define    KW_END                13
 #define    KW_IF                 14
 #define    KW_NOT                15
-#define    KW_NIL                16                                             
+#define    KW_NIL                16
 #define    KW_THEN               17
-#define    KW_WHILE              18   
+#define    KW_WHILE              18
 
 /*Vestavene funkce */
 #define    KW_INPUT_S            19
@@ -54,7 +54,7 @@
 #define    KW_CHR                26
 
 
-/* Zakladni tokeny */    
+/* Zakladni tokeny */
 #define    LEX_L_SBRACKET        27
 #define    LEX_R_SBRACKET        28
 #define    LEX_L_BRACKET         29
@@ -81,7 +81,7 @@
 #define    LEX_NUMBER            50
 #define    LEX_REAL_NUMBER       51
 #define    LEX_DOUBLE_EQUAL      52
-/////////////////////////////// 
+///////////////////////////////
 
 
 
@@ -108,7 +108,7 @@
 #define    S_REAL               67
 #define    S_EOF                68
 #define    S_EQUAL              69
-#define    S_EOL                70 
+#define    S_EOL                70
 #define    S_ID_END             71
 #define    S_COMMENT_BLOCK_B    72
 #define    S_COMMENT_BLOCK_E    73
@@ -118,7 +118,11 @@
 #define    S_COMMENT_END        77
 #define    S_COMMENT_END_E      78
 #define    S_COMMENT_END_N      79
- 
+#define    S_COMMENT_BLOCK_IN   80
+#define    S_COMMENT_BLOCK_IN_E 81
+#define    S_COMMENT_BLOCK_IN_N 82
+#define    S_COMMENT_BLOCK_N_NEWLINE   83
+#define    S_NEG_NUMBER         84
 
 
 

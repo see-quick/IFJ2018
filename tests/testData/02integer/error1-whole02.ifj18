@@ -1,0 +1,3 @@
+#Error pre prebytocne nuly na zaciatku celociselneho literalu
+
+def number = 0005
