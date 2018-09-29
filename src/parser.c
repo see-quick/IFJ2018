@@ -181,12 +181,23 @@ int term_list(void){
 
 int sth(void){
 	int result = SUCCESS;
+
+	tDataFunction *tmp;
+
+
 	printf("Pravidlo pro <id = sth> \n");
 	switch(token){
 		// case LEX_ID_F:
 		case LEX_ID:
 
 				//SEMANTICKA AKCE, KONTROLA DEFINICE FUNKCE
+
+				tmp = global_map_get_pointer_to_value(gMap, gToken.data.data);
+
+				if (tmp == NULL){
+					fprintf(stderr, "Chyba, funkce %s neni definovana, radek %d\n", gToken.data.data, gToken.row);
+					return SEM_ERR;
+				}
 
 				printf("Volani funkce\n");
 
@@ -572,57 +583,6 @@ int st_list(void){
 
       break;
 
-      case KW_LENGTH:
-      		token = getToken();
-			if(!error_lex()){
-				return ERROR_LEX;
-			} else if (!error_int()){
-				return INT_ERR;
-			}
-
-			if(!checkTokenType(LEX_L_BRACKET)){
-				fprintf(stderr, "Ocekavana '(' na radku %d\n", gToken.row);
-				resetToken();
-				return SYN_ERR;
-			}
-
-			token = getToken();
-			if(!error_lex()){
-				return ERROR_LEX;
-			} else if (!error_int()){
-				return INT_ERR;
-			}
-
-			if(!checkTokenType(LEX_ID)){
-				fprintf(stderr, "Ocekavana 'id' na radku %d\n", gToken.row);
-				resetToken();
-				return SYN_ERR;
-			}
-
-			token = getToken();
-			if(!error_lex()){
-				return ERROR_LEX;
-			} else if (!error_int()){
-				return INT_ERR;
-			}
-
-			if(!checkTokenType(LEX_R_BRACKET)){
-				fprintf(stderr, "Ocekavana ')' na radku %d\n", gToken.row);
-				resetToken();
-				return SYN_ERR;
-			}
-
-			// dalsi token pro st_list
-			token = getToken();
-			if(!error_lex()){
-				return ERROR_LEX;
-			} else if (!error_int()){
-				return INT_ERR;
-			}
-
-			return st_list();
-
-      break;
 
       case KW_DEF:
 
@@ -649,10 +609,6 @@ int st_list(void){
 			return st_list();
 
       break;
-
-      default:
-      	fprintf(stderr, "Ocekavano statement na radku %d\n", gToken.row);
-      	return SYN_ERR;
 
 	}
 
