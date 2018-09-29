@@ -103,7 +103,8 @@ tToken stack_pop(tStack *stack){
     // ak zasobnik nie je prazdny
     if(!(stack_empty(stack))){
         tToken item = stack->array[stack->top];
-        stack->top--;
+        stack->array[stack->top] = NULL;
+	stack->top--;
         stack->finderOfParenthesis--;
         return item;
     }
