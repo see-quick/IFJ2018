@@ -14,6 +14,7 @@
 */
 
 #include <stdio.h>
+#include <stdlib.h>
 
 
 #ifndef _LIST_H
@@ -87,7 +88,7 @@ typedef enum
     //ladiacie INSTRUCT.
             INSTRUCT_BREAK = 655,
             INSTRUCT_DPRINT  = 656
-}tInstructionTypes;
+} tInstructionTypes;
 
 /** **/
 typedef enum
@@ -97,23 +98,24 @@ typedef enum
     TF = 702,    //pre ID
     I = 703,     // napr:int@10
     F = 704,     // napr:float@2.33
-    S= 705,      // string@ahoj
-    FCE= 706,     //pre funkcie
+    S = 705,      // string@ahoj
+    FCE = 706,     //pre funkcie
     EMPTY = 707 //prazdna adresa
 } tDatType;
 
-typedef union value
+// zmenil som union na struct
+typedef struct value
 {
     int i;
     double d;
     char *s;
-}tValue;
+} tValue;
 
 typedef struct InstD
 {
     tDatType type;
     tValue value;
-}tInstructionData;
+} tInstructionData;
 
 // Struktura pre instrukcie
 typedef struct Data
@@ -139,5 +141,16 @@ typedef struct List
     tNode *act;
     FILE *stream;
 } tList;
+
+FILE *instr_file;
+
+// Prototypy funkcii
+tList* list_init(FILE *instr_file);
+void dispose_list(tList *instr_list);
+void insert_item (tList *instr_list, tInstructionTypes *instr_name , tInstructionData *addr1, tInstructionData *addr2, tInstructionData *addr3);
+tNode* return_instruct(tList *instr_list);
+void move_activity(tList *instr_list);
+void operand_type(char* order, tValue instr_operand, tDatType instr_type);
+void print_list_elements(tList *instr_list);
 
 #endif //_LIST_H
