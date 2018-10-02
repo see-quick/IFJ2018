@@ -23,7 +23,7 @@
 /*******Struktury*********/
 /*************************/
 typedef struct{
-  char *data;
+  char *str;
   unsigned int length;
   unsigned int memory;
 } tString;
@@ -51,6 +51,8 @@ int strCopyStr(tString *, tString *);
 int strCopyArr(tString *, char[]);
 int strCompare (tString *, tString *);
 char *getStr(tString *);
+
+int strClear (tString *str);
 
 
 #endif

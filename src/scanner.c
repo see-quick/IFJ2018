@@ -22,6 +22,8 @@
 //trackovanie zapornych cisel mimo vyrazy
 bool expr = false;
 bool sub = false;
+int digit_check = 0;
+//bool digit_lock = false;    // pomocnik pro uzamykani cisel
 
 
 /*********************************************************/
@@ -41,12 +43,13 @@ void pushToken(int character){
 }
 
 void returnToken(){
-    char* word = gToken.data.data;
+    char* word = gToken.data.str;
     int length = gToken.data.length;
     int i;
     for ( i = 0; i < length; i++){
         printf("%c",word[i]);
     }
+    printf("\n");
 }
 
 void resetToken(){
@@ -74,7 +77,7 @@ const char* keyWords[] = {
 int isKeyword(tString *word){
     int i;
     for(i = 0; i < KEYWORD_COUNT; i++){
-        if(strcmp(keyWords[i], word->data) == 0)
+        if(strcmp(keyWords[i], word->str) == 0)
             return i+SHIFT;
     }
     return SUCCESS;
@@ -340,11 +343,16 @@ int getToken(){
                         if (flag && zero_cnt > 1){
                             return ERROR_LEX;
                         }
-                        else{
+                        /*else if (digit_check == 1){
+                            return ERROR_LEX;
+                        }*/
+                        else if(isspace(c) || c == ',' || c == ')'){     // is delimiter     && digit_lock == false
                             expr = true;
                             return LEX_NUMBER;
                         }
+                        else return ERROR_LEX;
                     }
+                    //digit_lock == false;
                     break;
 
             //Cislo - desetina cast
@@ -363,6 +371,14 @@ int getToken(){
                     //if(c == '0') zero_cnt++;
                     pushToken(c);
                     state = S_REAL;
+                    if (c == '+' || c == '-'){
+                        digit_check = 1;    // pro kontrolu 1e+ erroru
+                    }
+                    else if (isdigit(c)){
+                        printf("cisloo");
+                        digit_check = 0;
+                    }
+                    //digit_check = 1;
                 }
                 else
                     return ERROR_LEX;
@@ -373,6 +389,8 @@ int getToken(){
                 if(isdigit(c)){
                     pushToken(c);
                     state = S_REAL;
+                    //printf("lllllll");
+                    //digit_check = 0;
                 }
                 else if(expr == false && sub == true && c == '\n') return ERROR_LEX;
                 else if (c == 'e' || c == 'E') {
@@ -381,7 +399,11 @@ int getToken(){
                 }
                 else{
                     ungetc(c, stdin);
+                    //printf("qqqqqq");
                     if (flag && zero_cnt > 1){
+                        return ERROR_LEX;
+                    }
+                    else if (digit_check == 1){
                         return ERROR_LEX;
                     }
                     else{
@@ -390,17 +412,44 @@ int getToken(){
                         return LEX_REAL_NUMBER;
                     }
                 }
+                digit_check = 0;
                 break;
 
-            //Identifikator
             case S_ID:
+                if (isalnum(c) || c == '_'){
+                  pushToken(c);
+                  state = S_ID;
+                }
+                else if(c == '!' || c == '?'){
+                    pushToken(c);
+                    state = S_ID_F_END;
+                }
+                else{
+                  ungetc(c, stdin);
+                  if ( (temp = isKeyword(&(gToken.data))) != SUCCESS)
+                    return temp;
+                  else expr = true; return LEX_ID;
+                }
+                break;
+                
+            case S_ID_F_END:
+                if (isspace(c) || ',' || ')'){ // is delimiter
+                    ungetc(c, stdin);
+                    return LEX_ID_F;
+                }
+                else{
+                    return ERROR_LEX;
+                }
+                break;
+            //Identifikator
+            /*case S_ID:
                 if (isalnum(c) || c == '_'){
                   pushToken(c);
                   state = S_ID;
                 }
                  else if(c == '!' || c == '?'){
                     pushToken(c);
-                    state = S_ID_END;
+                    state = S_ID_F_END;
                 }
                 else{
                   ungetc(c, stdin);
@@ -421,9 +470,18 @@ int getToken(){
                     ungetc(c, stdin);
                     return LEX_ID;
                 }
-
-
-            break;
+                break;
+            
+            case S_ID_F_END:
+                if (c == '?' || c == '!'){
+                    pushToken(c);
+                    state = S_ID;
+                }
+                else{
+                    ungetc(c, stdin);
+                    return LEX_ID_F;
+                }
+                break;*/
             // Radkovy komentar
             case S_COMMENT_ROW:
                 if( c == EOF )
@@ -463,7 +521,7 @@ int getToken(){
 
             //Retezec
             case S_STRING:
-                    if(c == EOF)
+                    if(c == EOF || c == '\n')
                         return ERROR_LEX;
                     else if (c == '\\'){
                         state = S_STRING_ESCAPED;
@@ -509,6 +567,7 @@ int getToken(){
                 break;
 
             case S_STRING_ASCII:
+                //printf("%c * \n", c);
                 if ((c >= '0' && c <= '9') || (c >= 'a' && c <= 'f') || (c >= 'A' && c <= 'F')) {
                     if (ascii_cnt < 2)
                         ascii_val[ascii_cnt++] = c;
@@ -517,8 +576,11 @@ int getToken(){
                         char *endptr = NULL;
                         long ascii_tmp = strtol(ascii_val, &endptr, 16);
 
-                        if (*endptr != '\0' || strcmp(endptr, ascii_val) == 0)
+                        if (*endptr != '\0' || strcmp(endptr, ascii_val) == 0){
+                            printf("asci err here 1");
                             return ERROR_LEX;
+                        }
+                            
 
                         pushToken((int) ascii_tmp);
                         state = S_STRING;
@@ -528,15 +590,20 @@ int getToken(){
                     ungetc(c, stdin);
                     char *endptr = NULL;
                     long ascii_tmp = strtol(ascii_val, &endptr, 16);
-
-                    if (*endptr != '\0' || strcmp(endptr, ascii_val) == 0)
+                    printf("%d  %d  %d ", *endptr, ascii_tmp, ascii_val);
+                    if (*endptr != '\0' || strcmp(endptr, ascii_val) == 0){
+                        printf("asci err here 2");
                         return ERROR_LEX;
+                    }
+                        
 
                     pushToken((int) ascii_tmp);
                     state = S_STRING;
                 }
-                else
+                else{
+                    printf("asci err here 3");
                     return ERROR_LEX;
+                }
                 break;
 
             case S_AS_EXCM:

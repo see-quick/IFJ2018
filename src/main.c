@@ -20,29 +20,17 @@
 #include <stdlib.h>
 #include "scanner.h"
 #include "error.h"
+#include "parser.h"
 
 int main(int argc, char** argv) {
-   
-   int result;             
-   //testovani LA
+  int result;
+  GlobalMap* globalMap;
 
-   if(initToken() == INT_ERR){
-		fprintf(stderr, "Nepodařilo se inicializovat strukturu pro token \n");
-		result = INT_ERR; 
-	}
-	
-	do {
-		if((token = getToken()) == ERROR_LEX) {
-			fprintf(stderr, "Lexikalni chyba \n");
-			result = ERROR_LEX;
-		} else if (token == INT_ERR) {
-			fprintf(stderr, "Interni chyba\n");
-		}
-		else{
-			printf("Token c: %d %s\n", token, gToken.data.data);
-			//printf("Radek c: %d\n", gToken.row);
-		}
-	} while(token != LEX_EOF);
-   
+  globalMap = global_map_init(MAX_SIZE_OF_HASH_TABLE);
+
+  result = parse(globalMap);
+
+  global_map_free(globalMap);
+
   return result;  
 }
