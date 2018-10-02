@@ -49,6 +49,7 @@ void returnToken(){
     for ( i = 0; i < length; i++){
         printf("%c",word[i]);
     }
+    printf("\n");
 }
 
 void resetToken(){

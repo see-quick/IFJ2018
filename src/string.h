@@ -52,5 +52,7 @@ int strCopyArr(tString *, char[]);
 int strCompare (tString *, tString *);
 char *getStr(tString *);
 
+int strClear (tString *str);
+
 
 #endif
