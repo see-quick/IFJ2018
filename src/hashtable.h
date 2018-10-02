@@ -23,7 +23,7 @@
 #include <stdbool.h>
 #include "string.h"
 
-#define MAX_SIZE_OF_HASH_TABLE 101 // cislo musi byt prvocislo
+#define MAX_SIZE_OF_HASH_TABLE 11 // cislo musi byt prvocislo
 
 typedef char* String; // (toto bude kluc)
 
@@ -59,28 +59,33 @@ typedef struct DataFunction {
     Types returnType;               // navratova hodnota
     int positionOfParameter;        // pozicia parametrov  //TODO: toto bude fungovat iba pre 0 a 1 argument, implementovat to ako list(v GTS bude typ a hodnota daneho parametru), LTS(key -> nazov premmenej, value -> typ, hodnota(v pripade arguemntov NONE(prazdna)))
     bool defined;                   // zda bola funckcia definovana
+    int paramCount;                 // pocet parametrov vo funckii
     tString functionParametersNames;//
 } tDataFunction;
 
 /*Datová položka TRP s explicitně řetězenými synonymy pre Globalnu mapu*/
 typedef struct GlobalMapItem{
-    String key;				    // kluc
-    tDataFunction globalData;	// obsah pre globalnu mapu
-    struct GlobalMapItem* ptrnext;	// ukazatel na dalsi synonym
+    String key;                 // kluc
+    tDataFunction globalData;   // obsah pre globalnu mapu
+    struct GlobalMapItem* ptrnext;  // ukazatel na dalsi synonym
 } GlobalMapItem;
 
 /*Datová položka TRP s explicitně řetězenými synonymy pre Localnu mapu*/
 typedef struct LocalMapItem{
-    String key;				    // kluc
-    tDataIDF localData;			// obsah pre localnu mapu
-    struct LocalMapItem* ptrnext;	// ukazatel na dalsi synonym
+    String key;                 // kluc
+    tDataIDF localData;         // obsah pre localnu mapu
+    struct LocalMapItem* ptrnext;   // ukazatel na dalsi synonym
 } LocalMapItem;
 
-typedef LocalMapItem* LocalMap[MAX_SIZE_OF_HASH_TABLE];
-typedef GlobalMapItem* GlobalMap[MAX_SIZE_OF_HASH_TABLE];
+typedef struct LocalMap{
+    int size;
+    struct LocalMapItem **list;
+}LocalMap;
 
-struct LocalMapItem* undefined_pointer_local;
-struct GlobalMapItem* undefined_pointer_global;
+typedef struct GlobalMap{
+    int size;
+    struct GlobalMapItem **list;
+}GlobalMap;
 
 // popis k proceduram / funckiam -> programova dokumentacia ak pouzivate Clion (staci ku funckii a pouzit CTLR + q)
 /** VSEOBECNE FUNCKIE **/
@@ -88,7 +93,7 @@ int hashcode ( String key );
 
 /** FUNKCIE S LOCALNOU MAPOU **/
 
-void local_map_init ( LocalMap* ptrMap);
+LocalMap* local_map_init (unsigned int size);
 LocalMapItem* local_map_get_item ( LocalMap* ptrMap, String key );
 tDataIDF* local_map_get_pointer_to_value ( LocalMap* ptrMap, String key );
 tDataIDF local_map_get_value(LocalMap* ptrMap, String key);
@@ -101,7 +106,7 @@ void local_map_print( LocalMap* ptrMap );
 void local_map_put ( LocalMap* ptrMap, String key, tDataIDF data );
 
 /** FUNKCIE S GLOBALNOU MAPOU **/
-void global_map_init ( GlobalMap* ptrMap);
+GlobalMap* global_map_init (unsigned int size);
 GlobalMapItem* global_map_get_item ( GlobalMap* ptrMap, String key );
 tDataFunction* global_map_get_pointer_to_value ( GlobalMap* ptrMap, String key );
 tDataFunction global_map_get_value(GlobalMap* ptrMap, String key);
@@ -113,6 +118,9 @@ void global_map_free ( GlobalMap* ptrMap );
 void global_map_print( GlobalMap* ptrMap );
 void global_map_put ( GlobalMap* ptrMap, String key, tDataFunction data );
 
+// Testovacie funckie
+void hashtableTestGlobal(GlobalMap *globalMap);
+void hashtableTestLocal();
 #define  _HASHMAP_H_
 
 #endif //IFJPROJ_HASHTABLE_H

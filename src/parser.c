@@ -27,6 +27,12 @@ GlobalMap* gMap;		     // globalni tabulka symbolu
 tDataFunction *gDataptr;	 // ukazatel na uzel globalni tabulky symbolu
 tDataFunction gData;
 
+char * str;
+
+int paramCount = 0;          // pocet parametru funkce
+int argCount = 0;            // pocet argumentu pri volani funkce
+
+
 /*Funkce pro vypsani lexikalni chyby na standardni chybovy vystup*/
 int error_lex(void){
 	if(token == ERROR_LEX){
@@ -56,7 +62,6 @@ int checkTokenType(int tokenType){ //funkce na kotnrolu typu tokenu
 
 // hlavni funkce precedencni analyzy
 int parse_expr(void){
-	printf("Precedencni analyza...\n");
 	return SUCCESS;
 }
 
@@ -113,6 +118,10 @@ int term_list2(void){
 				return result;
 			}
 
+
+			// +1 argument
+			argCount++;
+
 			//nacteno z param()
 			return term_list2();
 		break;
@@ -138,6 +147,7 @@ int term_list(void){
 		case LEX_NUMBER:
 		case LEX_REAL_NUMBER:
 		case LEX_STRING:
+
 			// semanticka akce 
 			// if LEX_ID -> zkontrolovat zda je promenna definovana 
 			// pokud je to LEX_ID, LEX_NUMBER, LEX_REAL, LEX_STRING , podle typu vytvorit vnitrni promennou s hodnotou argumentu
@@ -149,6 +159,9 @@ int term_list(void){
 			} else if (!error_int()){
 				return INT_ERR;
 			}
+
+			// zvetsit pocet argumentu
+			argCount++;
 
 
 			return term_list2();
@@ -181,14 +194,26 @@ int term_list(void){
 
 int sth(void){
 	int result = SUCCESS;
-	printf("Pravidlo pro <id = sth> \n");
+
+	tDataFunction *tmp;
+
+	char * tmp_str;
+
+	tmp_str = malloc(sizeof(char *));
+
 	switch(token){
 		// case LEX_ID_F:
 		case LEX_ID:
 
 				//SEMANTICKA AKCE, KONTROLA DEFINICE FUNKCE
+				tmp = global_map_get_pointer_to_value(gMap, gToken.data.str);
+				if (tmp == NULL){
+					fprintf(stderr, "Semanticka chyba, funkce %s neni definovana, radek %d\n", gToken.data.str, gToken.row);
+					return SEM_ERR;
+				}
 
-				printf("Volani funkce\n");
+				strcpy(tmp_str, gToken.data.str);
+
 
         	    token = getToken();
 				if(!error_lex()){
@@ -228,6 +253,14 @@ int sth(void){
 					return SYN_ERR;
 				}
 
+
+				if ( tmp->paramCount != argCount ){
+					fprintf(stderr, "Semanticka chyba, pocet parametru funkce %s nesouvisi s poctem argumentu na radku %d\n", tmp_str , gToken.row);
+				}
+
+				// pro dalsi volani funkce
+				argCount = 0;
+
 		break;
 
 		// semanticka chyba prirazeni
@@ -242,6 +275,9 @@ int sth(void){
 			return parse_expr();
 		
 	}
+
+	free(tmp_str);
+
 	return result;
 }
 
@@ -251,7 +287,6 @@ int stat(void){
 	switch(token){
 		//<STAT> -> id = <STH>
 		case LEX_ID:
-			printf("Identifikator pravidlo -> \n");
 
 			//dalsi musi byt '='
 			token = getToken();
@@ -287,7 +322,6 @@ int stat(void){
 
 		//<STAT> -> if <EXPR> then eol <ST-LIST> else eol <ST-LIST> end if 
 		case KW_IF:
-			printf("Pravidlo pro if:\n");
 
 			//nacteni a predani do vyrazove SA
 			token = getToken();
@@ -397,8 +431,6 @@ int stat(void){
 
 		//<STAT> -> while <EXPR> do eol <ST-LIST> end
 		case KW_WHILE:
-			printf("While pravidlo -> \n");
-
 			
 			//vyrazova SA, pro precedencni analyzu
 			token = getToken();
@@ -483,12 +515,7 @@ int stat(void){
 int st_list(void){
 	int result = SUCCESS;
 
-	// -- DEBUG -- 
-	printf("----- In <st_list> ----\n");
-
 	//pravidlo <ST-LIST> -> <STAT> eol <ST-LIST>
-
-
 	switch(token){
 
 		case KW_IF:
@@ -572,57 +599,6 @@ int st_list(void){
 
       break;
 
-      case KW_LENGTH:
-      		token = getToken();
-			if(!error_lex()){
-				return ERROR_LEX;
-			} else if (!error_int()){
-				return INT_ERR;
-			}
-
-			if(!checkTokenType(LEX_L_BRACKET)){
-				fprintf(stderr, "Ocekavana '(' na radku %d\n", gToken.row);
-				resetToken();
-				return SYN_ERR;
-			}
-
-			token = getToken();
-			if(!error_lex()){
-				return ERROR_LEX;
-			} else if (!error_int()){
-				return INT_ERR;
-			}
-
-			if(!checkTokenType(LEX_ID)){
-				fprintf(stderr, "Ocekavana 'id' na radku %d\n", gToken.row);
-				resetToken();
-				return SYN_ERR;
-			}
-
-			token = getToken();
-			if(!error_lex()){
-				return ERROR_LEX;
-			} else if (!error_int()){
-				return INT_ERR;
-			}
-
-			if(!checkTokenType(LEX_R_BRACKET)){
-				fprintf(stderr, "Ocekavana ')' na radku %d\n", gToken.row);
-				resetToken();
-				return SYN_ERR;
-			}
-
-			// dalsi token pro st_list
-			token = getToken();
-			if(!error_lex()){
-				return ERROR_LEX;
-			} else if (!error_int()){
-				return INT_ERR;
-			}
-
-			return st_list();
-
-      break;
 
       case KW_DEF:
 
@@ -650,18 +626,12 @@ int st_list(void){
 
       break;
 
-      default:
-      	fprintf(stderr, "Ocekavano statement na radku %d\n", gToken.row);
-      	return SYN_ERR;
-
 	}
 
 	return result;
 }
 
-int pm_list2(void){
-	printf("----- In <pm-list2> --- \n");
-
+int pm_list2(LocalMap* lMap, tDataIDF lData){
 	switch(token){
 		case LEX_COMMA:
 			token = getToken();
@@ -672,12 +642,20 @@ int pm_list2(void){
 				return INT_ERR;
 			}
 
-			// SEMANTICKE AKCE pridat
+			
 			if(!checkTokenType(LEX_ID)){
 				fprintf(stderr, "Ocekavno 'id' na radku %d\n", gToken.row);
 				resetToken();
 				return ERROR_LEX;
 			}
+
+			// SEMANTICKE AKCE pridani id do LTS funkce
+//			local_map_put(lMap, gToken.data.data, lData);
+
+			// + jeden parametr
+
+			paramCount++;
+
 
 			token = getToken();
 
@@ -687,7 +665,7 @@ int pm_list2(void){
 				return INT_ERR;
 			}
 
-			return pm_list2();
+			return pm_list2(lMap, lData);
 		break;
 
 		case LEX_R_BRACKET:
@@ -706,14 +684,13 @@ int pm_list2(void){
 }
 
 
-int pm_list(void){
+int pm_list(LocalMap* lMap, tDataIDF lData){
 	int result = SUCCESS;
 
 
 	if (token == LEX_ID){
 		token = getToken();
 
-		// SEMANTICKE AKCE
 
 		if(!error_lex()){
 			return ERROR_LEX;
@@ -721,7 +698,17 @@ int pm_list(void){
 			return INT_ERR;
 		}
 
-		return pm_list2();
+		// SEMANTICKE AKCE
+		// ulozeni do vnitrni LTS funkce parametr
+
+		// dalsi semanticke akce -> pridat....
+//		local_map_put(lMap, gToken.data.data, lData);
+
+		// pocet parametru ulozit
+
+		paramCount++;
+
+		return pm_list2(lMap, lData);
 	}
 	else{
 		return SUCCESS;
@@ -732,6 +719,8 @@ int pm_list(void){
 
 int func(void){
 	int result;
+
+
 	//pravidlo <func> -> def ID ( <pm_list> ) eol <ST-LIST> end
 
 	//dalsi token musi byt typu LEX_ID
@@ -748,23 +737,31 @@ int func(void){
 		return SYN_ERR;
 	}
 
+	// SEMANTICKA AKCE: vytvoreni LTS pro tento uzel GTS:
+
+	LocalMap* localMap;
+	localMap = local_map_init(MAX_SIZE_OF_HASH_TABLE);
+//    local_map_init(localMap);
+
+    tDataIDF localData;
+
 	
-    // SEMANTICKA AKCE
-
-
     // ukladam do GTS definice funkce
     // pokud tam ID neni tak vepsat
 
-    gDataptr = global_map_get_pointer_to_value(gMap, gToken.data.data);
-    if (gDataptr == NULL){
-    	printf("v GTS neni -> ulozit\n");
-    	global_map_put(gMap, gToken.data.data, gData);
+    str = (char *)malloc(sizeof(char *));
+    strcpy(str, gToken.data.str);
+
+
+
+    if (!global_map_contain(gMap, str)){
+    	gData.defined = 1;
+    	global_map_put(gMap, str, gData);
     }else {
-        // uz byla definovana
-        fprintf(stderr, "Radek %d: Semanticka chyba, funkce '%s' jiz byla definovana.\n", gToken.row, gToken.data.data);
+        //uz byla definovana
+        fprintf(stderr, "Radek %d: Semanticka chyba, funkce '%s' jiz byla definovana.\n", gToken.row, gToken.data.str);
         return SEM_ERR;
     }
-
 
 
    	//dalsi token musi byt '('
@@ -790,7 +787,7 @@ int func(void){
 		return INT_ERR;
 	}
 
-	result = pm_list();
+	result = pm_list(localMap, localData );
 	if(result != SUCCESS){
 		resetToken();
 		return result;
@@ -851,6 +848,14 @@ int func(void){
 		return SYN_ERR;
 	}
 
+	gData.paramCount = paramCount;
+	global_map_put(gMap, str, gData);
+
+	// pro dalsi funkce
+	paramCount = 0;
+	local_map_free(localMap);
+
+
 	//nacteni a kontrola dalsiho tokenu
 	token = getToken();
 	if(!error_lex()){
@@ -866,9 +871,6 @@ int func(void){
 
 
 int main_p(void){
-
-	// -- DEBUG --
-	printf("----- In <main_p> -----\n");
 
 	int result = SUCCESS;
 
@@ -939,7 +941,6 @@ int prog(){
 				return SYN_ERR;
 			}
 
-			printf("Konec prog, navratova hodnota je %d\n", result);
     		return SUCCESS;
     	break;
 	}
@@ -960,11 +961,6 @@ int parse(GlobalMap* globalMap) {
 	gMap = globalMap;
 
 	gDataptr = &gData;
-
-	gData.defined = 0;
-    gData.functionParametersNames.data = "";
-    gData.type = 500;
-    gData.returnType = 500;
 
 	if(initToken() == INT_ERR){
 		fprintf(stderr, "Nepodařilo se inicializovat strukturu pro token \n");
