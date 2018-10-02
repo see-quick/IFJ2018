@@ -1,5 +1,5 @@
 /**
- * Predmet:  IFJ 
+ * Predmet:  IFJ
  * Projekt:  Implementace prekladace imperativniho jazyka IFJ18
  * Soubor:   scanner.h
  *
@@ -9,9 +9,9 @@
  * Datum:
  *
  * Autori:   Maros Orsak       vedouci
- *           Polishchuk Kateryna     <xpolis03@fit.vutbr.cz>           
- *           Igor Ignac           
- *           Marek Rohel       
+ *           Polishchuk Kateryna     <xpolis03@fit.vutbr.cz>
+ *           Igor Ignac
+ *           Marek Rohel
 
 */
 
@@ -35,13 +35,13 @@
 /*Klicova slova */
 #define    KW_DEF                10
 #define    KW_DO                 11
-#define    KW_ELSE               12                                          
+#define    KW_ELSE               12
 #define    KW_END                13
 #define    KW_IF                 14
 #define    KW_NOT                15
-#define    KW_NIL                16                                             
+#define    KW_NIL                16
 #define    KW_THEN               17
-#define    KW_WHILE              18   
+#define    KW_WHILE              18
 
 /*Vestavene funkce */
 #define    KW_INPUT_S            19
@@ -54,7 +54,7 @@
 #define    KW_CHR                26
 
 
-/* Zakladni tokeny */    
+/* Zakladni tokeny */
 #define    LEX_L_SBRACKET        27
 #define    LEX_R_SBRACKET        28
 #define    LEX_L_BRACKET         29
@@ -78,47 +78,53 @@
 #define    LEX_EOF               47
 #define    LEX_STRING            48
 #define    LEX_ID                49
-#define    LEX_NUMBER            50
-#define    LEX_REAL_NUMBER       51
-#define    LEX_DOUBLE_EQUAL      52
-/////////////////////////////// 
+#define    LEX_ID_F              50
+#define    LEX_NUMBER            51
+#define    LEX_REAL_NUMBER       52
+#define    LEX_DOUBLE_EQUAL      53
+///////////////////////////////
 
 
 
 /* Chybove tokeny */
-#define    LEX_ERROR             53
+#define    LEX_ERROR             54
 
 
 
 
 /*Stavy*/
-#define    S_START              54
-#define    S_LESSER             55
-#define    S_GREATER            56
-#define    S_AS_EXCM            57
-#define    S_COMMENT_ROW        58
-#define    S_STRING             59
-#define    S_STRING_ESCAPED     60
-#define    S_STRING_ASCII       61
-#define    S_ID                 62
-#define    S_NUMBER             63
-#define    S_NUMBER_POINT       64
-#define    S_NUMER_DECIMAL      65
-#define    S_NUMBER_EXPONENT    66
-#define    S_REAL               67
-#define    S_EOF                68
-#define    S_EQUAL              69
-#define    S_EOL                70 
-#define    S_ID_END             71
-#define    S_COMMENT_BLOCK_B    72
-#define    S_COMMENT_BLOCK_E    73
-#define    S_COMMENT_BLOCK_G    74
-#define    S_COMMENT_BLOCK_I    75
-#define    S_COMMENT_BLOCK_N    76
-#define    S_COMMENT_END        77
-#define    S_COMMENT_END_E      78
-#define    S_COMMENT_END_N      79
- 
+#define    S_START              55
+#define    S_LESSER             56
+#define    S_GREATER            57
+#define    S_AS_EXCM            58
+#define    S_COMMENT_ROW        59
+#define    S_STRING             60
+#define    S_STRING_ESCAPED     61
+#define    S_STRING_ASCII       62
+#define    S_ID                 63
+#define    S_NUMBER             64
+#define    S_NUMBER_POINT       65
+#define    S_NUMER_DECIMAL      66
+#define    S_NUMBER_EXPONENT    67
+#define    S_REAL               68
+#define    S_EOF                69
+#define    S_EQUAL              70
+#define    S_EOL                71
+#define    S_ID_END             72
+#define    S_ID_F_END           73
+#define    S_COMMENT_BLOCK_B    74
+#define    S_COMMENT_BLOCK_E    75
+#define    S_COMMENT_BLOCK_G    76
+#define    S_COMMENT_BLOCK_I    77
+#define    S_COMMENT_BLOCK_N    78
+#define    S_COMMENT_END        79
+#define    S_COMMENT_END_E      80
+#define    S_COMMENT_END_N      81
+#define    S_COMMENT_BLOCK_IN   82
+#define    S_COMMENT_BLOCK_IN_E 83
+#define    S_COMMENT_BLOCK_IN_N 84
+#define    S_COMMENT_BLOCK_N_NEWLINE   85
+#define    S_NEG_NUMBER         86
 
 
 

@@ -26,11 +26,17 @@ int token;        	         // aktualni token
 GlobalMap* gMap;		     // globalni tabulka symbolu
 tDataFunction *gDataptr;	 // ukazatel na uzel globalni tabulky symbolu
 tDataFunction gData;
+tInstructionTypes instr_type;
 
 char * str;
+tList * ilist;
 
 int paramCount = 0;          // pocet parametru funkce
 int argCount = 0;            // pocet argumentu pri volani funkce
+
+tInstructionData instr1;
+tInstructionData instr2;
+tInstructionData instr3;
 
 
 /*Funkce pro vypsani lexikalni chyby na standardni chybovy vystup*/
@@ -206,13 +212,13 @@ int sth(void){
 		case LEX_ID:
 
 				//SEMANTICKA AKCE, KONTROLA DEFINICE FUNKCE
-				tmp = global_map_get_pointer_to_value(gMap, gToken.data.data);
+				tmp = global_map_get_pointer_to_value(gMap, gToken.data.str);
 				if (tmp == NULL){
-					fprintf(stderr, "Semanticka chyba, funkce %s neni definovana, radek %d\n", gToken.data.data, gToken.row);
+					fprintf(stderr, "Semanticka chyba, funkce %s neni definovana, radek %d\n", gToken.data.str, gToken.row);
 					return SEM_ERR;
 				}
 
-				strcpy(tmp_str, gToken.data.data);
+				strcpy(tmp_str, gToken.data.str);
 
 
         	    token = getToken();
@@ -631,7 +637,7 @@ int st_list(void){
 	return result;
 }
 
-int pm_list2(LocalMap* lMap, tDataIDF lData){
+int pm_list2(){
 	switch(token){
 		case LEX_COMMA:
 			token = getToken();
@@ -649,11 +655,10 @@ int pm_list2(LocalMap* lMap, tDataIDF lData){
 				return ERROR_LEX;
 			}
 
-			// SEMANTICKE AKCE pridani id do LTS funkce
-//			local_map_put(lMap, gToken.data.data, lData);
+			// SEMANTICKE AKCE pridani parametru do LTS funkce
+			
 
 			// + jeden parametr
-
 			paramCount++;
 
 
@@ -665,7 +670,7 @@ int pm_list2(LocalMap* lMap, tDataIDF lData){
 				return INT_ERR;
 			}
 
-			return pm_list2(lMap, lData);
+			return pm_list2();
 		break;
 
 		case LEX_R_BRACKET:
@@ -684,8 +689,13 @@ int pm_list2(LocalMap* lMap, tDataIDF lData){
 }
 
 
-int pm_list(LocalMap* lMap, tDataIDF lData){
+int pm_list(){
 	int result = SUCCESS;
+	
+	// LocalMap* lMap;
+
+	// localMap = (LocalMap*) malloc ( sizeof(LocalMap) );
+ //    local_map_init(localMap);
 
 
 	if (token == LEX_ID){
@@ -699,16 +709,16 @@ int pm_list(LocalMap* lMap, tDataIDF lData){
 		}
 
 		// SEMANTICKE AKCE
-		// ulozeni do vnitrni LTS funkce parametr
+		// ulozeni do vnitrni LTS funkce parametr, nesmi byt jako nazev funkce, ani jako nazev jine funkce
 
 		// dalsi semanticke akce -> pridat....
-//		local_map_put(lMap, gToken.data.data, lData);
 
-		// pocet parametru ulozit
 
+
+		// pocet parametru funkce ulozit
 		paramCount++;
 
-		return pm_list2(lMap, lData);
+		return pm_list2();
 	}
 	else{
 		return SUCCESS;
@@ -737,20 +747,13 @@ int func(void){
 		return SYN_ERR;
 	}
 
-	// SEMANTICKA AKCE: vytvoreni LTS pro tento uzel GTS:
-
-	LocalMap* localMap;
-	localMap = local_map_init(MAX_SIZE_OF_HASH_TABLE);
-//    local_map_init(localMap);
-
-    tDataIDF localData;
 
 	
     // ukladam do GTS definice funkce
     // pokud tam ID neni tak vepsat
 
     str = (char *)malloc(sizeof(char *));
-    strcpy(str, gToken.data.data);
+    strcpy(str, gToken.data.str);
 
 
 
@@ -759,7 +762,7 @@ int func(void){
     	global_map_put(gMap, str, gData);
     }else {
         //uz byla definovana
-        fprintf(stderr, "Radek %d: Semanticka chyba, funkce '%s' jiz byla definovana.\n", gToken.row, gToken.data.data);
+        fprintf(stderr, "Radek %d: Semanticka chyba, funkce '%s' jiz byla definovana.\n", gToken.row, gToken.data.str);
         return SEM_ERR;
     }
 
@@ -787,7 +790,7 @@ int func(void){
 		return INT_ERR;
 	}
 
-	result = pm_list(localMap, localData );
+	result = pm_list();
 	if(result != SUCCESS){
 		resetToken();
 		return result;
@@ -819,6 +822,15 @@ int func(void){
 		resetToken();
 		return SYN_ERR;
 	}
+
+	// vytvoreni docasneho ramce pro funkce
+	instr_type =  INSTRUCT_CREATEFREAME;
+	insert_item(ilist, &instr_type, &instr1, &instr2, &instr3);
+
+	// presun TF na zasobnik ramcu 
+	// lokalni promenne funkce budou mit ramec LF.
+	instr_type =  INSTRUCT_PUSHFRAME;
+	insert_item(ilist, &instr_type, &instr1, &instr2, &instr3);
 
 	//dalsi token pude do funce ST-LIST
 	token = getToken();
@@ -853,7 +865,10 @@ int func(void){
 
 	// pro dalsi funkce
 	paramCount = 0;
-	local_map_free(localMap);
+
+
+	instr_type = INSTRUCT_POPFRAME;
+	insert_item(ilist, &instr_type, &instr1, &instr2, &instr3);
 
 
 	//nacteni a kontrola dalsiho tokenu
@@ -954,13 +969,13 @@ int prog(){
 
 
 
-int parse(GlobalMap* globalMap) {
+int parse(GlobalMap* globalMap, tList *list) {
 
 	int result = SUCCESS;
 
 	gMap = globalMap;
-
 	gDataptr = &gData;
+	ilist = list;
 
 	if(initToken() == INT_ERR){
 		fprintf(stderr, "Nepodařilo se inicializovat strukturu pro token \n");
@@ -977,6 +992,9 @@ int parse(GlobalMap* globalMap) {
 	} while(token == LEX_EOL);
 
 	if(result == SUCCESS){
+		instr_type = INSTRUCT_HEAD;
+		insert_item(ilist, &instr_type, &instr1, &instr2, &instr3);
+		//print_list_elements(ilist);
 		result = prog();
 	}
 

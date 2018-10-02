@@ -286,6 +286,7 @@ GlobalMap* global_map_init (unsigned int size) {
     int i;
     for(i=0;i<size;i++)
         ptrMap->list[i] = NULL;
+
     return ptrMap;
 }
 

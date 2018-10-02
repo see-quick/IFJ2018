@@ -27,37 +27,37 @@
 /***********Strings****************/
 /**********************************/
 
-int strInit (tString *str)
+int strInit (tString *s)
 {
-  str->length = 0;
-  if ((str->data = (char *) calloc(SIZE, sizeof(char))) == NULL)
+  s->length = 0;
+  if ((s->str = (char *) calloc(SIZE, sizeof(char))) == NULL)
     return INT_ERR;
-  str->memory = SIZE;
+  s->memory = SIZE;
 
   return SUCCESS;
 }
 
-int strAdd (tString *str, char c)
+int strAdd (tString *s, char c)
 {
-  if (str->memory == str->length) {
-    str->memory += SIZE;
-    if ((str->data = (char *) realloc(str->data, str->memory * sizeof(char)) ) == NULL)
+  if (s->memory == s->length) {
+    s->memory += SIZE;
+    if ((s->str = (char *) realloc(s->str, s->memory * sizeof(char)) ) == NULL)
       return INT_ERR;
   }
 
-  str->data[str->length++] = c;
-  str->data[str->length] = '\0';
+  s->str[s->length++] = c;
+  s->str[s->length] = '\0';
 
   return SUCCESS;
 }
 
-int strFree (tString *str)
+int strFree (tString *s)
 {
-  if (str->data)
-    free(str->data);
-  str->data = NULL;
-  str->memory = 0;
-  str->length = 0;
+  if (s->str)
+    free(s->str);
+  s->str = NULL;
+  s->memory = 0;
+  s->length = 0;
 
   return SUCCESS;
 }
@@ -65,37 +65,37 @@ int strFree (tString *str)
 
 tString strCreate (char *array)
 {
-  tString str = {NULL, 0, 0};
-  if (strInit(&str) == INT_ERR)
-    return str;
+  tString s = {NULL, 0, 0};
+  if (strInit(&s) == INT_ERR)
+    return s;
 
   int i = 0;
   while (array[i] != '\0')
-    if (strAdd(&str, array[i++]) == INT_ERR) {
-      strFree(&str);
-      return str;
+    if (strAdd(&s, array[i++]) == INT_ERR) {
+      strFree(&s);
+      return s;
     }
 
-  return str;
+  return s;
 }
 
-int strClear (tString *str)
+int strClear (tString *s)
 {
-   str->data[0] = '\0';
-   str->length = 0;
+   s->str[0] = '\0';
+   s->length = 0;
 
   return SUCCESS;
 }
 
-int strCopy (tString *str, char *array)
+int strCopy (tString *s, char *array)
 {
-  array = (char *) calloc(str->length + 1, sizeof(char));
+  array = (char *) calloc(s->length + 1, sizeof(char));
   if (array == NULL)
     return INT_ERR;
 
-  int i = str->length;
+  int i = s->length;
   do
-    array[i] = str->data[i];
+    array[i] = s->str[i];
   while (i--);
 
   return SUCCESS;
@@ -105,26 +105,26 @@ int strCopy (tString *str, char *array)
 int strCopyStr(tString *s1, tString *s2){
    int new_length = s2->length;
    if (new_length >= s1->memory){
-      if ((s1->data = (char*) realloc(s1->data, new_length + 1)) == NULL)
+      if ((s1->str = (char*) realloc(s1->str, new_length + 1)) == NULL)
          return INT_ERR;
       s1->memory = new_length + 1;
    }
 
-   strcpy(s1->data, s2->data);
+   strcpy(s1->str, s2->str);
    s1->length = new_length;
    return SUCCESS;
 }
 
-int strCompare(tString *str1, tString *str2){
-  return (strcmp(str1->data, str2->data));
+int strCompare(tString *s1, tString *s2){
+  return (strcmp(s1->str, s2->str));
 }
 
 
-int strCopyArr(tString *str, char array[]){
-   strClear(str);
+int strCopyArr(tString *s, char array[]){
+   strClear(s);
    int length = strlen(array);
    for(int i = 0; i < length; i++) {
-      if(strAdd(str, array[i]) != SUCCESS)
+      if(strAdd(s, array[i]) != SUCCESS)
          return INT_ERR;     
    }
    return SUCCESS;
@@ -132,6 +132,6 @@ int strCopyArr(tString *str, char array[]){
 
 
 char *getStr(tString *s){
-  return s->data;
+  return s->str;
 }
 
