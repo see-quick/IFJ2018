@@ -27,6 +27,8 @@ GlobalMap* gMap;		     // globalni tabulka symbolu
 tDataFunction *gDataptr;	 // ukazatel na uzel globalni tabulky symbolu
 tDataFunction gData;
 
+char * str;
+
 int paramCount = 0;          // pocet parametru funkce
 int argCount = 0;            // pocet argumentu pri volani funkce
 
@@ -60,7 +62,6 @@ int checkTokenType(int tokenType){ //funkce na kotnrolu typu tokenu
 
 // hlavni funkce precedencni analyzy
 int parse_expr(void){
-	printf("Precedencni analyza...\n");
 	return SUCCESS;
 }
 
@@ -200,13 +201,9 @@ int sth(void){
 
 	tmp_str = malloc(sizeof(char *));
 
-
-	printf("Pravidlo pro <id = sth> \n");
 	switch(token){
 		// case LEX_ID_F:
 		case LEX_ID:
-
-				printf("Token: %s\n", gToken.data.data);
 
 				//SEMANTICKA AKCE, KONTROLA DEFINICE FUNKCE
 				tmp = global_map_get_pointer_to_value(gMap, gToken.data.data);
@@ -217,12 +214,6 @@ int sth(void){
 
 				strcpy(tmp_str, gToken.data.data);
 
-				if (tmp == NULL){
-					fprintf(stderr, "Chyba, funkce %s neni definovana, radek %d\n", gToken.data.data, gToken.row);
-					return SEM_ERR;
-				}
-
-				printf("Volani funkce\n");
 
         	    token = getToken();
 				if(!error_lex()){
@@ -262,10 +253,8 @@ int sth(void){
 					return SYN_ERR;
 				}
 
-				global_map_print(gMap);
 
 				if ( tmp->paramCount != argCount ){
-					printf("Counts: %d - %d\n", tmp->paramCount, argCount);
 					fprintf(stderr, "Semanticka chyba, pocet parametru funkce %s nesouvisi s poctem argumentu na radku %d\n", tmp_str , gToken.row);
 				}
 
@@ -298,7 +287,6 @@ int stat(void){
 	switch(token){
 		//<STAT> -> id = <STH>
 		case LEX_ID:
-			printf("Identifikator pravidlo -> \n");
 
 			//dalsi musi byt '='
 			token = getToken();
@@ -334,7 +322,6 @@ int stat(void){
 
 		//<STAT> -> if <EXPR> then eol <ST-LIST> else eol <ST-LIST> end if 
 		case KW_IF:
-			printf("Pravidlo pro if:\n");
 
 			//nacteni a predani do vyrazove SA
 			token = getToken();
@@ -444,8 +431,6 @@ int stat(void){
 
 		//<STAT> -> while <EXPR> do eol <ST-LIST> end
 		case KW_WHILE:
-			printf("While pravidlo -> \n");
-
 			
 			//vyrazova SA, pro precedencni analyzu
 			token = getToken();
@@ -530,12 +515,7 @@ int stat(void){
 int st_list(void){
 	int result = SUCCESS;
 
-	// -- DEBUG -- 
-	printf("----- In <st_list> ----\n");
-
 	//pravidlo <ST-LIST> -> <STAT> eol <ST-LIST>
-
-
 	switch(token){
 
 		case KW_IF:
@@ -652,8 +632,6 @@ int st_list(void){
 }
 
 int pm_list2(LocalMap* lMap, tDataIDF lData){
-	printf("----- In <pm-list2> --- \n");
-
 	switch(token){
 		case LEX_COMMA:
 			token = getToken();
@@ -672,7 +650,7 @@ int pm_list2(LocalMap* lMap, tDataIDF lData){
 			}
 
 			// SEMANTICKE AKCE pridani id do LTS funkce
-			local_map_put(lMap, gToken.data.data, lData);
+//			local_map_put(lMap, gToken.data.data, lData);
 
 			// + jeden parametr
 
@@ -724,7 +702,7 @@ int pm_list(LocalMap* lMap, tDataIDF lData){
 		// ulozeni do vnitrni LTS funkce parametr
 
 		// dalsi semanticke akce -> pridat....
-		local_map_put(lMap, gToken.data.data, lData);
+//		local_map_put(lMap, gToken.data.data, lData);
 
 		// pocet parametru ulozit
 
@@ -761,27 +739,26 @@ int func(void){
 
 	// SEMANTICKA AKCE: vytvoreni LTS pro tento uzel GTS:
 
-	LocalMap* localMap = NULL;
-    local_map_init(localMap);
-    localMap = (LocalMap*) malloc ( sizeof(LocalMap) );
-    for ( int i=0; i<MAX_SIZE_OF_HASH_TABLE; (*localMap)[i++] = undefined_pointer_local );
+	LocalMap* localMap;
+	localMap = local_map_init(MAX_SIZE_OF_HASH_TABLE);
+//    local_map_init(localMap);
 
     tDataIDF localData;
 
 	
-
     // ukladam do GTS definice funkce
     // pokud tam ID neni tak vepsat
-    //global_map_get_pointer_to_value(gMap, gToken.data.data);
 
-    if (!global_map_contain(gMap, gToken.data.data)){
-    	printf("v GTS %s neni -> ulozit\n", gToken.data.data);
+    str = (char *)malloc(sizeof(char *));
+    strcpy(str, gToken.data.data);
+
+
+
+    if (!global_map_contain(gMap, str)){
     	gData.defined = 1;
-    	global_map_put(gMap, gToken.data.data, gData);
-
-    	global_map_print(gMap);
+    	global_map_put(gMap, str, gData);
     }else {
-        // uz byla definovana
+        //uz byla definovana
         fprintf(stderr, "Radek %d: Semanticka chyba, funkce '%s' jiz byla definovana.\n", gToken.row, gToken.data.data);
         return SEM_ERR;
     }
@@ -872,13 +849,11 @@ int func(void){
 	}
 
 	gData.paramCount = paramCount;
-
-	printf("%d - %d\n", gData.paramCount, paramCount);
+	global_map_put(gMap, str, gData);
 
 	// pro dalsi funkce
 	paramCount = 0;
 	local_map_free(localMap);
-
 
 
 	//nacteni a kontrola dalsiho tokenu
@@ -896,9 +871,6 @@ int func(void){
 
 
 int main_p(void){
-
-	// -- DEBUG --
-	printf("----- In <main_p> -----\n");
 
 	int result = SUCCESS;
 
@@ -969,7 +941,6 @@ int prog(){
 				return SYN_ERR;
 			}
 
-			printf("Konec prog, navratova hodnota je %d\n", result);
     		return SUCCESS;
     	break;
 	}
@@ -990,12 +961,6 @@ int parse(GlobalMap* globalMap) {
 	gMap = globalMap;
 
 	gDataptr = &gData;
-
-	// gData.defined = 0;
- //    gData.functionParametersNames.data = "";
- //    gData.type = 500;
- //    gData.returnType = 500;
- //    gData.paramCount = 0;
 
 	if(initToken() == INT_ERR){
 		fprintf(stderr, "Nepodařilo se inicializovat strukturu pro token \n");

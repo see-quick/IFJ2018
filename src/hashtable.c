@@ -16,7 +16,6 @@
 
 #include <stdio.h>
 #include "hashtable.h"
-
 /**
  * Hashovacia funckia, moznost vylepsenia...
  * @param key dany kluc
@@ -26,10 +25,12 @@
 int hashcode ( String key ) {
     int retval = 1;
     int keylen = strlen(key);
-    for ( int i=0; i<keylen; i++ )
+    for ( int i=0; i < keylen; i++ ){
         retval += key[i];
+    }
     return ( retval % MAX_SIZE_OF_HASH_TABLE );
 }
+
 
 /************ FUNCKIE PRE PRACU S LOCALNOU MAPOU *****************/
 
@@ -38,14 +39,14 @@ int hashcode ( String key ) {
  * @param ptrMap pointer na mapu
  */
 
-void local_map_init ( LocalMap* ptrMap) {
-    if(ptrMap != NULL){		// ak bude existovat ukazatel na tabulku
-        int i = 0;
-        while (i < MAX_SIZE_OF_HASH_TABLE){		// naplnat po velkost pola
-            (*ptrMap)[i] = NULL;
-            i++;
-        }
-    }
+LocalMap* local_map_init (unsigned int size) {
+    LocalMap *ptrMap = (LocalMap*)malloc(sizeof(LocalMap));
+    ptrMap->size = size;
+    ptrMap->list = malloc(sizeof(GlobalMapItem*)*size);
+    int i;
+    for(i=0;i<size;i++)
+        ptrMap->list[i] = NULL;
+    return ptrMap;
 }
 
 /**
@@ -56,13 +57,13 @@ void local_map_init ( LocalMap* ptrMap) {
  */
 
 LocalMapItem* local_map_get_item ( LocalMap* ptrMap, String key ) {
-    if (ptrMap != NULL){		// ak bude existovat ukazatel na tabulku
-        LocalMapItem *item = (*ptrMap)[hashcode(key)];	// pomocna premmenna (polozka v tabulke)
+    if (ptrMap != NULL){        // ak bude existovat ukazatel na tabulku
+        LocalMapItem *item = (ptrMap->list)[hashcode(key)]; // pomocna premmenna (polozka v tabulke)
         while (item != NULL){
             if (strcmp(item->key , key) != 0){  // porovnanie s hladanym klucom
                 item = item->ptrnext;
             } else{
-                return  item;					//  vracia sa najdeny item
+                return  item;                   //  vracia sa najdeny item
             }
         }
         // prvok nebol najdeny
@@ -81,29 +82,21 @@ LocalMapItem* local_map_get_item ( LocalMap* ptrMap, String key ) {
  */
 
 void local_map_put ( LocalMap* ptrMap, String key, tDataIDF data ) {
-    if (ptrMap != NULL){						// ak bude existovat ukazatel na tabulku
-        LocalMapItem *item = local_map_get_item(ptrMap, key); // overenie ci uz existuje v tabulke poloĹžka s totoznym klucom
-        LocalMapItem *tmp;
-        if (item != NULL){
-            item->localData = data; 		// nasla sa cize prepisene staru hodnotu za novu
+    int position = hashcode(key);
+    LocalMapItem *list = ptrMap->list[position];
+    LocalMapItem *temp = list;
+    while(temp){
+        if(strcmp(temp->key, key) == 0){
+            temp->localData = data;
+            return;
         }
-        else{		// nenasla sa hodnota a teda budeme vytvarat pamat
-            item = (LocalMapItem*) malloc(sizeof(LocalMapItem));
-            if (item == NULL){		// zle priradenie pamati resp. chyba mallocu
-                return;
-            }
-            else {					// polozku zapiseme jej data kluc
-                item->key = key;
-                item->localData = data;
-                int index = hashcode(key); // ziskam index
-                tmp = (*ptrMap)[index];		// do pomocnej si hoodim hodnotu na indexe (index)
-                item->ptrnext = tmp;		// do nasledujucej polozky si ulozim hodnotu v pomocnej
-                (*ptrMap)[index] = item;	// vlozenie novej polozky na zaciatku zoznamu
-                return;
-            }
-
-        }
+        temp = temp->ptrnext;
     }
+    LocalMapItem* globalMapItem = (LocalMapItem*)malloc(sizeof(LocalMapItem));
+    globalMapItem->key = key;
+    globalMapItem->localData = data;
+    globalMapItem->ptrnext = list;
+    ptrMap->list[position] = globalMapItem;
 }
 
 /**
@@ -113,16 +106,16 @@ void local_map_put ( LocalMap* ptrMap, String key, tDataIDF data ) {
  * @return pointer na hodnotu
  */
 tDataIDF* local_map_get_pointer_to_value ( LocalMap* ptrMap, String key ) {
-    if (ptrMap != NULL){							// ak existuje
-        LocalMapItem *item =  local_map_get_item(ptrMap, key);	//hladame polozku
+    if (ptrMap != NULL){                            // ak existuje
+        LocalMapItem *item =  local_map_get_item(ptrMap, key);  //hladame polozku
         if (item != NULL){
-            return &item->localData;			// polozka bola najdena (vracia ukazatel na polozku)
+            return &item->localData;            // polozka bola najdena (vracia ukazatel na polozku)
         }
         else {
-            return NULL;						// polozka nebola najdena
+            return NULL;                        // polozka nebola najdena
         }
     }
-    return NULL;							// neexistuje
+    return NULL;                            // neexistuje
 }
 
 /**
@@ -144,16 +137,16 @@ tDataIDF local_map_get_value(LocalMap* ptrMap, String key){
  */
 
 String* local_map_get_pointer_to_key ( LocalMap* ptrMap, String key ) {
-    if (ptrMap != NULL){							// ak existuje
-        LocalMapItem *item = local_map_get_item(ptrMap, key);	//hladame polozku
+    if (ptrMap != NULL){                            // ak existuje
+        LocalMapItem *item = local_map_get_item(ptrMap, key);   //hladame polozku
         if (item != NULL){
-            return &(item->key);			// polozka bola najdena (vracia ukazatel na polozku)
+            return &(item->key);            // polozka bola najdena (vracia ukazatel na polozku)
         }
         else {
-            return NULL;						// polozka nebola najdena
+            return NULL;                        // polozka nebola najdena
         }
     }
-    return NULL;							// neexistuje
+    return NULL;                            // neexistuje
 }
 
 /**
@@ -173,13 +166,13 @@ String local_map_get_key(LocalMap* ptrMap, String key){
  * @return v pripade najdenia -> true inak false
  */
 bool local_map_contain(LocalMap* ptrMap, String key){
-    if (ptrMap != NULL){		// ak bude existovat ukazatel na tabulku
-        LocalMapItem *item = (*ptrMap)[hashcode(key)];	// pomocna premmenna (polozka v tabulke)
+    if (ptrMap != NULL){        // ak bude existovat ukazatel na tabulku
+        LocalMapItem *item = (ptrMap->list)[hashcode(key)]; // pomocna premmenna (polozka v tabulke)
         while (item != NULL){
             if (strcmp(item->key , key) != 0){  // porovnanie s hladanym klucom
                 item = item->ptrnext;
             } else{
-                return true;					//  vracia sa najdeny item
+                return true;                    //  vracia sa najdeny item
             }
         }
         // prvok nebol najdeny
@@ -197,25 +190,25 @@ bool local_map_contain(LocalMap* ptrMap, String key){
  */
 
 void local_map_remove ( LocalMap* ptrMap, String key ) {
-    if (ptrMap != NULL){		// ak bude existovat ukazatel na tabulku
-        LocalMapItem *item = (*ptrMap)[hashcode(key)]; 		// polozka v tabulke
+    if (ptrMap != NULL){        // ak bude existovat ukazatel na tabulku
+        LocalMapItem *item = (ptrMap->list)[hashcode(key)];         // polozka v tabulke
         LocalMapItem *tmp = NULL;
         while (item != NULL){
-            if (strcmp(item->key , key) != 0){			// porovanie kluca s hladanym
+            if (strcmp(item->key , key) != 0){          // porovanie kluca s hladanym
                 tmp = item;
-                item = item->ptrnext;					// premiestnenie sa na dalsi item pretoze aktualny nie je ten ktory chceme
+                item = item->ptrnext;                   // premiestnenie sa na dalsi item pretoze aktualny nie je ten ktory chceme
             } else{
-                if (tmp == NULL){						// kluc sa nasiel
-                    (*ptrMap)[hashcode(key)] = item->ptrnext;
+                if (tmp == NULL){                       // kluc sa nasiel
+                    (ptrMap->list)[hashcode(key)] = item->ptrnext;
                 } else{
                     tmp->ptrnext = item->ptrnext;
                 }
-                free(item);				//uvolnenie polozky
+                free(item);             //uvolnenie polozky
                 item = NULL;
             }
         }
-        return;			// prvok s danym klucom nebol najdeny
-    } else{				// ukazatel na tabulku neexistuje
+        return;         // prvok s danym klucom nebol najdeny
+    } else{             // ukazatel na tabulku neexistuje
 
         return;
     }
@@ -228,18 +221,20 @@ void local_map_remove ( LocalMap* ptrMap, String key ) {
 
 void local_map_free ( LocalMap* ptrMap ) {
     if (ptrMap != NULL){// ak bude existovat ukazatel na tabulku
-        int i = 0;								// indexovac nastavneny
-        while (i < MAX_SIZE_OF_HASH_TABLE){						// cyklus pojde po max pola
-            LocalMapItem *item = (*ptrMap)[i]; 		// polozky tabulky
-            LocalMapItem *tmp;						// pomocna aby sa nestratil ukazatel po uvolneni
+        int i = 0;                              // indexovac nastavneny
+        while (i < MAX_SIZE_OF_HASH_TABLE){                     // cyklus pojde po max pola
+            LocalMapItem *item = (ptrMap->list)[i];         // polozky tabulky
+            LocalMapItem *tmp;                      // pomocna aby sa nestratil ukazatel po uvolneni
             while (item != NULL){
                 tmp = item;
-                item = item->ptrnext;			// skok na dalsi prvok
+                item = item->ptrnext;           // skok na dalsi prvok
                 free(tmp);
             }
-            (*ptrMap)[i] = NULL;
+            (ptrMap->list)[i] = NULL;
             i++;
         }
+        free(ptrMap->list);
+        free(ptrMap);
     }
 }
 
@@ -252,14 +247,13 @@ void local_map_print( LocalMap* ptrMap ) {
     int sumcnt = 0;
 
     printf ("------------HASH TABLE--------------\n");
-    for ( int i=0; i<MAX_SIZE_OF_HASH_TABLE; i++ ) {
+    for ( int i=0; i<sizeof(ptrMap); i++ ) {
         printf ("%i:",i);
         int cnt = 0;
-        LocalMapItem* ptr = (*ptrMap)[i];
+        LocalMapItem* ptr = (ptrMap->list[i]);
         while ( ptr != NULL ) {
-            printf (" (%s) (%d)",ptr->key,ptr->localData.value.i);
-            if ( ptr != undefined_pointer_local )
-                cnt++;
+            printf (" (%s, %d)",ptr->key,ptr->localData.type);
+            cnt++;
             ptr = ptr->ptrnext;
         }
         printf ("\n");
@@ -285,14 +279,14 @@ void local_map_print( LocalMap* ptrMap ) {
  * @param ptrMap pointer na mapu
  */
 
-void global_map_init ( GlobalMap* ptrMap) {
-    if(ptrMap != NULL){		// ak bude existovat ukazatel na tabulku
-        int i = 0;
-        while (i < MAX_SIZE_OF_HASH_TABLE){		// naplnat po velkost pola
-            (*ptrMap)[i] = NULL;
-            i++;
-        }
-    }
+GlobalMap* global_map_init (unsigned int size) {
+    GlobalMap *ptrMap = (GlobalMap*)malloc(sizeof(GlobalMap));
+    ptrMap->size = size;
+    ptrMap->list = malloc(sizeof(GlobalMapItem*)*size);
+    int i;
+    for(i=0;i<size;i++)
+        ptrMap->list[i] = NULL;
+    return ptrMap;
 }
 
 /**
@@ -303,13 +297,13 @@ void global_map_init ( GlobalMap* ptrMap) {
  */
 
 GlobalMapItem* global_map_get_item ( GlobalMap* ptrMap, String key ) {
-    if (ptrMap != NULL){		// ak bude existovat ukazatel na tabulku
-        GlobalMapItem *item = (*ptrMap)[hashcode(key)];	// pomocna premmenna (polozka v tabulke)
+    if (ptrMap != NULL){        // ak bude existovat ukazatel na tabulku
+        GlobalMapItem *item = (ptrMap->list)[hashcode(key)];    // pomocna premmenna (polozka v tabulke)
         while (item != NULL){
             if (strcmp(item->key , key) != 0){  // porovnanie s hladanym klucom
                 item = item->ptrnext;
             } else{
-                return item;					//  vracia sa najdeny item
+                return item;                    //  vracia sa najdeny item
             }
         }
         // prvok nebol najdeny
@@ -328,29 +322,22 @@ GlobalMapItem* global_map_get_item ( GlobalMap* ptrMap, String key ) {
  */
 
 void global_map_put ( GlobalMap* ptrMap, String key, tDataFunction data ) {
-    if (ptrMap != NULL){						// ak bude existovat ukazatel na tabulku
-        GlobalMapItem *item = global_map_get_item(ptrMap,key); // overenie ci uz existuje v tabulke poloĹžka s totoznym klucom
-        GlobalMapItem *tmp;
-        if (item != NULL){
-            item->globalData = data; 		// nasla sa cize prepisene staru hodnotu za novu
+    int position = hashcode(key);
+    GlobalMapItem *list = ptrMap->list[position];
+    GlobalMapItem *temp = list;
+    while(temp){
+        if(strcmp(temp->key, key) == 0){
+            temp->globalData = data;
+            return;
         }
-        else{		// nenasla sa hodnota a teda budeme vytvarat pamat
-            item = (GlobalMapItem*) malloc(sizeof(GlobalMapItem));
-            if (item == NULL){		// zle priradenie pamati resp. chyba mallocu
-                return;
-            }
-            else {					// polozku zapiseme jej data kluc
-                item->key = key;
-                item->globalData = data;
-                int index = hashcode(key); // ziskam index
-                tmp = (*ptrMap)[index];		// do pomocnej si hoodim hodnotu na indexe (index)
-                item->ptrnext = tmp;		// do nasledujucej polozky si ulozim hodnotu v pomocnej
-                (*ptrMap)[index] = item;	// vlozenie novej polozky na zaciatku zoznamu
-                return;
-            }
-
-        }
+        temp = temp->ptrnext;
     }
+
+    GlobalMapItem* globalMapItem = (GlobalMapItem*)malloc(sizeof(GlobalMapItem));
+    globalMapItem->key = key;
+    globalMapItem->globalData = data;
+    globalMapItem->ptrnext = list;
+    ptrMap->list[position] = globalMapItem;
 }
 
 /**
@@ -360,16 +347,16 @@ void global_map_put ( GlobalMap* ptrMap, String key, tDataFunction data ) {
  * @return pointer na hodnotu
  */
 tDataFunction* global_map_get_pointer_to_value ( GlobalMap* ptrMap, String key ) {
-    if (ptrMap != NULL){							// ak existuje
-        GlobalMapItem *item = global_map_get_item(ptrMap, key);	//hladame polozku
+    if (ptrMap != NULL){                            // ak existuje
+        GlobalMapItem *item = global_map_get_item(ptrMap, key); //hladame polozku
         if (item != NULL){
-            return &item->globalData;			// polozka bola najdena (vracia ukazatel na polozku)
+            return &item->globalData;           // polozka bola najdena (vracia ukazatel na polozku)
         }
         else {
-            return NULL;						// polozka nebola najdena
+            return NULL;                        // polozka nebola najdena
         }
     }
-    return NULL;							// neexistuje
+    return NULL;                            // neexistuje
 }
 
 /**
@@ -391,16 +378,16 @@ tDataFunction global_map_get_value(GlobalMap* ptrMap, String key){
  */
 
 String* global_map_get_pointer_to_key ( GlobalMap* ptrMap, String key ) {
-    if (ptrMap != NULL){							// ak existuje
-        GlobalMapItem *item = global_map_get_item(ptrMap, key);	//hladame polozku
+    if (ptrMap != NULL){                            // ak existuje
+        GlobalMapItem *item = global_map_get_item(ptrMap, key); //hladame polozku
         if (item != NULL){
-            return &(item->key);			// polozka bola najdena (vracia ukazatel na polozku)
+            return &(item->key);            // polozka bola najdena (vracia ukazatel na polozku)
         }
         else {
-            return NULL;						// polozka nebola najdena
+            return NULL;                        // polozka nebola najdena
         }
     }
-    return NULL;							// neexistuje
+    return NULL;                            // neexistuje
 }
 
 /**
@@ -420,13 +407,13 @@ String global_map_get_key(GlobalMap* ptrMap, String key){
  * @return v pripade najdenia -> true inak false
  */
 bool global_map_contain(GlobalMap* ptrMap, String key){
-    if (ptrMap != NULL){		// ak bude existovat ukazatel na tabulku
-        GlobalMapItem *item = (*ptrMap)[hashcode(key)];	// pomocna premmenna (polozka v tabulke)
+    if (ptrMap != NULL){        // ak bude existovat ukazatel na tabulku
+        GlobalMapItem *item = (ptrMap->list)[hashcode(key)];    // pomocna premmenna (polozka v tabulke)
         while (item != NULL){
             if (strcmp(item->key , key) != 0){  // porovnanie s hladanym klucom
                 item = item->ptrnext;
             } else{
-                return true;					//  vracia sa najdeny item
+                return true;                    //  vracia sa najdeny item
             }
         }
         // prvok nebol najdeny
@@ -444,49 +431,51 @@ bool global_map_contain(GlobalMap* ptrMap, String key){
  */
 
 void global_map_remove ( GlobalMap* ptrMap, String key ) {
-    if (ptrMap != NULL){		// ak bude existovat ukazatel na tabulku
-        GlobalMapItem *item = (*ptrMap)[hashcode(key)]; 		// polozka v tabulke
+    if (ptrMap != NULL){        // ak bude existovat ukazatel na tabulku
+        GlobalMapItem *item = (ptrMap->list)[hashcode(key)];        // polozka v tabulke
         GlobalMapItem *tmp = NULL;
         while (item != NULL){
-            if (strcmp(item->key , key) != 0){			// porovanie kluca s hladanym
+            if (strcmp(item->key , key) != 0){          // porovanie kluca s hladanym
                 tmp = item;
-                item = item->ptrnext;					// premiestnenie sa na dalsi item pretoze aktualny nie je ten ktory chceme
+                item = item->ptrnext;                   // premiestnenie sa na dalsi item pretoze aktualny nie je ten ktory chceme
             } else{
-                if (tmp == NULL){						// kluc sa nasiel
-                    (*ptrMap)[hashcode(key)] = item->ptrnext;
+                if (tmp == NULL){                       // kluc sa nasiel
+                    (ptrMap->list)[hashcode(key)] = item->ptrnext;
                 } else{
                     tmp->ptrnext = item->ptrnext;
                 }
-                free(item);				//uvolnenie polozky
+                free(item);             //uvolnenie polozky
                 item = NULL;
             }
         }
-        return;			// prvok s danym klucom nebol najdeny
-    } else{				// ukazatel na tabulku neexistuje
+        return;         // prvok s danym klucom nebol najdeny
+    } else{             // ukazatel na tabulku neexistuje
 
         return;
     }
 }
 
 /**
- * Procedura zrusi vsetky polozky a uvolni pamat, hned na to uvedie tabulku do poc. stavu
+ * Procedura zrusi vsetky polozky a uvolni pamat, taktiez uvolni pamat listu a celej mapy
  * @param ptrMap pointer na Mapu
  */
 
 void global_map_free ( GlobalMap* ptrMap ) {
     if (ptrMap != NULL){// ak bude existovat ukazatel na tabulku
-        int i = 0;								// indexovac nastavneny
-        while (i < MAX_SIZE_OF_HASH_TABLE){						// cyklus pojde po max pola
-            GlobalMapItem *item = (*ptrMap)[i]; 		// polozky tabulky
-            GlobalMapItem *tmp;						// pomocna aby sa nestratil ukazatel po uvolneni
+        int i = 0;                              // indexovac nastavneny
+        while (i < MAX_SIZE_OF_HASH_TABLE){                     // cyklus pojde po max pola
+            GlobalMapItem *item = (ptrMap->list)[i];        // polozky tabulky
+            GlobalMapItem *tmp;                     // pomocna aby sa nestratil ukazatel po uvolneni
             while (item != NULL){
                 tmp = item;
-                item = item->ptrnext;			// skok na dalsi prvok
+                item = item->ptrnext;           // skok na dalsi prvok
                 free(tmp);
             }
-            (*ptrMap)[i] = NULL;
+            (ptrMap->list)[i] = NULL;
             i++;
         }
+        free(ptrMap->list);
+        free(ptrMap);
     }
 }
 
@@ -499,14 +488,14 @@ void global_map_print( GlobalMap* ptrMap ) {
     int sumcnt = 0;
 
     printf ("------------HASH TABLE--------------\n");
-    for ( int i=0; i<MAX_SIZE_OF_HASH_TABLE; i++ ) {
+    for ( int i=0; i<=sizeof(ptrMap); i++ ) {
         printf ("%i:",i);
         int cnt = 0;
-        GlobalMapItem* ptr = (*ptrMap)[i];
+        GlobalMapItem* ptr = (ptrMap->list[i]);
+        
         while ( ptr != NULL ) {
             printf (" (%s, %d)",ptr->key,ptr->globalData.type);
-            if ( ptr != undefined_pointer_global )
-                cnt++;
+            cnt++;
             ptr = ptr->ptrnext;
         }
         printf ("\n");
@@ -523,4 +512,3 @@ void global_map_print( GlobalMap* ptrMap ) {
 
     /************************ KONIEC FUNKCII PRE GLOBALNU MAPU ****************************/
 }
-
