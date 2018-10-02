@@ -145,11 +145,13 @@ typedef struct List
 FILE *instr_file;
 
 // Prototypy funkcii
+int list_error();
 tList* list_init(FILE *instr_file);
-void dispose_list(tList *instr_list);
 void insert_item (tList *instr_list, tInstructionTypes *instr_name , tInstructionData *addr1, tInstructionData *addr2, tInstructionData *addr3);
+void dispose_list(tList *instr_list);
 tNode* return_instruct(tList *instr_list);
 void move_activity(tList *instr_list);
+void set_active(tList *instr_list);
 void operand_type(char* order, tValue instr_operand, tDatType instr_type);
 void print_list_elements(tList *instr_list);
 

@@ -57,7 +57,6 @@ void insert_item (tList *instr_list, tInstructionTypes *instr_name , tInstructio
 
   tNode *new_instr = NULL;
   if((new_instr = (tNode*)malloc(sizeof(tNode))) == NULL ) {
-    printf("Allocating\n" );
     list_error();
   }
   else {
@@ -69,8 +68,11 @@ void insert_item (tList *instr_list, tInstructionTypes *instr_name , tInstructio
     new_instr->data.address3.type = addr3->type;
     new_instr->data.address3.value = addr3->value;
 
-    new_instr->next = instr_list->first;
-    instr_list->first = new_instr;
+    new_instr->next = instr_list->first;  //do ukazatela na dalsi dame aktualne prvy v prvok v zozname
+    instr_list->first = new_instr;  //do prveho dame novy
+
+    if(instr_list->last == NULL) instr_list->last = new_instr;  //poslednym prvkom bude stale prvok ktory sme vlozili ako uplne prvy
+
   }
 }
 
@@ -87,7 +89,7 @@ void dispose_list(tList *instr_list) {
       instr_list->act = NULL;
     }
     tNode* temp = instr_list->first; //dame prvy prvok do pomocnej aby sme ho mohli uvolnit
-    instr_list->first = instr_list->first->next; //druhy prvek sa stane prvym
+    instr_list->first = instr_list->first->next; //druhy prvok sa stane prvym
     free(temp);
   }
 }
@@ -118,15 +120,25 @@ void move_activity(tList *instr_list) {
 }
 
 /**
+ * Nastavenie aktivity listu na prvy prvok
+ */
+
+void set_active(tList *instr_list)  {
+  if(instr_list->first != NULL) {
+    instr_list->act = instr_list->first;
+  }
+}
+
+/**
  * Zistuje co sme naplnili do unionu instrukcie a printuje to
  * @param order first/second/third instruction operand
  * @param instr_operand hodnota z unionu(integer,double..)
  * @param instr_type typ instrukcie(GF,LF..)
  */
 void operand_type(char* order, tValue instr_operand, tDatType instr_type)  {
-  if(instr_operand.i != 0)  printf("%s operand value: %d type: %u\n\t", order, instr_operand.i, instr_type);
-  else if( (instr_operand.d - (int)instr_operand.d) != 0)  printf("%s operand value: %f type: %u\n\t", order, instr_operand.d, instr_type);
-  else if(instr_operand.s != NULL)  printf("%s operand value: %s type: %u\n\t", order, instr_operand.s, instr_type);
+  if(instr_type == I)  printf("%s operand value: %d type: %u\n\t", order, instr_operand.i, instr_type);
+  else if(instr_type == F)  printf("%s operand value: %f type: %u\n\t", order, instr_operand.d, instr_type);
+  else  printf("%s operand value: %s type: %u\n\t", order, instr_operand.s, instr_type);
 }
 
 /**
