@@ -27,7 +27,7 @@ int main(int argc, char** argv) {
    
   int result; 
 
-  tList *list = list_init(instr_file);
+  tList *list = list_init();
 
   GlobalMap* globalMap;
   globalMap = global_map_init(MAX_SIZE_OF_HASH_TABLE);
@@ -35,8 +35,6 @@ int main(int argc, char** argv) {
   result = parse(globalMap, list); 
 
   global_map_free(globalMap);
-
-  interpret(list);
 
   dispose_list(list);
   free(list);

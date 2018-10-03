@@ -247,7 +247,8 @@ void local_map_print( LocalMap* ptrMap ) {
     int sumcnt = 0;
 
     printf ("------------HASH TABLE--------------\n");
-    for ( int i=0; i<sizeof(ptrMap); i++ ) {
+    // for ( int i=0; i<sizeof(ptrMap); i++ ) {
+    for ( int i=0; i<=10; i++ ) {
         printf ("%i:",i);
         int cnt = 0;
         LocalMapItem* ptr = (ptrMap->list[i]);

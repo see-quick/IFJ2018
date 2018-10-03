@@ -21,12 +21,15 @@
 #include "parser.h"
 #include "scanner.h"
 #include "error.h"
+#include "prece.h"
 
 int token;        	         // aktualni token
 GlobalMap* gMap;		     // globalni tabulka symbolu
 tDataFunction *gDataptr;	 // ukazatel na uzel globalni tabulky symbolu
 tDataFunction gData;
 tInstructionTypes instr_type;
+LocalMap* localMap;
+tDataIDF lData;
 
 char * str;
 tList * ilist;
@@ -66,10 +69,6 @@ int checkTokenType(int tokenType){ //funkce na kotnrolu typu tokenu
 }
 
 
-// hlavni funkce precedencni analyzy
-int parse_expr(void){
-	return SUCCESS;
-}
 
 int term(void){
 	int result = SUCCESS;
@@ -198,18 +197,19 @@ int term_list(void){
 }
 
 
-int sth(void){
+int sth(LocalMap* localMap){
 	int result = SUCCESS;
-
+	expr_return res;
 	tDataFunction *tmp;
 
-	char * tmp_str;
 
+	char * tmp_str;
 	tmp_str = malloc(sizeof(char *));
+
 
 	switch(token){
 		// case LEX_ID_F:
-		case LEX_ID:
+		case LEX_ID_F:
 
 				//SEMANTICKA AKCE, KONTROLA DEFINICE FUNKCE
 				tmp = global_map_get_pointer_to_value(gMap, gToken.data.str);
@@ -277,8 +277,7 @@ int sth(void){
 
 		//pokud neni token LEX_ID_F, prozenem to precedencni SA
 		default:
-			//printf("prirazeni\n");
-			return parse_expr();
+			res = parse_expr(localMap, ilist);
 		
 	}
 
@@ -289,10 +288,18 @@ int sth(void){
 
 int stat(void){
 	int result = SUCCESS;
+	expr_return res;
+
+	char * tmp_str;
+	tmp_str = (char *)malloc(sizeof(char *));
+
 
 	switch(token){
 		//<STAT> -> id = <STH>
 		case LEX_ID:
+
+			strcpy(tmp_str, gToken.data.str);
+			// INT ERR dopsat kontrolu
 
 			//dalsi musi byt '='
 			token = getToken();
@@ -308,6 +315,13 @@ int stat(void){
 				return SYN_ERR;
 			}
 
+			// ulozeni promenne do lokalni mapy, hodnota nil, typ nil
+
+			lData.defined = 1;
+			lData.value.nil = true;
+			lData.type = 500; // typ nil - NONE
+
+			local_map_put(localMap, tmp_str, lData);
 
 			// nacteni dalsiho tokenu , musi byt identifikator nebo vyraz
 			token = getToken();
@@ -318,7 +332,7 @@ int stat(void){
 			}
 
 			// volani pravidla sth()
-			result = sth();
+			result = sth(localMap);
 			if(result != SUCCESS){
 				return result;
 			}
@@ -337,7 +351,7 @@ int stat(void){
 				return INT_ERR;
 			}
 
-			result = parse_expr();
+			res = parse_expr(localMap, ilist);
 			if(result != SUCCESS){
 				resetToken();
 				return result;
@@ -446,7 +460,7 @@ int stat(void){
 				return INT_ERR;
 			}
 
-			result = parse_expr();
+			res = parse_expr(localMap, ilist);
 			if(result != SUCCESS){
 				resetToken();
 				return result;
@@ -542,8 +556,11 @@ int st_list(void){
 				return INT_ERR;
 			}
 
-			if(!checkTokenType(LEX_EOL)){
-				fprintf(stderr, "1 Ocekavan 'eol' na radku %d\n", gToken.row);
+			if(checkTokenType(LEX_EOF)){
+				return SUCCESS;
+			}
+			else if (!checkTokenType(LEX_EOL)){
+				fprintf(stderr, "Ocekavan 'eol' na radku %d\n", gToken.row);
 				resetToken();
 				return SYN_ERR;
 			}
@@ -810,6 +827,17 @@ int func(void){
 		return SYN_ERR;
 	}
 
+
+
+	// ulozeni poctu formalnich parametru funkce
+	gData.paramCount = paramCount;
+	global_map_put(gMap, str, gData);
+
+	// pro dalsi funkce
+	paramCount = 0;
+
+
+
 	token = getToken();
 	if(!error_lex()){
 		return ERROR_LEX;
@@ -860,11 +888,6 @@ int func(void){
 		return SYN_ERR;
 	}
 
-	gData.paramCount = paramCount;
-	global_map_put(gMap, str, gData);
-
-	// pro dalsi funkce
-	paramCount = 0;
 
 
 	instr_type = INSTRUCT_POPFRAME;
@@ -909,6 +932,7 @@ int main_p(void){
 				resetToken();
 				return result;
 			}
+
 
 			//dalsi musi byt EOL / EOF
 			token = getToken();
@@ -977,6 +1001,8 @@ int parse(GlobalMap* globalMap, tList *list) {
 	gDataptr = &gData;
 	ilist = list;
 
+	localMap = local_map_init(MAX_SIZE_OF_HASH_TABLE);
+
 	if(initToken() == INT_ERR){
 		fprintf(stderr, "Nepodařilo se inicializovat strukturu pro token \n");
 		result = INT_ERR; 
@@ -999,6 +1025,8 @@ int parse(GlobalMap* globalMap, tList *list) {
 	}
 
 	resetToken();
+
+	local_map_free(localMap);
 
 	return result;
 

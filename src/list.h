@@ -89,12 +89,12 @@ typedef enum
             INSTRUCT_BREAK = 655,
             INSTRUCT_DPRINT  = 656,
 
-    // hlavicka .IFJcode18
+    //hlavicka .IFJcode18 + instr popframe
             INSTRUCT_HEAD = 657,
             INSTRUCT_POPFRAME = 658
 } tInstructionTypes;
 
-/** **/
+/** **/ //pridat nil
 typedef enum
 {
     GF = 700,    //pre ID
@@ -143,14 +143,12 @@ typedef struct List
     tNode *first;
     tNode *last;
     tNode *act;
-    FILE *stream;
+    //FILE *stream;
 } tList;
-
-FILE *instr_file;
 
 // Prototypy funkcii
 int list_error();
-tList* list_init(FILE *instr_file);
+tList* list_init();
 void insert_item (tList *instr_list, tInstructionTypes *instr_name , tInstructionData *addr1, tInstructionData *addr2, tInstructionData *addr3);
 void dispose_list(tList *instr_list);
 tNode* return_instruct(tList *instr_list);
@@ -158,6 +156,5 @@ void move_activity(tList *instr_list);
 void set_active(tList *instr_list);
 void operand_type(char* order, tValue instr_operand, tDatType instr_type);
 void print_list_elements(tList *instr_list);
-int interpret(tList *instr_list);
 
 #endif //_LIST_H

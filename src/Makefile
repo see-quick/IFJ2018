@@ -1,15 +1,5 @@
-NAME = ifj
+SRC=string.c hashtable.c scanner.c list.c stack.c prece.c parser.c main.c
+CFLAGS=-std=c99 -Wall -g
 
-CC = gcc
-CFLAGS = -std=c11
-LDFLAGS =
-
-$(NAME): compileAll
-	$(CC) $(CFLAGS) *.o -o $(NAME) $(LDFLAGS)
-	rm -f *.o
-compileAll:
-	$(CC) $(CFLAGS) -c *.c $(LDFLAGS)
-clean:
-	rm -f *.o
-remove:
-	rm $(NAME)
+ALL: $(SRC)
+	gcc -o ifj $^ $(CFLAGS)

@@ -44,6 +44,7 @@ typedef union DataTypes
     int i;
     double d;
     tString string;
+    bool nil;
 } dType;
 
 /** stucture for data of indetificator (for local map) **/
