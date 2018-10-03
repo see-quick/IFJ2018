@@ -18,7 +18,7 @@
 
 int main(int argc, char const *argv[]) {
 
-  tList* list = list_init(instr_file);
+  tList* list = list_init();
   tInstructionData instr1;
   tInstructionData instr2;
   tInstructionData instr3;
@@ -49,6 +49,8 @@ int main(int argc, char const *argv[]) {
   /*  Inserting into list */
   insert_item(list, &instr_type, &instr1, &instr2, &instr3);
   insert_item(list, &instr_type, &instr4, &instr5, &instr6);
+  insert_item(list, &instr_type, &instr4, &instr5, &instr6);
+  insert_item(list, &instr_type, &instr4, &instr5, &instr6);
   set_active(list); //nastavime list ako aktivny
   /*  Getting instruction */
   tmp_instr1 = return_instruct(list);
@@ -68,6 +70,9 @@ int main(int argc, char const *argv[]) {
   printf("---END OF TEST---\n\n");
   /*  Print */
   printf("Printing whole list...\n\n");
+  print_list_elements(list);
+  printf("\n\n\n");
+  reverse(&(list->first));  //reverse listu
   print_list_elements(list);
 
   dispose_list(list);

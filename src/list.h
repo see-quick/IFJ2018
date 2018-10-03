@@ -26,7 +26,7 @@ typedef enum
     //praca s ramcami, volanie funkcií
             INSTRUCT_MOVE = 600,
             INSTRUCT_CREATEFREAME = 601,
-            INSTRUCT_PUSHFRAME, INSTRUCT_POPFRAME = 602,
+            INSTRUCT_PUSHFRAME = 602,
             INSTRUCT_DEFVAR = 603,
             INSTRUCT_CALL = 604,
             INSTRUCT_RETURN = 605,
@@ -87,10 +87,14 @@ typedef enum
             INSTRUCT_EXIT = 654,
     //ladiacie INSTRUCT.
             INSTRUCT_BREAK = 655,
-            INSTRUCT_DPRINT  = 656
+            INSTRUCT_DPRINT  = 656,
+
+    //hlavicka .IFJcode18 + instr popframe
+            INSTRUCT_HEAD = 657,
+            INSTRUCT_POPFRAME = 658
 } tInstructionTypes;
 
-/** **/
+/** **/ //pridat nil
 typedef enum
 {
     GF = 700,    //pre ID
@@ -139,14 +143,12 @@ typedef struct List
     tNode *first;
     tNode *last;
     tNode *act;
-    FILE *stream;
+    //FILE *stream;
 } tList;
-
-FILE *instr_file;
 
 // Prototypy funkcii
 int list_error();
-tList* list_init(FILE *instr_file);
+tList* list_init();
 void insert_item (tList *instr_list, tInstructionTypes *instr_name , tInstructionData *addr1, tInstructionData *addr2, tInstructionData *addr3);
 void dispose_list(tList *instr_list);
 tNode* return_instruct(tList *instr_list);

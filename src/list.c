@@ -31,7 +31,7 @@ int list_error() {
  * @param filename nazov suboru kam ukladame instrukcie
  * @return prazdny list
  */
-tList* list_init (FILE *instr_file)  {
+tList* list_init ()  {
 
   tList* instr_list = (tList*)malloc(sizeof(tList));
   if(instr_list == NULL)  {
@@ -40,7 +40,7 @@ tList* list_init (FILE *instr_file)  {
 	instr_list->first = NULL;
 	instr_list->last = NULL;
   instr_list->act = NULL;
-  instr_list->stream = instr_file;
+  //instr_list->stream = NULL;
 
   return instr_list;
 }
@@ -68,6 +68,7 @@ void insert_item (tList *instr_list, tInstructionTypes *instr_name , tInstructio
     new_instr->data.address3.type = addr3->type;
     new_instr->data.address3.value = addr3->value;
 
+    //new_instr->next = instr_list->first
     new_instr->next = instr_list->first;  //do ukazatela na dalsi dame aktualne prvy v prvok v zozname
     instr_list->first = new_instr;  //do prveho dame novy
 
@@ -103,12 +104,15 @@ tNode* return_instruct(tList *instr_list) {
   if(instr_list->act != NULL) { //list je aktivny
     return instr_list->act;
   }
-  else list_error();
+  else  {
+    fprintf (stderr, "*ERROR* The program has performed an illegal operation.\n");
+    return NULL;
+  }
 }
 
 /**
  * Posunieme aktivitu na nasledujuci prvok po aktivnom prvku
- * @param list instrukcii
+ * @param instr_list instrukcii
 */
 void move_activity(tList *instr_list) {
   if(instr_list->act != NULL) { //zoznam je aktivny
@@ -121,12 +125,33 @@ void move_activity(tList *instr_list) {
 
 /**
  * Nastavenie aktivity listu na prvy prvok
+ * @param instr_list list ktoreho aktivitu nastavujeme
  */
 
 void set_active(tList *instr_list)  {
   if(instr_list->first != NULL) {
     instr_list->act = instr_list->first;
   }
+}
+
+/**
+ * Reverzacia listu na opacne poradie
+ * @param head_ref prvy prvok zoznamu
+ */
+void reverse(struct Node** head_ref)  {
+    struct Node* prev = NULL;
+    struct Node* current = *head_ref;
+    struct Node* next = NULL;
+    while (current != NULL) {
+
+        next = current->next;  // ulozim dalsi
+        current->next = prev; // Obratenie aktualneho ukazavatela current
+
+        // Posuniem ukazatele o jednu poziciu dopredu
+        prev = current;
+        current = next;
+    }
+    *head_ref = prev;
 }
 
 /**
@@ -147,7 +172,7 @@ void operand_type(char* order, tValue instr_operand, tDatType instr_type)  {
  */
 void print_list_elements(tList *instr_list)	{
 
-	tList *tmp_list = (tList*)malloc(sizeof(tList));
+  tList *tmp_list = (tList*)malloc(sizeof(tList));
   *tmp_list = *instr_list;
 
   char *first, *second, *third;
