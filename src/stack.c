@@ -91,7 +91,7 @@ void stack_push ( tStack *stack, tToken token){
     stack->top++;
     stack->finderOfParenthesis++;
     stack->array[stack->top] =  token;
-    printf("%c <-- Pushed to stack\n", *(token.data.data));
+    printf("%c <-- Pushed to stack\n", *(token.data.str));
 }
 
 /**
@@ -103,8 +103,8 @@ tToken stack_pop(tStack *stack){
     // ak zasobnik nie je prazdny
     if(!(stack_empty(stack))){
         tToken item = stack->array[stack->top];
-        stack->array[stack->top] = NULL;
-	stack->top--;
+        stack->array[stack->top].data.str = NULL;
+	    stack->top--;
         stack->finderOfParenthesis--;
         return item;
     }
@@ -127,7 +127,7 @@ int stack_get_size(tStack *stack){
 void stack_print(tStack *stack){
     printf("[------------> STACK BEGIN <-------------]\n");
     for(int i = 0; i < stack_get_size(stack); i++){
-        printf("Current stack item is -> %c\n", *(stack->array[i].data.data));
+        printf("Current stack item is -> %c\n", *(stack->array[i].data.str));
     }
     printf("[-------------> STACK END <--------------]\n");
 }
@@ -138,7 +138,7 @@ void stack_print(tStack *stack){
  */
 void stack_refresh(tStack *stack){
     for(int i = 0; i < stack_get_size(stack); i++){
-        stack->array[i].data.data = NULL;
+        stack->array[i].data.str = NULL;
     }
     stack->top = -1;
     stack->finderOfParenthesis = -1;
