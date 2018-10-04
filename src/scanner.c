@@ -343,9 +343,6 @@ int getToken(){
                         if (flag && zero_cnt > 1){
                             return ERROR_LEX;
                         }
-                        /*else if (digit_check == 1){
-                            return ERROR_LEX;
-                        }*/
                         else if(isspace(c) || c == ',' || c == ')'){     // is delimiter     && digit_lock == false
                             expr = true;
                             return LEX_NUMBER;
@@ -378,7 +375,6 @@ int getToken(){
                         printf("cisloo");
                         digit_check = 0;
                     }
-                    //digit_check = 1;
                 }
                 else
                     return ERROR_LEX;
@@ -389,8 +385,6 @@ int getToken(){
                 if(isdigit(c)){
                     pushToken(c);
                     state = S_REAL;
-                    //printf("lllllll");
-                    //digit_check = 0;
                 }
                 else if(expr == false && sub == true && c == '\n') return ERROR_LEX;
                 else if (c == 'e' || c == 'E') {
@@ -399,7 +393,6 @@ int getToken(){
                 }
                 else{
                     ungetc(c, stdin);
-                    //printf("qqqqqq");
                     if (flag && zero_cnt > 1){
                         return ERROR_LEX;
                     }
@@ -414,7 +407,8 @@ int getToken(){
                 }
                 digit_check = 0;
                 break;
-
+                
+            //Identifikator
             case S_ID:
                 if (isalnum(c) || c == '_'){
                   pushToken(c);
@@ -433,55 +427,15 @@ int getToken(){
                 break;
                 
             case S_ID_F_END:
-                if (isspace(c) || ',' || ')'){ // is delimiter
+                if (isspace(c) || '('){ // is delimiter
                     ungetc(c, stdin);
-                    return LEX_ID_F;
+                    return LEX_ID;
                 }
                 else{
                     return ERROR_LEX;
                 }
                 break;
-            //Identifikator
-            /*case S_ID:
-                if (isalnum(c) || c == '_'){
-                  pushToken(c);
-                  state = S_ID;
-                }
-                 else if(c == '!' || c == '?'){
-                    pushToken(c);
-                    state = S_ID_F_END;
-                }
-                else{
-                  ungetc(c, stdin);
-                  if ( (temp = isKeyword(&(gToken.data))) != SUCCESS)
-                    return temp;
-                  else expr = true; return LEX_ID;
-                }
-                break;
 
-
-            // dodelat
-            case S_ID_END:
-                if (isalnum(c)){
-                    pushToken(c);
-                    state = S_ID;
-                }
-                else{
-                    ungetc(c, stdin);
-                    return LEX_ID;
-                }
-                break;
-            
-            case S_ID_F_END:
-                if (c == '?' || c == '!'){
-                    pushToken(c);
-                    state = S_ID;
-                }
-                else{
-                    ungetc(c, stdin);
-                    return LEX_ID_F;
-                }
-                break;*/
             // Radkovy komentar
             case S_COMMENT_ROW:
                 if( c == EOF )
@@ -567,7 +521,6 @@ int getToken(){
                 break;
 
             case S_STRING_ASCII:
-                //printf("%c * \n", c);
                 if ((c >= '0' && c <= '9') || (c >= 'a' && c <= 'f') || (c >= 'A' && c <= 'F')) {
                     if (ascii_cnt < 2)
                         ascii_val[ascii_cnt++] = c;
