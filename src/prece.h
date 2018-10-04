@@ -24,6 +24,7 @@
 #include "scanner.h"
 #include "hashtable.h"
 #include "list.h"
+#include "stack.h"
 
 #define SIZEOFTABLE 14
 

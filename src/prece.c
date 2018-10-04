@@ -42,11 +42,9 @@ prece_states prece_table [SIZEOFTABLE][SIZEOFTABLE] = {
 };
 
 /* KVOLI INDEXOVANIU NA PRECEDENCNI TABULKU */
-int indexerOfPreceTable (int indexer)        // definovanie aktualneho tokenu TODO: there will be not char but tToken(as getToken)
+int indexerOfPreceTable (int indexer)
 {
     int type = indexer;          // vyberieme si co je aktualny token a budeme ho indexovat
-    /* 0 */
-    // getToken mi vyhodi cislo ?? 
     switch (type)
     {
         /* OPERACIE */
@@ -70,6 +68,7 @@ int indexerOfPreceTable (int indexer)        // definovanie aktualneho tokenu TO
         /* KONIEC PRECE */
         case LEX_EOL: type = eDOLAR; break;             // v pripade ze to bude EOL napriklad bude then tak sa to bude spravat ako $
         case LEX_EOF: type = eDOLAR; break;             // v pripade ze to bude EOF na konci suboru
+        case KW_THEN: type = eDOLAR; break;             // v pripade ze to bude then taktiez ukoncuj
         default:
             /* ZLY TOKEN */
             printf("indexerOfPreceTable():There is not such a symbol\n");
@@ -218,16 +217,14 @@ expr_return parse_expr(LocalMap* lMap, tList* list){
                 }
                 printf("This is act token    number -> |%d| and char -> |%s|\n", actTokenIndexToPreceTable, convert_to_char(actTokenIndexToPreceTable));
                 break;
-                // TODO: dokoncit pravidlo, a urobit funciu generateNonTermn
+                // TODO: dokoncit pravidlo, a urobit funciu stack_print_preceeNonTermn
             case Err:
                 if(actTokenIndexToPreceTable == eDOLAR){
                     printf("STATE: $E$ -> EVERYTHING OK\n");
                     // uvolnenie stacku
                     stack_free(stack);
-                    printf("This is act token -> %d", token);
-                    ungetc(token, stdin);
-                    printf("This is act token -> %d", token);
-                    resultOfPrece.bool_result = SUCCESS;
+                    printf("Vraciam -> %d\n", resultOfPrece.result);
+                    resultOfPrece.result = SUCCESS;
                     return resultOfPrece;
                 }
                 printf("Error\n");

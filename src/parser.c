@@ -310,9 +310,9 @@ int sth(LocalMap* localMap){
 
 		//pokud neni token LEX_ID_F, prozenem to precedencni SA
 		default:
-			result = parse_expression();
-			//res = parse_expr(localMap, ilist);
-		
+//			result = parse_expression();
+			res = parse_expr(localMap, ilist);
+			result = res.result;
 	}
 
 	free(tmp_str);
@@ -381,6 +381,7 @@ int stat(void){
 				return result;
 			}
 
+
 			// MOVE GF@tmp TF@%retval
 			instr_type = INSTRUCT_MOVE;
 			instr1.type = 700;
@@ -389,6 +390,7 @@ int stat(void){
 			instr2.value.s = "%retval";
 
 			insert_item(ilist, &instr_type, &instr1, &instr2, &instr3);
+
 
 			return result;
 		break;
@@ -404,8 +406,9 @@ int stat(void){
 				return INT_ERR;
 			}
 
-			//res = parse_expr(localMap, ilist);
-			result = parse_expression();
+			res = parse_expr(localMap, ilist);
+			result = res.result;
+//			result = parse_expression();
 			if(result != SUCCESS){
 				resetToken();
 				return result;
@@ -511,8 +514,9 @@ int stat(void){
 				return INT_ERR;
 			}
 
-			//res = parse_expr(localMap, ilist);
-			result = parse_expression();
+			res = parse_expr(localMap, ilist);
+			result = res.result;
+//			result = parse_expression();
 			if(result != SUCCESS){
 				resetToken();
 				return result;
@@ -579,19 +583,26 @@ int stat(void){
 
 	
 }
-int parse_expression(void){
-
-	// returnToken();
- 	token = getToken();
-
-	// returnToken();
-	return SUCCESS;
-}
+//int parse_expression(void){
+//
+//	// testovani pro a = 2 + 2 ( jen dva operandy), ale od precedencni analyzy se ocekava posledni token, bud je to EOL/EOF
+//	// nebo dalsi statement
+//
+//	//returnToken();
+// 	token = getToken();
+//
+//	token = getToken();
+//
+//	token = getToken();
+//	token = getToken();
+//
+//	return SUCCESS;
+//}
 
 
 int st_list(void){
 	int result = SUCCESS;
-
+	//printf("st list %d\n", token);
 	//pravidlo <ST-LIST> -> <STAT> eol <ST-LIST>
 	switch(token){
 
@@ -606,28 +617,18 @@ int st_list(void){
 				return result;
 			}
 
+			//returnToken();
+
 			// token nacteny z stat() muze byt dalsi statment nebo LEX_EOL/LEX_EOF
 
 			if(checkTokenType(LEX_EOF) && checkTokenType(LEX_EOL)){
 				return SUCCESS;
 			}
-			else if (!checkTokenType(LEX_EOL)){
-				fprintf(stderr, "Ocekavan 'eol' na radku %d\n", gToken.row);
-				resetToken();
-				return SYN_ERR;
-			}
+
 			else{
-				token = getToken();
-			if(!error_lex()){
-				return ERROR_LEX;
-			} else if (!error_int()){
-				return INT_ERR;
+
+				return st_list();
 			}
-
-			}
-
-
-			return st_list();
 
 		// case KW_PRINT
 
@@ -1029,8 +1030,7 @@ int main_p(void){
 				return result;
 			}
 
-
-			//dalsi musi byt EOL / EOF
+			// //dalsi musi byt EOL / EOF
 			token = getToken();
 
 			if(!error_lex()){
@@ -1038,6 +1038,8 @@ int main_p(void){
 			} else if (!error_int()){
 				return INT_ERR;
 			}
+
+			//printf("main p %d\n", token);
 
 			return SUCCESS;
 		break;
@@ -1069,8 +1071,10 @@ int prog(){
 				return result;
 			}
 
+			//printf("%d\n", token);
+
 			//token nacten z main_p() = EOF
-			if(!checkTokenType(LEX_EOF)) {
+			if(!checkTokenType(LEX_EOL) && !checkTokenType(LEX_EOF)) {
 				fprintf(stderr, "Ocekavano 'eof' 'eol' na radku %d \n", gToken.row);
 				resetToken();
 				return SYN_ERR;
