@@ -388,7 +388,7 @@ int stat(void){
 			instr2.type = 702;
 			instr2.value.s = "%retval";
 
-			insert_item(ilist, &instr_type, &instr1, &instr2, &instr3); 
+			insert_item(ilist, &instr_type, &instr1, &instr2, &instr3);
 
 			return result;
 		break;
@@ -411,12 +411,7 @@ int stat(void){
 				return result;
 			}
 
-			token = getToken();
-			if(!error_lex()){
-				return ERROR_LEX;
-			} else if (!error_int()){
-				return INT_ERR;
-			}
+			// token nacteny z parse_expr ma byt THEN nebo 
 
 
 			//token je jiz nacteny, musi = KW_THEN
@@ -498,6 +493,8 @@ int stat(void){
 				return SYN_ERR;
 			}
 
+			token = getToken();
+
 
 			return SUCCESS;
 		break;
@@ -521,12 +518,7 @@ int stat(void){
 				return result;
 			}
 
-			token = getToken();
-			if(!error_lex()){
-				return ERROR_LEX;
-			} else if (!error_int()){
-				return INT_ERR;
-			}
+			// token nacteny z precedencni analyzy musi byt DO
 
 			if(!checkTokenType(KW_DO)){
 				fprintf(stderr, "Ocekavano 'do' na radku %d\n", gToken.row);
@@ -571,6 +563,8 @@ int stat(void){
 				return SYN_ERR;
 			}
 
+			token = getToken();
+
 			return result;
 		break;
 
@@ -586,6 +580,11 @@ int stat(void){
 	
 }
 int parse_expression(void){
+
+	// returnToken();
+ 	token = getToken();
+
+	// returnToken();
 	return SUCCESS;
 }
 
@@ -607,13 +606,7 @@ int st_list(void){
 				return result;
 			}
 
-			token = getToken();
-			if(!error_lex()){
-				return ERROR_LEX;
-			} else if (!error_int()){
-				return INT_ERR;
-			}
-
+			// token nacteny z stat() muze byt dalsi statment nebo LEX_EOL/LEX_EOF
 
 			if(checkTokenType(LEX_EOF) && checkTokenType(LEX_EOL)){
 				return SUCCESS;
@@ -623,13 +616,16 @@ int st_list(void){
 				resetToken();
 				return SYN_ERR;
 			}
-
-			token = getToken();
+			else{
+				token = getToken();
 			if(!error_lex()){
 				return ERROR_LEX;
 			} else if (!error_int()){
 				return INT_ERR;
 			}
+
+			}
+
 
 			return st_list();
 
