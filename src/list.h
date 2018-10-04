@@ -37,7 +37,7 @@ typedef enum
     //aritmeticke, relacne, boolovske a konverzni INSTRUCT.
             INSTRUCT_ADD = 609,
             INSTRUCT_SUB = 610,
-            INSTRUCT_MULL = 611,
+            INSTRUCT_MUL = 611,
             INSTRUCT_DIV = 612,
             INSTRUCT_ADDS = 613,
             INSTRUCT_SUBS = 614,
@@ -56,7 +56,7 @@ typedef enum
             INSTRUCT_ORS = 627,
             INSTRUCT_NOTS = 628,
             INSTRUCT_INT2FLOAT = 629,
-            INSTRUCT_FLOAT2IN = 630,
+            INSTRUCT_FLOAT2INT = 630,
             INSTRUCT_FLOAT2R2EINT = 631,
             INSTRUCT_FLOAT2R2OINT = 632,
             INSTRUCT_INT2CHAR = 633,
@@ -89,12 +89,15 @@ typedef enum
             INSTRUCT_BREAK = 655,
             INSTRUCT_DPRINT  = 656,
 
-    //hlavicka .IFJcode18 + instr popframe
+    //hlavicka .IFJcode18 + nove instrukcie
             INSTRUCT_HEAD = 657,
-            INSTRUCT_POPFRAME = 658
+            INSTRUCT_POPFRAME = 658,
+            INSTRUCT_IDIV = 659,
+            INSTRUCT_IDIVS = 660
+
 } tInstructionTypes;
 
-/** **/ //pridat nil
+/** **/
 typedef enum
 {
     GF = 700,    //pre ID
@@ -104,7 +107,8 @@ typedef enum
     F = 704,     // napr:float@2.33
     S = 705,      // string@ahoj
     FCE = 706,     //pre funkcie
-    EMPTY = 707 //prazdna adresa
+    EMPTY = 707, //prazdna adresa
+    N = 708    // napr:nil@nil   <--
 } tDatType;
 
 // zmenil som union na struct
@@ -154,9 +158,9 @@ void dispose_list(tList *instr_list);
 tNode* return_instruct(tList *instr_list);
 void move_activity(tList *instr_list);
 void set_active(tList *instr_list);
+void reverse(struct Node** head_ref);
+int temporary_exists(tList *instr_list);
 void operand_type(char* order, tValue instr_operand, tDatType instr_type);
 void print_list_elements(tList *instr_list);
-
-void gen_code(tList *instr_list);
 
 #endif //_LIST_H

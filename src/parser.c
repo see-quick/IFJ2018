@@ -392,6 +392,9 @@ int stat(void){
 			insert_item(ilist, &instr_type, &instr1, &instr2, &instr3);
 
 
+			printf("end sstat\n");
+
+
 			return result;
 		break;
 
@@ -617,16 +620,19 @@ int st_list(void){
 				return result;
 			}
 
+			//printf("kone stat, st-list\n");
+
 			//returnToken();
 
 			// token nacteny z stat() muze byt dalsi statment nebo LEX_EOL/LEX_EOF
 
-			if(checkTokenType(LEX_EOF) && checkTokenType(LEX_EOL)){
+			if(checkTokenType(LEX_EOF)){
 				return SUCCESS;
 			}
-
 			else{
 
+				//printf("%d\n", token);
+				token = getToken();
 				return st_list();
 			}
 
@@ -1071,7 +1077,9 @@ int prog(){
 				return result;
 			}
 
-			//printf("%d\n", token);
+			//printf("in prog\n");
+
+			//sprintf("%d\n", token);
 
 			//token nacten z main_p() = EOF
 			if(!checkTokenType(LEX_EOL) && !checkTokenType(LEX_EOF)) {
