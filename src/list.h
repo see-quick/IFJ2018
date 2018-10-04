@@ -157,4 +157,6 @@ void set_active(tList *instr_list);
 void operand_type(char* order, tValue instr_operand, tDatType instr_type);
 void print_list_elements(tList *instr_list);
 
+void gen_code(tList *instr_list);
+
 #endif //_LIST_H

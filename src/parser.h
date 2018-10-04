@@ -49,6 +49,8 @@ int term_list2(void);
 int func(void);
 int one_term(void);
 
+int parse_expression(void);
+
 #endif
 
 

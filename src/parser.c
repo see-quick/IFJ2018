@@ -157,6 +157,26 @@ int term_list(void){
 			// if LEX_ID -> zkontrolovat zda je promenna definovana 
 			// pokud je to LEX_ID, LEX_NUMBER, LEX_REAL, LEX_STRING , podle typu vytvorit vnitrni promennou s hodnotou argumentu
 
+
+			instr_type = INSTRUCT_DEFVAR;
+			instr1.type = 702;
+
+			// pridat counter pro params!!!
+			instr1.value.s = "$_param1";
+
+			if (token == LEX_NUMBER){
+				insert_item(ilist, &instr_type, &instr1, &instr2, &instr3);
+				instr_type = INSTRUCT_MOVE;
+				instr1.type = 702;
+				instr1.value.s = "$_param1";
+
+				instr2.type = 703; //integer
+				instr2.value.i = atoi(gToken.data.str);
+
+				insert_item(ilist, &instr_type, &instr1, &instr2, &instr3);
+
+			}
+
 			//nacteni a volani term_list2()
 			token = getToken();
 			if(!error_lex()){
@@ -210,6 +230,7 @@ int sth(LocalMap* localMap){
 	switch(token){
 		// case LEX_ID_F:
 		case LEX_ID_F:
+		case LEX_ID:
 
 				//SEMANTICKA AKCE, KONTROLA DEFINICE FUNKCE
 				tmp = global_map_get_pointer_to_value(gMap, gToken.data.str);
@@ -220,6 +241,9 @@ int sth(LocalMap* localMap){
 
 				strcpy(tmp_str, gToken.data.str);
 
+				// vytvoreni docasneho ramce pro funkce
+				instr_type =  INSTRUCT_CREATEFREAME;
+				insert_item(ilist, &instr_type, &instr1, &instr2, &instr3);
 
         	    token = getToken();
 				if(!error_lex()){
@@ -267,6 +291,15 @@ int sth(LocalMap* localMap){
 				// pro dalsi volani funkce
 				argCount = 0;
 
+
+				// instrukce pro volani funkce
+
+				instr_type = INSTRUCT_CALL;
+				instr1.type = 706;
+				instr1.value.s = tmp_str;
+
+				insert_item(ilist, &instr_type, &instr1, &instr2, &instr3);
+
 		break;
 
 		// semanticka chyba prirazeni
@@ -277,7 +310,8 @@ int sth(LocalMap* localMap){
 
 		//pokud neni token LEX_ID_F, prozenem to precedencni SA
 		default:
-			res = parse_expr(localMap, ilist);
+			result = parse_expression();
+			//res = parse_expr(localMap, ilist);
 		
 	}
 
@@ -298,6 +332,7 @@ int stat(void){
 		//<STAT> -> id = <STH>
 		case LEX_ID:
 
+
 			strcpy(tmp_str, gToken.data.str);
 			// INT ERR dopsat kontrolu
 
@@ -315,6 +350,7 @@ int stat(void){
 				return SYN_ERR;
 			}
 
+
 			// ulozeni promenne do lokalni mapy, hodnota nil, typ nil
 
 			lData.defined = 1;
@@ -322,6 +358,13 @@ int stat(void){
 			lData.type = 500; // typ nil - NONE
 
 			local_map_put(localMap, tmp_str, lData);
+
+			// instrukce pro definice promenne s typem nil a hodnotou nil
+			instr_type = INSTRUCT_DEFVAR;
+			instr1.type = 700; // GF
+			insert_item(ilist, &instr_type, &instr1, &instr2, &instr3);
+
+
 
 			// nacteni dalsiho tokenu , musi byt identifikator nebo vyraz
 			token = getToken();
@@ -331,11 +374,21 @@ int stat(void){
 				return INT_ERR;
 			}
 
+
 			// volani pravidla sth()
 			result = sth(localMap);
 			if(result != SUCCESS){
 				return result;
 			}
+
+			// MOVE GF@tmp TF@%retval
+			instr_type = INSTRUCT_MOVE;
+			instr1.type = 700;
+			instr1.value.s = tmp_str;
+			instr2.type = 702;
+			instr2.value.s = "%retval";
+
+			insert_item(ilist, &instr_type, &instr1, &instr2, &instr3); 
 
 			return result;
 		break;
@@ -351,7 +404,8 @@ int stat(void){
 				return INT_ERR;
 			}
 
-			res = parse_expr(localMap, ilist);
+			//res = parse_expr(localMap, ilist);
+			result = parse_expression();
 			if(result != SUCCESS){
 				resetToken();
 				return result;
@@ -381,7 +435,7 @@ int stat(void){
 			}
 
 			if(!checkTokenType(LEX_EOL)){
-				fprintf(stderr, "2 Ocekavano 'eol' na radku %d \n", gToken.row);
+				fprintf(stderr, "Ocekavano 'eol' na radku %d \n", gToken.row);
 				resetToken();
 				return SYN_ERR;
 			}
@@ -460,7 +514,8 @@ int stat(void){
 				return INT_ERR;
 			}
 
-			res = parse_expr(localMap, ilist);
+			//res = parse_expr(localMap, ilist);
+			result = parse_expression();
 			if(result != SUCCESS){
 				resetToken();
 				return result;
@@ -530,6 +585,9 @@ int stat(void){
 
 	
 }
+int parse_expression(void){
+	return SUCCESS;
+}
 
 
 int st_list(void){
@@ -556,7 +614,8 @@ int st_list(void){
 				return INT_ERR;
 			}
 
-			if(checkTokenType(LEX_EOF)){
+
+			if(checkTokenType(LEX_EOF) && checkTokenType(LEX_EOL)){
 				return SUCCESS;
 			}
 			else if (!checkTokenType(LEX_EOL)){
@@ -583,6 +642,7 @@ int st_list(void){
       	break;
 
       case KW_PRINT:
+
       		token = getToken();
 			if(!error_lex()){
 				return ERROR_LEX;
@@ -758,11 +818,41 @@ int func(void){
 		return INT_ERR;
 	}
 
-	if(!checkTokenType(LEX_ID)){
+	if(!checkTokenType(LEX_ID) && !checkTokenType(LEX_ID_F)){
 		fprintf(stderr, "Ocekavan identifikator na radku %d \n", gToken.row);
 		resetToken();
 		return SYN_ERR;
 	}
+
+	instr_type = INSTRUCT_LABEL;
+	instr1.type = 706;
+	instr1.value.s = gToken.data.str;
+
+	insert_item(ilist, &instr_type, &instr1, &instr2, &instr3);
+
+	// KONTROLA TF PRAZDNY - dopsat
+
+	instr_type = INSTRUCT_PUSHFRAME;
+	instr1.type = 707;
+	insert_item(ilist, &instr_type, &instr1, &instr2, &instr3);
+
+	// navratova hodnota
+
+	instr_type = INSTRUCT_DEFVAR;
+	instr1.type = 701;
+	instr1.value.s = "%retval";
+	insert_item(ilist, &instr_type, &instr1, &instr2, &instr3);
+
+	instr_type = INSTRUCT_MOVE;
+	instr1.type = 701;
+	instr1.value.s = "%retval";
+	instr2.type = 704;
+	instr2.value.d = 0.0;
+
+	insert_item(ilist, &instr_type, &instr1, &instr2, &instr3);
+
+	// the next instruction are instr. of function .... <st-list>
+	// udelat param-list!!
 
 
 	
@@ -851,14 +941,6 @@ int func(void){
 		return SYN_ERR;
 	}
 
-	// vytvoreni docasneho ramce pro funkce
-	instr_type =  INSTRUCT_CREATEFREAME;
-	insert_item(ilist, &instr_type, &instr1, &instr2, &instr3);
-
-	// presun TF na zasobnik ramcu 
-	// lokalni promenne funkce budou mit ramec LF.
-	instr_type =  INSTRUCT_PUSHFRAME;
-	insert_item(ilist, &instr_type, &instr1, &instr2, &instr3);
 
 	//dalsi token pude do funce ST-LIST
 	token = getToken();
@@ -888,10 +970,28 @@ int func(void){
 		return SYN_ERR;
 	}
 
+	// konec funkce
 
+	instr_type = INSTRUCT_LABEL;
+	instr1.type = 707;
+
+	// vymyslet nejakou promennou pro ukonceni funkce, treba $foo$end
+	// zatim to bude jen $end, ale muzeme narazit na funkci se stejnym nazvem
+	instr1.value.s = "$end";
+	insert_item(ilist, &instr_type, &instr1, &instr2, &instr3);
+
+	// POPFRAME
 
 	instr_type = INSTRUCT_POPFRAME;
+	// otazka: instr1 je prazdny??
 	insert_item(ilist, &instr_type, &instr1, &instr2, &instr3);
+
+
+	// return retval of function
+	instr_type = INSTRUCT_RETURN;
+	insert_item(ilist, &instr_type, &instr1, &instr2, &instr3);
+
+	// end of function, navrat na predchozi pozici
 
 
 	//nacteni a kontrola dalsiho tokenu
@@ -1020,7 +1120,6 @@ int parse(GlobalMap* globalMap, tList *list) {
 	if(result == SUCCESS){
 		instr_type = INSTRUCT_HEAD;
 		insert_item(ilist, &instr_type, &instr1, &instr2, &instr3);
-		//print_list_elements(ilist);
 		result = prog();
 	}
 

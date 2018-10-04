@@ -34,6 +34,8 @@ int main(int argc, char** argv) {
 
   result = parse(globalMap, list); 
 
+  gen_code(list);
+
   global_map_free(globalMap);
 
   dispose_list(list);

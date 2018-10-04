@@ -201,4 +201,106 @@ void print_list_elements(tList *instr_list) {
   free(tmp_list);
   printf("\n\nEnd of the list\n-----------------\n");
 }
+
+
+
+char * decode(int en){
+  switch(en){
+    case 700:
+      return "GF";
+    break;
+    case 701:
+      return "LF";
+    break;
+    case 702:
+      return "TF";
+    break;
+    case 703:
+      return "int";
+    break;
+  }
+}
+
+
+// pro testovani - Igor predela
+void gen_code(tList *instr_list) {
+
+  char * tmp;
+  tmp = malloc(sizeof(char *));
+
+  tList *tmp_list = (tList*)malloc(sizeof(tList));
+  *tmp_list = *instr_list;
+
+  while (tmp_list->first != NULL) {
+      switch(tmp_list->first->data.type){
+
+        case INSTRUCT_HEAD:
+          printf(".IFJcode18\n");
+          printf("JUMP $$main\nLABEL $$main\n");
+        break;
+
+        // OR %a ???
+        case INSTRUCT_MOVE:
+        tmp = decode(tmp_list->first->data.address1.type);
+        if (tmp_list->first->data.address2.type == 703) // int
+        {
+          printf("MOVE %s@%s int@%d\n", tmp, tmp_list->first->data.address1.value.s, tmp_list->first->data.address2.value.i);
+        }
+        else if (tmp_list->first->data.address2.type == 704) { // float 
+          printf("MOVE %s@%s float@%f\n", tmp, tmp_list->first->data.address1.value.s, tmp_list->first->data.address2.value.d);
+        }
+        else{
+          printf("MOVE %s@%s string@%s\n", tmp, tmp_list->first->data.address1.value.s, tmp_list->first->data.address2.value.s);
+        }
+        break;
+
+
+        case INSTRUCT_DEFVAR:
+        tmp = decode(tmp_list->first->data.address1.type);
+          printf("DEFVAR %s@%s\n", tmp, tmp_list->first->data.address1.value.s);
+        break;
+
+
+        case INSTRUCT_CREATEFREAME:
+          printf("CREATEFRAME\n");
+        break;
+
+
+        case INSTRUCT_PUSHFRAME:\
+          printf("PUSHFRAME\n");
+        break;
+
+
+        case INSTRUCT_POPFRAME:
+          printf("POPFRAME\n");
+        break;
+
+
+        // something wrong with value.s ;
+        case INSTRUCT_CALL:
+          printf("CALL %s\n", tmp_list->first->data.address1.value.s);
+        break;
+
+
+        case INSTRUCT_LABEL:
+          printf("LABEL %s\n", tmp_list->first->data.address1.value.s);
+          break;
+
+
+        case INSTRUCT_RETURN:
+          printf("RETURN\n");
+        break;
+
+
+        default:
+          printf("dopsat\n");
+
+      }
+
+    tmp_list->first = tmp_list->first->next;
+  }
+
+  free(tmp_list);
+}
+
 /* Koniec list.c */
