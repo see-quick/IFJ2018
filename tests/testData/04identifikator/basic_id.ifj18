@@ -1,5 +1,5 @@
 #deklaracia jednoduchych identifikatorov pre premenne
 
-id
-longidentifier
-verylongidentifierwithreallylongnamehere
+id = 1
+longidentifier = 1
+verylongidentifierwithreallylongnamehere = 1
