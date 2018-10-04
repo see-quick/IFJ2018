@@ -69,9 +69,12 @@ int indexerOfPreceTable (int indexer)
         case LEX_EOL: type = eDOLAR; break;             // v pripade ze to bude EOL napriklad bude then tak sa to bude spravat ako $
         case LEX_EOF: type = eDOLAR; break;             // v pripade ze to bude EOF na konci suboru
         case KW_THEN: type = eDOLAR; break;             // v pripade ze to bude then taktiez ukoncuj
+        case eDOLAR: type = eDOLAR; break;          // TODO: toto ak tak vymaz
+        // TODO: while <vyraz> do treba este ukoncovaci vyraz z lexiklanej do...
         default:
-            /* ZLY TOKEN */
-            printf("indexerOfPreceTable():There is not such a symbol\n");
+            /* SYNTAKTICKA CHYBA */
+            printf("indexerOfPreceTable():Syntactic Error\n");
+            return eSYNTERROR;
     }
     return type;
 }
@@ -131,13 +134,21 @@ expr_return parse_expr(LocalMap* lMap, tList* list){
         //v pripade ze je na vrchole zasobniku non terminal E pozerame sa o 1 miesto nizsie
         if(stack->array[stack->top] == E){
             actTokenIndexToPreceTable = indexerOfPreceTable(token);  // pretypovanie na dany index
-            stackTopTokenIndexToPreceTable = indexerOfPreceTable(stack->array[stack->finderOfParenthesis - 1]);     // pozerame sa o jedno miesto nizsie
+            stackTopTokenIndexToPreceTable = stack->array[stack->finderOfParenthesis - 1];     // pozerame sa o jedno miesto nizsie
         }
         else{
             actTokenIndexToPreceTable = indexerOfPreceTable(token);  // pretypovanie na dany index
-            stackTopTokenIndexToPreceTable  = indexerOfPreceTable(stack_top(stack)); // pretypovanie na dany index
+            stackTopTokenIndexToPreceTable  = stack_top(stack); // pretypovanie na dany index
 
         }
+
+        // akonahle sa vo fucnkii indexerOfPreceTable nenajde ziadny znak tak vyhadzujem syntaticku chybu
+        if(actTokenIndexToPreceTable == eSYNTERROR){
+            resultOfPrece.result = SYN_ERR;
+            return resultOfPrece;
+        }
+
+
 
         printf("This is act token    number -> |%d| and char -> |%s|\n", actTokenIndexToPreceTable, convert_to_char(actTokenIndexToPreceTable));
         printf("This is act stackTop number -> |%d| and char -> |%s|\n", stackTopTokenIndexToPreceTable, convert_to_char(stackTopTokenIndexToPreceTable));
@@ -220,6 +231,13 @@ expr_return parse_expr(LocalMap* lMap, tList* list){
                 // TODO: dokoncit pravidlo, a urobit funciu stack_print_preceeNonTermn
             case Err:
                 if(actTokenIndexToPreceTable == eDOLAR){
+                    printf("This is stackTop %s\n", convert_to_char(stack_top(stack)));
+                    /* v pripade ak prijde vyraz a = then  v preklade $$ medzi nimi nebude nic ziaden nontermian(E) tak to vychodi syntakticku chybu */
+                    if(stack->top == 0){
+                        resultOfPrece.result = SYN_ERR;
+                        return resultOfPrece;
+                    }
+//                    if(stack_top(stack) == eDOLAR)
                     printf("STATE: $E$ -> EVERYTHING OK\n");
                     // uvolnenie stacku
                     stack_free(stack);

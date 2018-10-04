@@ -48,6 +48,8 @@
 #define eSOLVING_RULE   22 // preventujeme kvoli situacii kde ak najde symbol < a pride dalsi < tak nech sa z toho nezblazni
 #define E               42  // E - non terminal
 
+#define eSYNTERROR 800 // syntax error
+
 // Enum ktorý, bude selectovať o akú operáciu pojde pri vykonavaní precedenčnej analýzy(využívanie stacku a getToken()
 typedef enum{
     EQ = 800,   // = Znamienko, znamenajúce jednoduchý shift v precedenčnej tabuľke
