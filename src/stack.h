@@ -40,6 +40,7 @@ int stack_top(tStack *stack);
 int stack_pop ( tStack *stack ); // sem bude vracat Token
 void stack_free(tStack *stack);
 void stack_print(tStack *stack);
+void stack_print_prece(tStack *stack);
 void stack_refresh(tStack *stack);
 void stack_search_for_theorem(tStack *stack);
 

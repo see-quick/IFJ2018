@@ -18,8 +18,8 @@
 #include "stack.h"
 
 
-#define RULE_OF_OPERATORS stack_pops(4, stack);stack_push(stack, E);stack_print(stack);break
-#define RULE_OF_IDENTIFICATOR stack_pops(2, stack);stack_push(stack, E);stack_print(stack)
+#define RULE_OF_OPERATORS stack_pops(4, stack);stack_push(stack, E);stack_print_prece(stack);break
+#define RULE_OF_IDENTIFICATOR stack_pops(2, stack);stack_push(stack, E);stack_print_prece(stack)
 
 int counterVar = 1;
 
@@ -70,13 +70,38 @@ int indexerOfPreceTable (int indexer)        // definovanie aktualneho tokenu TO
         /* KONIEC PRECE */
         case LEX_EOL: type = eDOLAR; break;             // v pripade ze to bude EOL napriklad bude then tak sa to bude spravat ako $
         case LEX_EOF: type = eDOLAR; break;             // v pripade ze to bude EOF na konci suboru
-        /* ZLA POSTUPNOST TOKENOV */
-        case LEX_ERROR: return ERROR_LEX;               // v pripade ziskania zlej $i<<i
         default:
             /* ZLY TOKEN */
             printf("indexerOfPreceTable():There is not such a symbol\n");
     }
     return type;
+}
+
+/**
+ * Funkcia, ktora je primarne urcena na debugovanie, premiena cisla tokenov na znaky aby vypis bol rychlejsie pochopitelny
+ * @param token aktualny token
+ * @return konvertovany znak
+ */
+char* convert_to_char(int token){
+    switch(token){
+        case 0: return "+\0";
+        case 1: return "-\0";
+        case 2: return "*\0";
+        case 3: return "/\0";
+        case 4: return "<\0";
+        case 5: return ">\0";
+        case 6: return "<=\0";
+        case 7: return ">=\0";
+        case 8: return "==\0";
+        case 9: return "!=\0";
+        case 10: return "i\0";
+        case 11: return "(\0";
+        case 12: return ")\0";
+        case 13: return "$\0";
+        case 15: return " \0";
+        case 22: return "[<]\0";
+        case 42: return "E\0";
+    }
 }
 
 expr_return parse_expr(LocalMap* lMap, tList* list){
@@ -88,13 +113,13 @@ expr_return parse_expr(LocalMap* lMap, tList* list){
 
     /* INICIALIZACIA STRUKTUR */
     expr_return resultOfPrece = {.result=SUCCESS};
+
     tStack* stack = stack_init(15);
 
     stack_refresh(stack);   // vycistenie stacku
     stack_push(stack, eDOLAR); // pushnutie na stack $
 
-    printf("Current token  is -> %d\n", token);
-    printf("StackTop  is -> %d\n", stack_top(stack));
+    stack_print_prece(stack);
 
     int actTokenIndexToPreceTable = 0;
     int stackTopTokenIndexToPreceTable = 0;
@@ -103,12 +128,6 @@ expr_return parse_expr(LocalMap* lMap, tList* list){
 
     do{
         stack->finderOfParenthesis = stack->top; // vyrovnanie top so finderom
-
-        // v pripade lexikalnej chyb
-        if (actTokenIndexToPreceTable == ERROR_LEX){
-            resultOfPrece.result = ERROR_LEX;
-            return resultOfPrece;
-        }
 
         //v pripade ze je na vrchole zasobniku non terminal E pozerame sa o 1 miesto nizsie
         if(stack->array[stack->top] == E){
@@ -121,31 +140,37 @@ expr_return parse_expr(LocalMap* lMap, tList* list){
 
         }
 
+        printf("This is act token    number -> |%d| and char -> |%s|\n", actTokenIndexToPreceTable, convert_to_char(actTokenIndexToPreceTable));
+        printf("This is act stackTop number -> |%d| and char -> |%s|\n", stackTopTokenIndexToPreceTable, convert_to_char(stackTopTokenIndexToPreceTable));
+
         switch(prece_table[stackTopTokenIndexToPreceTable][actTokenIndexToPreceTable]){
             case EQ:
+                printf("CASE: |=| (equal)\n");
                 stack->finderOfParenthesis = stack->top;
                 stack_search_for_theorem(stack);
                 stack_push(stack, actTokenIndexToPreceTable);
-                stack_print(stack);
+                stack_print_prece(stack);
                 token = getToken();     //zavolanie si noveho tokenu
                 break;
             case L:
+                printf("CASE: |<| (shifting)\n");
                 // SEM BUDEME VYHLADAVAT ZA NON - TERMINAL -> pre jednoduchost bez neho...
                 if(stack_top(stack) == E){
                     stack_pop(stack);
                     stack_push(stack, eSOLVING_RULE);
                     stack_push(stack, E);
                     stack_push(stack, actTokenIndexToPreceTable);
-                    stack_print(stack);
+                    stack_print_prece(stack);
                 }
                 else{
                     stack_push(stack, eSOLVING_RULE);
                     stack_push(stack, actTokenIndexToPreceTable);
-                    stack_print(stack);
+                    stack_print_prece(stack);
                 }
                 token = getToken();     //zavolanie si noveho tokenu
                 break;
             case G:
+                printf("CASE: |>| (reduction)\n");
                 stack_search_for_theorem(stack);
                 // PRAVIDLO E -> i
                 printf("This is value -> %d\n",stack->array[stack->finderOfParenthesis+1]);
@@ -161,7 +186,6 @@ expr_return parse_expr(LocalMap* lMap, tList* list){
                     switch(concreteOperator){
                         // PRAVIDLO E -> E + E
                         case ePLUS:
-
                             RULE_OF_OPERATORS;
                         // PRAVIDLO E -> E - E
                         case eMINUS:
@@ -192,14 +216,18 @@ expr_return parse_expr(LocalMap* lMap, tList* list){
                             RULE_OF_OPERATORS;
                     }
                 }
+                printf("This is act token    number -> |%d| and char -> |%s|\n", actTokenIndexToPreceTable, convert_to_char(actTokenIndexToPreceTable));
                 break;
                 // TODO: dokoncit pravidlo, a urobit funciu generateNonTermn
             case Err:
                 if(actTokenIndexToPreceTable == eDOLAR){
                     printf("STATE: $E$ -> EVERYTHING OK\n");
-
+                    // uvolnenie stacku
+                    stack_free(stack);
+                    printf("This is act token -> %d", token);
+                    ungetc(token, stdin);
+                    printf("This is act token -> %d", token);
                     resultOfPrece.bool_result = SUCCESS;
-                    resultOfPrece.string->str = "true";
                     return resultOfPrece;
                 }
                 printf("Error\n");
@@ -208,7 +236,8 @@ expr_return parse_expr(LocalMap* lMap, tList* list){
         }
 
 
-    }while(actTokenIndexToPreceTable != eDOLAR);
+    }while(1);
+    // (actTokenIndexToPreceTable != eDOLAR) && (stackTopTokenIndexToPreceTable != eDOLAR)
 
     return resultOfPrece;
 }

@@ -103,17 +103,16 @@ void stack_push ( tStack *stack, int token){
  * @return vrati token na vrchole zasobnika
  */
 int stack_pop(tStack *stack){
-    // control reaches end of non-void function!
     // ak zasobnik nie je prazdny
     if(!(stack_empty(stack))){
         int item = stack->array[stack->top];
-        stack->array[stack->top] = 0;
+        stack->array[stack->top] = 15;
 	    stack->top--;
         stack->finderOfParenthesis--;
         return item;
     }
-    // chyba cislo ????
-    printf("Popujes prazdny zasobnik\n");;
+    printf("Popping empty stack\n");
+    return INT_ERR;
 }
 
 /**
@@ -126,13 +125,25 @@ int stack_get_size(tStack *stack){
 }
 
 /**
+ * Pomocna debugovacia funkcia pre precedencnu analyzu
+ * @param stack konkretny stack
+ */
+void stack_print_prece(tStack *stack){
+    printf("[------------> STACK PRECE BEGIN <-------------]\n");
+    for(int i = 0; i < stack_get_size(stack); i++){
+        printf("Current stack item is -> %s\n", convert_to_char(stack->array[i]));
+    }
+    printf("[-------------> STACK PRECE END <--------------]\n");
+}
+
+/**
  * Pomocna debugovacia funkcia
  * @param stack konkretny stack
  */
 void stack_print(tStack *stack){
     printf("[------------> STACK BEGIN <-------------]\n");
     for(int i = 0; i < stack_get_size(stack); i++){
-        printf("Current stack item is -> %d\n", (stack->array[i]));
+        printf("Current stack item is -> %d\n", stack->array[i]);
     }
     printf("[-------------> STACK END <--------------]\n");
 }
@@ -143,7 +154,7 @@ void stack_print(tStack *stack){
  */
 void stack_refresh(tStack *stack){
     for(int i = 0; i < stack_get_size(stack); i++){
-        stack->array[i] = 0;
+        stack->array[i] = 15;
     }
     stack->top = -1;
     stack->finderOfParenthesis = -1;
