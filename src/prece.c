@@ -69,8 +69,7 @@ int indexerOfPreceTable (int indexer)
         case LEX_EOL: type = eDOLAR; break;             // v pripade ze to bude EOL napriklad bude then tak sa to bude spravat ako $
         case LEX_EOF: type = eDOLAR; break;             // v pripade ze to bude EOF na konci suboru
         case KW_THEN: type = eDOLAR; break;             // v pripade ze to bude then taktiez ukoncuj
-        case eDOLAR: type = eDOLAR; break;          // TODO: toto ak tak vymaz
-        // TODO: while <vyraz> do treba este ukoncovaci vyraz z lexiklanej do...
+        case KW_DO: type = eDOLAR; break;               // v pripade ze pripde DO
         default:
             /* SYNTAKTICKA CHYBA */
             printf("indexerOfPreceTable():Syntactic Error\n");
