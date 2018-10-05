@@ -63,6 +63,7 @@ void insert_item (tList *instr_list, tInstructionTypes *instr_name , tInstructio
     new_instr->data.type = *instr_name;
     new_instr->data.address1.type = addr1->type;
     new_instr->data.address1.value = addr1->value;
+    //printf("Test2: %s\n", new_instr->data.address1.value.s);
     new_instr->data.address2.type = addr2->type;
     new_instr->data.address2.value = addr2->value;
     new_instr->data.address3.type = addr3->type;
@@ -76,6 +77,16 @@ void insert_item (tList *instr_list, tInstructionTypes *instr_name , tInstructio
 
   }
 }
+
+
+
+// doplnit defaultni hodnoty!!!!!!!!!!!!!]
+// spravne alokovat pamet
+
+
+
+
+
 
 /**
  * Uvolnuje vsetky prvky listu

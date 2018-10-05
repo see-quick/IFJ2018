@@ -51,6 +51,8 @@ char* instruct_type(tDatType instruction) {
     case TF:
           return instr_type = "TF";
     break;
+    default:
+      printf("TODO\n");
 
   }
 }
@@ -75,6 +77,8 @@ void print_arit_instr( tNode *act_instr) {
   switch (act_instr->data.type) {
     case INSTRUCT_ADD: name = "ADD"; break;
     case INSTRUCT_SUB: name = "SUB"; break;
+    default:
+      printf("TODO\n" );
     //case INSTRUCT_INT2FLOAT: name = "INT2FLOAT"; break;
     //TODO remaining states
   }
@@ -94,12 +98,16 @@ void parse_instructions(tList *instr_list)  {
 
   while(1) {
 
+
     if((act_instr = return_instruct(instr_list)) == NULL )  break;
     move_activity(instr_list);
 
+
     switch (act_instr->data.type) {
       case INSTRUCT_HEAD:
-          printf(".IFJCODE18\n");
+          printf(".IFJcode18\n");
+          printf("JUMP $$main\n");
+          printf("LABEL $$main\n");
       break;
 
       case INSTRUCT_CREATEFREAME:
@@ -126,9 +134,11 @@ void parse_instructions(tList *instr_list)  {
           printf("BREAK\n");
       break;
 
+
+      // funguje!
       case INSTRUCT_MOVE:
-          printf("MOVE %s@%s %s@", instruct_type(act_instr->data.address1.type), act_instr->data.address1.value.s, instruct_type(act_instr->data.address2.type));
-          print_symb(act_instr->data.address2);
+          printf("MOVE %s@%s %s@\n", instruct_type(act_instr->data.address1.type), act_instr->data.address1.value.s, instruct_type(act_instr->data.address2.type));
+          //print_symb(act_instr->data.address2);
       break;
 
       case INSTRUCT_DEFVAR:
@@ -137,6 +147,10 @@ void parse_instructions(tList *instr_list)  {
 
       case INSTRUCT_CALL:
           printf("CALL %s\n", act_instr->data.address1.value.s);
+      break;
+
+      case INSTRUCT_LABEL:
+          printf("LABEL %s\n", act_instr->data.address1.value.s);
       break;
 
       case INSTRUCT_PUSHS:
@@ -278,6 +292,9 @@ void parse_instructions(tList *instr_list)  {
       case INSTRUCT_STRI2INTS:
           print_arit_instr(act_instr);
       break;
+
+      default:
+        printf("TODO\n");
 
       /*case INSTRUCT_READ:
           printf("READ %s@%s %s\n", instruct_type(act_instr->data.address1.type), act_instr->data.address1.value.s, );

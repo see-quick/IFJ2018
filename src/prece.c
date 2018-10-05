@@ -18,8 +18,10 @@
 #include "stack.h"
 
 
-#define RULE_OF_OPERATORS stack_pops(4, stack);stack_push(stack, E);stack_print_prece(stack);break
-#define RULE_OF_IDENTIFICATOR stack_pops(2, stack);stack_push(stack, E);stack_print_prece(stack)
+// #define RULE_OF_OPERATORS stack_pops(4, stack);stack_push(stack, E);stack_print_prece(stack);break
+#define RULE_OF_OPERATORS stack_pops(4, stack);stack_push(stack, E);break
+// #define RULE_OF_IDENTIFICATOR stack_pops(2, stack);stack_push(stack, E);stack_print_prece(stack)
+#define RULE_OF_IDENTIFICATOR stack_pops(2, stack);stack_push(stack, E);
 
 int counterVar = 1;
 
@@ -107,7 +109,7 @@ char* convert_to_char(int token){
 
 expr_return parse_expr(LocalMap* lMap, tList* list){
 
-    printf("Som v precedenčnej analýze\n");
+    //printf("Som v precedenčnej analýze\n");
 
     local_map_print(lMap);
 
@@ -120,7 +122,7 @@ expr_return parse_expr(LocalMap* lMap, tList* list){
     stack_refresh(stack);   // vycistenie stacku
     stack_push(stack, eDOLAR); // pushnutie na stack $
 
-    stack_print_prece(stack);
+    //stack_print_prece(stack);
 
     int actTokenIndexToPreceTable = 0;
     int stackTopTokenIndexToPreceTable = 0;
@@ -149,40 +151,40 @@ expr_return parse_expr(LocalMap* lMap, tList* list){
 
 
 
-        printf("This is act token    number -> |%d| and char -> |%s|\n", actTokenIndexToPreceTable, convert_to_char(actTokenIndexToPreceTable));
-        printf("This is act stackTop number -> |%d| and char -> |%s|\n", stackTopTokenIndexToPreceTable, convert_to_char(stackTopTokenIndexToPreceTable));
+        //printf("This is act token    number -> |%d| and char -> |%s|\n", actTokenIndexToPreceTable, convert_to_char(actTokenIndexToPreceTable));
+        //printf("This is act stackTop number -> |%d| and char -> |%s|\n", stackTopTokenIndexToPreceTable, convert_to_char(stackTopTokenIndexToPreceTable));
 
         switch(prece_table[stackTopTokenIndexToPreceTable][actTokenIndexToPreceTable]){
             case EQ:
-                printf("CASE: |=| (equal)\n");
+                //printf("CASE: |=| (equal)\n");
                 stack->finderOfParenthesis = stack->top;
                 stack_search_for_theorem(stack);
                 stack_push(stack, actTokenIndexToPreceTable);
-                stack_print_prece(stack);
+                //stack_print_prece(stack);
                 token = getToken();     //zavolanie si noveho tokenu
                 break;
             case L:
-                printf("CASE: |<| (shifting)\n");
+                //printf("CASE: |<| (shifting)\n");
                 // SEM BUDEME VYHLADAVAT ZA NON - TERMINAL -> pre jednoduchost bez neho...
                 if(stack_top(stack) == E){
                     stack_pop(stack);
                     stack_push(stack, eSOLVING_RULE);
                     stack_push(stack, E);
                     stack_push(stack, actTokenIndexToPreceTable);
-                    stack_print_prece(stack);
+                    //stack_print_prece(stack);
                 }
                 else{
                     stack_push(stack, eSOLVING_RULE);
                     stack_push(stack, actTokenIndexToPreceTable);
-                    stack_print_prece(stack);
+                    //stack_print_prece(stack);
                 }
                 token = getToken();     //zavolanie si noveho tokenu
                 break;
             case G:
-                printf("CASE: |>| (reduction)\n");
+                //printf("CASE: |>| (reduction)\n");
                 stack_search_for_theorem(stack);
                 // PRAVIDLO E -> i
-                printf("This is value -> %d\n",stack->array[stack->finderOfParenthesis+1]);
+                //printf("This is value -> %d\n",stack->array[stack->finderOfParenthesis+1]);
                 if ((stack->array[stack->finderOfParenthesis+1]) == eIDENT){
                     RULE_OF_IDENTIFICATOR;
                 }
@@ -225,22 +227,22 @@ expr_return parse_expr(LocalMap* lMap, tList* list){
                             RULE_OF_OPERATORS;
                     }
                 }
-                printf("This is act token    number -> |%d| and char -> |%s|\n", actTokenIndexToPreceTable, convert_to_char(actTokenIndexToPreceTable));
+                //printf("This is act token    number -> |%d| and char -> |%s|\n", actTokenIndexToPreceTable, convert_to_char(actTokenIndexToPreceTable));
                 break;
                 // TODO: dokoncit pravidlo, a urobit funciu stack_print_preceeNonTermn
             case Err:
                 if(actTokenIndexToPreceTable == eDOLAR){
-                    printf("This is stackTop %s\n", convert_to_char(stack_top(stack)));
+                    //printf("This is stackTop %s\n", convert_to_char(stack_top(stack)));
                     /* v pripade ak prijde vyraz a = then  v preklade $$ medzi nimi nebude nic ziaden nontermian(E) tak to vychodi syntakticku chybu */
                     if(stack->top == 0){
                         resultOfPrece.result = SYN_ERR;
                         return resultOfPrece;
                     }
 //                    if(stack_top(stack) == eDOLAR)
-                    printf("STATE: $E$ -> EVERYTHING OK\n");
+                    //printf("STATE: $E$ -> EVERYTHING OK\n");
                     // uvolnenie stacku
                     stack_free(stack);
-                    printf("Vraciam -> %d\n", resultOfPrece.result);
+                    //printf("Vraciam -> %d\n", resultOfPrece.result);
                     resultOfPrece.result = SUCCESS;
                     return resultOfPrece;
                 }

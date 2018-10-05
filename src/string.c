@@ -51,6 +51,8 @@ int strAdd (tString *s, char c)
   return SUCCESS;
 }
 
+
+
 int strFree (tString *s)
 {
   if (s->str)

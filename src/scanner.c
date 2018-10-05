@@ -346,11 +346,12 @@ int getToken(){
                         /*else if (digit_check == 1){
                             return ERROR_LEX;
                         }*/
-                        else if(isspace(c) || c == ',' || c == ')'){     // is delimiter     && digit_lock == false
+                        else if(isspace(c) || c == ',' || c == ')' || c == '+' || c == '-'){     // is delimiter     && digit_lock == false
                             expr = true;
                             return LEX_NUMBER;
                         }
                         else return ERROR_LEX;
+
                     }
                     //digit_lock == false;
                     break;
@@ -590,7 +591,7 @@ int getToken(){
                     ungetc(c, stdin);
                     char *endptr = NULL;
                     long ascii_tmp = strtol(ascii_val, &endptr, 16);
-                    printf("%d  %ld  %s ", *endptr, ascii_tmp, ascii_val);
+                    printf("%d  %d  %d ", *endptr, ascii_tmp, ascii_val);
                     if (*endptr != '\0' || strcmp(endptr, ascii_val) == 0){
                         printf("asci err here 2");
                         return ERROR_LEX;

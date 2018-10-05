@@ -22,6 +22,8 @@
 #include "error.h"
 #include "parser.h"
 #include "list.h"
+#include "instr_parse.h"
+#include "list.h"
 
 int main(int argc, char** argv) {
    
@@ -34,7 +36,10 @@ int main(int argc, char** argv) {
 
   result = parse(globalMap, list); 
 
-//  gen_code(list);
+  reverse(&(list->first));
+  set_active(list);
+
+  parse_instructions(list);
 
   global_map_free(globalMap);
 
