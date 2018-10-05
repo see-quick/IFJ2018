@@ -115,11 +115,37 @@ char* convert_to_char(int token){
     return "\0";
 }
 
-expr_return parse_expr(LocalMap* lMap, tList* list){
 
-    //printf("Som v precedenčnej analýze\n");
 
-    local_map_print(lMap);
+// @varName pravidlo id = <sth> 
+// @lMap je lokalni Mapa
+expr_return parse_expr(LocalMap* lMap, tList* list, char * varName){
+
+    // --- DEBUG varName node v mape ---
+    printf("Operand: %s\n", varName);
+    tDataIDF* temporary = local_map_get_pointer_to_value(lMap, varName);
+    if (temporary == NULL){
+        printf("Zatim nevim, co se ma stat, asi interni chyba...\n");
+    }
+    else{
+        // --debug vypis typu a hodnoty
+        printf("Typ operandu: %d\n", temporary->type);
+        if (temporary->type == 501){
+            printf("Oparand value: %d\n", temporary->value.i);
+        }
+        else if (temporary->type == 502){
+            printf("Operand value: %f", temporary->value.d);
+        }
+        else if (temporary->type == 503){ // string
+            printf("Operand value: %s", temporary->value.string.str);
+        }
+        else{ //nil
+            printf("Operand type: nil\n");
+        }
+    }
+
+
+    /* Inicializace struktury pro informaci o operandu vyrazu*/
     tDataIDF* dataIDF = (tDataIDF*)malloc(sizeof(tDataIDF));
     setEmptyDataIDF(dataIDF);
 
@@ -129,14 +155,47 @@ expr_return parse_expr(LocalMap* lMap, tList* list){
     tStack* stack = stack_init(15);
 
     stack_refresh(stack);   // vycistenie stacku
-    stack_push(stack, eDOLAR, *dataIDF); // pushnutie na stack $
 
+
+
+
+    // prvni push
+
+    // SEMANTICKA AKCE
+    // pushnuti do stackofItems strukturu pro token, ktery prave prisel od PARSERU
+    // muze byt LEX_ID, LEX_NUMBER, LEX_REAL_NUMBER, LEX_STRING
+
+    // printf("Testovani - %d\n", token);    -- actTokenIndexToPreceTable 
+    // naplnim strukturu tDataIDF
+    // a pushnem
+
+    if (token == LEX_NUMBER){
+        dataIDF->type = 501; // integer
+        dataIDF->value.i = atoi(gToken.data.str);   
+    }
+    else if (token == LEX_REAL_NUMBER){
+        dataIDF->type = 502;
+        dataIDF->value.d = atof(gToken.data.str);
+    }
+    else if (token == LEX_STRING){
+        dataIDF->type = 503;
+        dataIDF->value.string.str = gToken.data.str;
+    }
+    // else LEX_ID dodelat
+    dataIDF->defined = true;
+
+    stack_push(stack, eDOLAR, *dataIDF); // pushnutie na stack $
     stack_print_prece(stack);
+
+    // proc je type u vsech polozek 501?
+    stack_print(stack);
 
     int actTokenIndexToPreceTable = 0;
     int stackTopTokenIndexToPreceTable = 0;
 
     actTokenIndexToPreceTable = indexerOfPreceTable(token);  // pretypovanie na dany index
+
+ 
 
     do{
         stack->finderOfParenthesis = stack->top; // vyrovnanie top so finderom
@@ -158,19 +217,23 @@ expr_return parse_expr(LocalMap* lMap, tList* list){
             return resultOfPrece;
         }
 
-
-
-        //printf("This is act token    number -> |%d| and char -> |%s|\n", actTokenIndexToPreceTable, convert_to_char(actTokenIndexToPreceTable));
-        //printf("This is act stackTop number -> |%d| and char -> |%s|\n", stackTopTokenIndexToPreceTable, convert_to_char(stackTopTokenIndexToPreceTable));
+        // printf("This is act token    number -> |%d| and char -> |%s|\n", actTokenIndexToPreceTable, convert_to_char(actTokenIndexToPreceTable));
+        // printf("This is act stackTop number -> |%d| and char -> |%s|\n", stackTopTokenIndexToPreceTable, convert_to_char(stackTopTokenIndexToPreceTable));
 
         switch(prece_table[stackTopTokenIndexToPreceTable][actTokenIndexToPreceTable]){
             case EQ:
                 //printf("CASE: |=| (equal)\n");
                 stack->finderOfParenthesis = stack->top;
                 stack_search_for_theorem(stack);
+
                 stack_push(stack, actTokenIndexToPreceTable, *dataIDF);
                 //stack_print_prece(stack);
                 token = getToken();     //zavolanie si noveho tokenu
+
+                if (token == LEX_NUMBER || token == LEX_REAL_NUMBER || token == LEX_STRING){
+                    printf("Pridat do tDataIDF\n");
+                }
+
                 break;
             case L:
                 //printf("CASE: |<| (shifting)\n");
@@ -187,7 +250,11 @@ expr_return parse_expr(LocalMap* lMap, tList* list){
                     stack_push(stack, actTokenIndexToPreceTable, *dataIDF);
                     //stack_print_prece(stack);
                 }
+
                 token = getToken();     //zavolanie si noveho tokenu
+
+                // pridani do tDataIDF, nechapu kdy se presne pridava tata kontrola...
+
                 break;
             case G:
                 //printf("CASE: |>| (reduction)\n");

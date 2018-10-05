@@ -232,7 +232,7 @@ int term_list(void){
 }
 
 
-int sth(LocalMap* localMap){
+int sth(LocalMap* localMap, char * nazev_promenne){
 	int result = SUCCESS;
 	expr_return res;
 	tDataFunction *tmp;
@@ -328,7 +328,7 @@ int sth(LocalMap* localMap){
 		//pokud neni token LEX_ID_F, prozenem to precedencni SA
 		default:
 //			result = parse_expression();
-			res = parse_expr(localMap, ilist);
+			res = parse_expr(localMap, ilist, nazev_promenne);
 			result = res.result;
 	}
 
@@ -393,7 +393,7 @@ int stat(void){
 
 
 			// volani pravidla sth()
-			result = sth(localMap);
+			result = sth(localMap, tmp_str2);
 			if(result != SUCCESS){
 				return result;
 			}
@@ -422,7 +422,7 @@ int stat(void){
 				return INT_ERR;
 			}
 
-			res = parse_expr(localMap, ilist);
+			res = parse_expr(localMap, ilist, NULL);
 			result = res.result;
 //			result = parse_expression();
 			if(result != SUCCESS){
@@ -530,7 +530,7 @@ int stat(void){
 				return INT_ERR;
 			}
 
-			res = parse_expr(localMap, ilist);
+			res = parse_expr(localMap, ilist, NULL);
 			result = res.result;
 //			result = parse_expression();
 			if(result != SUCCESS){

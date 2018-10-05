@@ -65,7 +65,7 @@ typedef struct{
 }expr_return;
 
 // hlavni funkce precedencni analyzy
-expr_return parse_expr(LocalMap*, tList*);
+expr_return parse_expr(LocalMap*, tList*, char *);
 void setEmptyDataIDF(tDataIDF* dataIDF);
 
 // pomocne debugovanie funckie

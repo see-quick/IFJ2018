@@ -46,8 +46,8 @@ tStack* stack_init(unsigned memory){
     stack->top = -1;
     stack->finderOfParenthesis = -1;
     stack->memory = memory;
-    stack->arrayOfNumbers = (int*) malloc(stack->memory * sizeof(int));
-    stack->arrayOfItems = (tDataIDF*) malloc(stack->memory * sizeof(tDataIDF));
+    stack->arrayOfNumbers = (int *) malloc(stack->memory * sizeof(int));
+    stack->arrayOfItems = (tDataIDF *) malloc(stack->memory * sizeof(tDataIDF));
     return stack;
 }
 
@@ -118,7 +118,7 @@ void stack_push ( tStack *stack, int tokenNumber, tDataIDF tokenData){
 tItem* stack_pop(tStack *stack){
     // ak zasobnik nie je prazdny
     if(!(stack_empty(stack))){
-        item = malloc(sizeof(tItem));
+        item = (tItem *)malloc(sizeof(tItem));
         item->token_number = stack->arrayOfNumbers[stack->top];
         item->token_data = stack->arrayOfItems[stack->top];
         stack->arrayOfNumbers[stack->top] = 15;
@@ -164,13 +164,13 @@ void stack_print_prece(tStack *stack){
  * Pomocna debugovacia funkcia
  * @param stack konkretny stack
  */
-//void stack_print(tStack *stack){
-//    printf("[------------> STACK BEGIN <-------------]\n");
-//    for(int i = 0; i < stack_get_size(stack); i++){
-//        printf("Current stack item is -> %d\n", stack->arrayOfItems[i].);
-//    }
-//    printf("[-------------> STACK END <--------------]\n");
-//}
+void stack_print(tStack *stack){
+   printf("[------------> STACK BEGIN <-------------]\n");
+   for(int i = 0; i < stack_get_size(stack); i++){
+       printf("Current stack item type %d, value %d\n", stack->arrayOfItems[i].type, stack->arrayOfItems[i].value.i);
+   }
+   printf("[-------------> STACK END <--------------]\n");
+}
 
 /**
  * Vzdy pouzi tuto funckiu pred funkciou stack_free(), sluzi iniciliazivanie vsetkych poli na NULL
@@ -192,7 +192,9 @@ void stack_refresh(tStack *stack){
 void stack_free(tStack *stack)
 {
     stack->memory = 0;
-    free(item);
+    if (item != NULL){
+        free(item);
+    }
     free(stack->arrayOfNumbers);
     free(stack->arrayOfItems);
     free(stack);
