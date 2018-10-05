@@ -346,7 +346,8 @@ int getToken(){
                         /*else if (digit_check == 1){
                             return ERROR_LEX;
                         }*/
-                        else if(isspace(c) || c == ',' || c == ')' || c == '+' || c == '-'){     // is delimiter     && digit_lock == false
+                        else if(isspace(c) || c == ',' || c == ')' || c == '+' || c == '-' || c == '*' || c == '/'
+                                  || c == '>' || c == '<'    ){     // is delimiter     && digit_lock == false
                             expr = true;
                             return LEX_NUMBER;
                         }

@@ -168,11 +168,11 @@ int term_list(void){
 			instr_type = INSTRUCT_DEFVAR;
 			instr1.type = 702;
 
-			printf("Paramcount %d\n", paramCount);
+			//printf("Paramcount %d\n", paramCount);
 
 			sprintf(&s, "%d", paramCount);
 
-			printf("String paramCount %c\n", s);
+			//printf("String paramCount %c\n", s);
 
 
 			// pridat counter pro params!!!
