@@ -18,10 +18,9 @@
 #include "stack.h"
 
 
-// #define RULE_OF_OPERATORS stack_pops(4, stack);stack_push(stack, E);stack_print_prece(stack);break
-#define RULE_OF_OPERATORS stack_pops(4, stack);stack_push(stack, E);break
-// #define RULE_OF_IDENTIFICATOR stack_pops(2, stack);stack_push(stack, E);stack_print_prece(stack)
-#define RULE_OF_IDENTIFICATOR stack_pops(2, stack);stack_push(stack, E);
+ #define RULE_OF_OPERATORS stack_pops(4, stack);stack_push(stack, E, *dataIDF);stack_print_prece(stack);break
+ #define RULE_OF_IDENTIFICATOR stack_pops(2, stack);stack_push(stack, E, *dataIDF);stack_print_prece(stack)
+
 
 int counterVar = 1;
 
@@ -42,6 +41,14 @@ prece_states prece_table [SIZEOFTABLE][SIZEOFTABLE] = {
 /* ) */ { G ,  G,   G,   G,   G,   G,  G,   G,   G,   G, Err, Err,   G,   G},
 /* $ */ { L ,  L,   L,   L,   L,   L,  L,   L,   L,   L,   L,   L, Err, Err},
 };
+
+
+void setEmptyDataIDF(tDataIDF* dataIDF) {
+    dataIDF->value.i = 0;
+    dataIDF->type = 501;
+    dataIDF->defined = true;
+}
+
 
 /* KVOLI INDEXOVANIU NA PRECEDENCNI TABULKU */
 int indexerOfPreceTable (int indexer)
@@ -105,6 +112,7 @@ char* convert_to_char(int token){
         case 22: return "[<]\0";
         case 42: return "E\0";
     }
+    return "\0";
 }
 
 expr_return parse_expr(LocalMap* lMap, tList* list){
@@ -112,7 +120,8 @@ expr_return parse_expr(LocalMap* lMap, tList* list){
     //printf("Som v precedenčnej analýze\n");
 
     local_map_print(lMap);
-
+    tDataIDF* dataIDF = (tDataIDF*)malloc(sizeof(tDataIDF));
+    setEmptyDataIDF(dataIDF);
 
     /* INICIALIZACIA STRUKTUR */
     expr_return resultOfPrece = {.result=SUCCESS};
@@ -120,9 +129,9 @@ expr_return parse_expr(LocalMap* lMap, tList* list){
     tStack* stack = stack_init(15);
 
     stack_refresh(stack);   // vycistenie stacku
-    stack_push(stack, eDOLAR); // pushnutie na stack $
+    stack_push(stack, eDOLAR, *dataIDF); // pushnutie na stack $
 
-    //stack_print_prece(stack);
+    stack_print_prece(stack);
 
     int actTokenIndexToPreceTable = 0;
     int stackTopTokenIndexToPreceTable = 0;
@@ -133,13 +142,13 @@ expr_return parse_expr(LocalMap* lMap, tList* list){
         stack->finderOfParenthesis = stack->top; // vyrovnanie top so finderom
 
         //v pripade ze je na vrchole zasobniku non terminal E pozerame sa o 1 miesto nizsie
-        if(stack->array[stack->top] == E){
+        if(stack->arrayOfNumbers[stack->top] == E){
             actTokenIndexToPreceTable = indexerOfPreceTable(token);  // pretypovanie na dany index
-            stackTopTokenIndexToPreceTable = stack->array[stack->finderOfParenthesis - 1];     // pozerame sa o jedno miesto nizsie
+            stackTopTokenIndexToPreceTable = stack->arrayOfNumbers[stack->finderOfParenthesis - 1];     // pozerame sa o jedno miesto nizsie
         }
         else{
             actTokenIndexToPreceTable = indexerOfPreceTable(token);  // pretypovanie na dany index
-            stackTopTokenIndexToPreceTable  = stack_top(stack); // pretypovanie na dany index
+            stackTopTokenIndexToPreceTable  = stack_top_token_number(stack); // pretypovanie na dany index
 
         }
 
@@ -159,23 +168,23 @@ expr_return parse_expr(LocalMap* lMap, tList* list){
                 //printf("CASE: |=| (equal)\n");
                 stack->finderOfParenthesis = stack->top;
                 stack_search_for_theorem(stack);
-                stack_push(stack, actTokenIndexToPreceTable);
+                stack_push(stack, actTokenIndexToPreceTable, *dataIDF);
                 //stack_print_prece(stack);
                 token = getToken();     //zavolanie si noveho tokenu
                 break;
             case L:
                 //printf("CASE: |<| (shifting)\n");
                 // SEM BUDEME VYHLADAVAT ZA NON - TERMINAL -> pre jednoduchost bez neho...
-                if(stack_top(stack) == E){
+                if(stack_top_token_number(stack) == E){
                     stack_pop(stack);
-                    stack_push(stack, eSOLVING_RULE);
-                    stack_push(stack, E);
-                    stack_push(stack, actTokenIndexToPreceTable);
+                    stack_push(stack, eSOLVING_RULE, *dataIDF);
+                    stack_push(stack, E, *dataIDF);
+                    stack_push(stack, actTokenIndexToPreceTable, *dataIDF);
                     //stack_print_prece(stack);
                 }
                 else{
-                    stack_push(stack, eSOLVING_RULE);
-                    stack_push(stack, actTokenIndexToPreceTable);
+                    stack_push(stack, eSOLVING_RULE, *dataIDF);
+                    stack_push(stack, actTokenIndexToPreceTable, *dataIDF);
                     //stack_print_prece(stack);
                 }
                 token = getToken();     //zavolanie si noveho tokenu
@@ -185,15 +194,15 @@ expr_return parse_expr(LocalMap* lMap, tList* list){
                 stack_search_for_theorem(stack);
                 // PRAVIDLO E -> i
                 //printf("This is value -> %d\n",stack->array[stack->finderOfParenthesis+1]);
-                if ((stack->array[stack->finderOfParenthesis+1]) == eIDENT){
+                if ((stack->arrayOfNumbers[stack->finderOfParenthesis+1]) == eIDENT){
                     RULE_OF_IDENTIFICATOR;
                 }
                     // PRAVIDLO E -> (E)
-                else if(((stack->array[stack->finderOfParenthesis+1]) == eLBAR) && ((stack->array[stack->finderOfParenthesis + 2]) == E) && ((stack->array[stack->finderOfParenthesis+3]) == eRBAR)){
+                else if(((stack->arrayOfNumbers[stack->finderOfParenthesis+1]) == eLBAR) && ((stack->arrayOfNumbers[stack->finderOfParenthesis + 2]) == E) && ((stack->arrayOfNumbers[stack->finderOfParenthesis+3]) == eRBAR)){
                     RULE_OF_OPERATORS;
                 }
                 else {
-                    int concreteOperator = stack->array[stack->finderOfParenthesis + 2];
+                    int concreteOperator = stack->arrayOfNumbers[stack->finderOfParenthesis + 2];
                     switch(concreteOperator){
                         // PRAVIDLO E -> E + E
                         case ePLUS:
@@ -239,7 +248,7 @@ expr_return parse_expr(LocalMap* lMap, tList* list){
                         return resultOfPrece;
                     }
 //                    if(stack_top(stack) == eDOLAR)
-                    //printf("STATE: $E$ -> EVERYTHING OK\n");
+                    printf("STATE: $E$ -> EVERYTHING OK\n");
                     // uvolnenie stacku
                     stack_free(stack);
                     //printf("Vraciam -> %d\n", resultOfPrece.result);

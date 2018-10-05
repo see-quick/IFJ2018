@@ -53,7 +53,7 @@ char* instruct_type(tDatType instruction) {
     break;
     default:
       printf("TODO\n");
-
+      return "instruct_type():i did not find anything\n";
   }
 }
 /*

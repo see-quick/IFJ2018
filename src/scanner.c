@@ -591,7 +591,7 @@ int getToken(){
                     ungetc(c, stdin);
                     char *endptr = NULL;
                     long ascii_tmp = strtol(ascii_val, &endptr, 16);
-                    printf("%d  %d  %d ", *endptr, ascii_tmp, ascii_val);
+                    printf("%d  %ld  %s ", *endptr, ascii_tmp, ascii_val);
                     if (*endptr != '\0' || strcmp(endptr, ascii_val) == 0){
                         printf("asci err here 2");
                         return ERROR_LEX;

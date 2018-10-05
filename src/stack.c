@@ -19,6 +19,9 @@
 #include <stdlib.h>
 #include "prece.h"
 
+
+tItem* item;
+
 /* Zakladne funckie so Stackom */
 
 /**
@@ -43,7 +46,8 @@ tStack* stack_init(unsigned memory){
     stack->top = -1;
     stack->finderOfParenthesis = -1;
     stack->memory = memory;
-    stack->array = (int*) malloc(stack->memory * sizeof(int));
+    stack->arrayOfNumbers = (int*) malloc(stack->memory * sizeof(int));
+    stack->arrayOfItems = (tDataIDF*) malloc(stack->memory * sizeof(tDataIDF));
     return stack;
 }
 
@@ -70,22 +74,30 @@ int stack_full(tStack *stack){
  * @param stack konkretny zasobnik
  * @return token
  */
-int stack_top(tStack *stack){
+int stack_top_token_number(tStack *stack){
     int result;
     if(stack_empty(stack)){
         result = stack_error(stack);
     } else{
-        return stack->array[stack->top];
+        return stack->arrayOfNumbers[stack->top];
     }
     return result;
 }
+
+tDataIDF* stack_top_token_data(tStack *stack){
+    tDataIDF* result = NULL;
+    if(stack_empty(stack)){
+       return result;
+    }
+    return &stack->arrayOfItems[stack->top];
+};
 
 /**
  * Funckia, ktora pushuje zvoleny token do zasobnika
  * @param stack konkretny token
  * @param token pushovany token
  */
-void stack_push ( tStack *stack, int token){
+void stack_push ( tStack *stack, int tokenNumber, tDataIDF tokenData){
     if(stack_full(stack)){
         if(stack_error(stack) == -1){
             return;
@@ -93,7 +105,8 @@ void stack_push ( tStack *stack, int token){
     }
     stack->top++;
     stack->finderOfParenthesis++;
-    stack->array[stack->top] = token;
+    stack->arrayOfNumbers[stack->top] = tokenNumber;
+    stack->arrayOfItems[stack->top] = tokenData;
     //printf("%d <-- Pushed to stack\n", (token));
 }
 
@@ -102,17 +115,19 @@ void stack_push ( tStack *stack, int token){
  * @param stack konkrenty token
  * @return vrati token na vrchole zasobnika
  */
-int stack_pop(tStack *stack){
+tItem* stack_pop(tStack *stack){
     // ak zasobnik nie je prazdny
     if(!(stack_empty(stack))){
-        int item = stack->array[stack->top];
-        stack->array[stack->top] = 15;
-	    stack->top--;
+        item = malloc(sizeof(tItem));
+        item->token_number = stack->arrayOfNumbers[stack->top];
+        item->token_data = stack->arrayOfItems[stack->top];
+        stack->arrayOfNumbers[stack->top] = 15;
+        stack->top--;
         stack->finderOfParenthesis--;
         return item;
     }
     printf("Popping empty stack\n");
-    return INT_ERR;
+    return NULL;
 }
 
 /**
@@ -128,10 +143,19 @@ int stack_get_size(tStack *stack){
  * Pomocna debugovacia funkcia pre precedencnu analyzu
  * @param stack konkretny stack
  */
+//void stack_print_prece(tStack *stack){
+//    printf("[------------> STACK PRECE BEGIN <-------------]\n");
+//    for(int i = 0; i < stack_get_size(stack); i++){
+//        printf("Current stack item is -> %s\n", convert_to_char(stack->arrayOfNumbers[i]));
+//    }
+//    printf("[-------------> STACK PRECE END <--------------]\n");
+//}
+
+
 void stack_print_prece(tStack *stack){
     printf("[------------> STACK PRECE BEGIN <-------------]\n");
     for(int i = 0; i < stack_get_size(stack); i++){
-        printf("Current stack item is -> %s\n", convert_to_char(stack->array[i]));
+        printf("Current stack item is -> %s\n", convert_to_char(stack->arrayOfNumbers[i]));
     }
     printf("[-------------> STACK PRECE END <--------------]\n");
 }
@@ -140,13 +164,13 @@ void stack_print_prece(tStack *stack){
  * Pomocna debugovacia funkcia
  * @param stack konkretny stack
  */
-void stack_print(tStack *stack){
-    printf("[------------> STACK BEGIN <-------------]\n");
-    for(int i = 0; i < stack_get_size(stack); i++){
-        printf("Current stack item is -> %d\n", stack->array[i]);
-    }
-    printf("[-------------> STACK END <--------------]\n");
-}
+//void stack_print(tStack *stack){
+//    printf("[------------> STACK BEGIN <-------------]\n");
+//    for(int i = 0; i < stack_get_size(stack); i++){
+//        printf("Current stack item is -> %d\n", stack->arrayOfItems[i].);
+//    }
+//    printf("[-------------> STACK END <--------------]\n");
+//}
 
 /**
  * Vzdy pouzi tuto funckiu pred funkciou stack_free(), sluzi iniciliazivanie vsetkych poli na NULL
@@ -154,7 +178,8 @@ void stack_print(tStack *stack){
  */
 void stack_refresh(tStack *stack){
     for(int i = 0; i < stack_get_size(stack); i++){
-        stack->array[i] = 15;
+        stack->arrayOfNumbers[i] = 15;
+        setEmptyDataIDF(&stack->arrayOfItems[i]);
     }
     stack->top = -1;
     stack->finderOfParenthesis = -1;
@@ -167,7 +192,9 @@ void stack_refresh(tStack *stack){
 void stack_free(tStack *stack)
 {
     stack->memory = 0;
-    free(stack->array);
+    free(item);
+    free(stack->arrayOfNumbers);
+    free(stack->arrayOfItems);
     free(stack);
 }
 
@@ -178,7 +205,7 @@ void stack_free(tStack *stack)
  */
 void stack_search_for_theorem(tStack *stack) {
     /* this will be testing code */
-    for(int i = 0; stack->array[stack->finderOfParenthesis] != eSOLVING_RULE; i++) { //solving rule
+    for(int i = 0; stack->arrayOfNumbers[stack->finderOfParenthesis] != eSOLVING_RULE; i++) { //solving rule
         stack->finderOfParenthesis--;
     }
 }

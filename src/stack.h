@@ -22,22 +22,31 @@
 
 #include <stdio.h>
 #include "string.h"
+#include "hashtable.h"
 
 typedef struct{
     int top;
     int finderOfParenthesis; // TODO: same as top, but this variable is used for finding first occurence of '<' in Non-terminal
     unsigned memory;
-    int *array;
+    int *arrayOfNumbers;
+    tDataIDF *arrayOfItems;
 }tStack;
+
+typedef struct{
+    int token_number;
+    tDataIDF token_data;
+}tItem;
+
 
 tStack* stack_init(unsigned memory);
 int stack_error();
 int stack_empty(tStack *stack);
 int stack_full(tStack *stack);
 int stack_get_size(tStack *stack);
-void stack_push ( tStack *stack, int token );
-int stack_top(tStack *stack);
-int stack_pop ( tStack *stack ); // sem bude vracat Token
+int stack_top_token_number(tStack *stack);
+tDataIDF* stack_top_token_data(tStack *stack);
+tItem* stack_pop(tStack *stack); // sem bude vracat Token
+void stack_push ( tStack *stack, int tokenNumber, tDataIDF tokenData);
 void stack_free(tStack *stack);
 void stack_print(tStack *stack);
 void stack_print_prece(tStack *stack);

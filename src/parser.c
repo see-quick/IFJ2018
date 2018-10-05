@@ -1,5 +1,5 @@
 /**
- * Predmet:  IFJ 
+ * Predmet:  IFJ
  * Projekt:  Implementace prekladace imperativniho jazyka IFJ18
  * Soubor:   parser.c
  *
@@ -9,9 +9,9 @@
  * Datum:
  *
  * Autori:   Maros Orsak       vedouci
- *           Polishchuk Kateryna     <xpolis03@fit.vutbr.cz>           
- *           Igor Ignac           
- *           Marek Rohel       
+ *           Polishchuk Kateryna     <xpolis03@fit.vutbr.cz>
+ *           Igor Ignac
+ *           Marek Rohel
 
 */
 
@@ -83,7 +83,7 @@ int term(void){
 		case LEX_NUMBER:
 		case LEX_REAL_NUMBER:
 		case LEX_STRING:
-			//  semanticka kontrola dalsich parametru 
+			//  semanticka kontrola dalsich parametru
 			// kontrola, zda je dana promenna deklarovana
 			// jinak vytvor vnitrni promennou s hodnotou
 
@@ -160,8 +160,8 @@ int term_list(void){
 		case LEX_REAL_NUMBER:
 		case LEX_STRING:
 
-			// semanticka akce 
-			// if LEX_ID -> zkontrolovat zda je promenna definovana 
+			// semanticka akce
+			// if LEX_ID -> zkontrolovat zda je promenna definovana
 			// pokud je to LEX_ID, LEX_NUMBER, LEX_REAL, LEX_STRING , podle typu vytvorit vnitrni promennou s hodnotou argumentu
 
 
@@ -216,7 +216,7 @@ int term_list(void){
 		default:
 			fprintf(stderr, "Ocekavano 'identifikator' 'konstanta' ')' na radku %d\n", gToken.row);
 			resetToken();
-			return SYN_ERR; 
+			return SYN_ERR;
 	}
 
 	token = getToken();
@@ -332,7 +332,7 @@ int sth(LocalMap* localMap){
 			result = res.result;
 	}
 
-	
+
 
 	return result;
 }
@@ -341,7 +341,7 @@ int stat(void){
 	int result = SUCCESS;
 	expr_return res;
 
-	
+
 
 	switch(token){
 		//<STAT> -> id = <STH>
@@ -411,7 +411,7 @@ int stat(void){
 			return result;
 		break;
 
-		//<STAT> -> if <EXPR> then eol <ST-LIST> else eol <ST-LIST> end if 
+		//<STAT> -> if <EXPR> then eol <ST-LIST> else eol <ST-LIST> end if
 		case KW_IF:
 
 			//nacteni a predani do vyrazove SA
@@ -430,7 +430,7 @@ int stat(void){
 				return result;
 			}
 
-			// token nacteny z parse_expr ma byt THEN nebo 
+			// token nacteny z parse_expr ma byt THEN nebo
 
 
 			//token je jiz nacteny, musi = KW_THEN
@@ -521,7 +521,7 @@ int stat(void){
 
 		//<STAT> -> while <EXPR> do eol <ST-LIST> end
 		case KW_WHILE:
-			
+
 			//vyrazova SA, pro precedencni analyzu
 			token = getToken();
 			if(!error_lex()){
@@ -597,7 +597,7 @@ int stat(void){
 
 	return result;
 
-	
+
 }
 //int parse_expression(void){
 //
@@ -741,7 +741,7 @@ int pm_list2(){
 				return INT_ERR;
 			}
 
-			
+
 			if(!checkTokenType(LEX_ID)){
 				fprintf(stderr, "Ocekavno 'id' na radku %d\n", gToken.row);
 				resetToken();
@@ -749,7 +749,7 @@ int pm_list2(){
 			}
 
 			// SEMANTICKE AKCE pridani parametru do LTS funkce
-			
+
 
 			// + jeden parametr
 			paramCount++;
@@ -784,7 +784,7 @@ int pm_list2(){
 
 int pm_list(){
 	int result = SUCCESS;
-	
+
 	// LocalMap* lMap;
 
 	// localMap = (LocalMap*) malloc ( sizeof(LocalMap) );
@@ -873,11 +873,11 @@ int func(void){
 	// udelat param-list!!
 
 
-	
+
     // ukladam do GTS definice funkce
     // pokud tam ID neni tak vepsat
 
-    
+
     strcpy(str, gToken.data.str);
 
 
@@ -1133,7 +1133,7 @@ int parse(GlobalMap* globalMap, tList *list) {
 
 	if(initToken() == INT_ERR){
 		fprintf(stderr, "Nepodařilo se inicializovat strukturu pro token \n");
-		result = INT_ERR; 
+		result = INT_ERR;
 	}
 
 	do {
