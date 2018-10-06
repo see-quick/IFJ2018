@@ -50,6 +50,10 @@
 
 #define eSYNTERROR 800 // syntax error
 
+
+tDataIDF dataIDF;
+
+
 // Enum ktorý, bude selectovať o akú operáciu pojde pri vykonavaní precedenčnej analýzy(využívanie stacku a getToken()
 typedef enum{
     EQ = 800,   // = Znamienko, znamenajúce jednoduchý shift v precedenčnej tabuľke
@@ -59,14 +63,14 @@ typedef enum{
 }prece_states;
 
 typedef struct{
-    tString *string;    // chces aby som ti vracal aj ten NonTerminal? :) ci staci iba hodnota
+    char *string;    // chces aby som ti vracal aj ten NonTerminal? :) ci staci iba hodnota
     bool bool_result;;   // pri vyrazoch < > <= >= bude vzdy vysledok true alebo false;
     int result;         // pouzivaju sa navratove hodnoty z "error.h"
 }expr_return;
 
 // hlavni funkce precedencni analyzy
-expr_return parse_expr(LocalMap*, tList*, char *);
-void setEmptyDataIDF(tDataIDF* dataIDF);
+expr_return parse_expr(LocalMap*, tList*);
+void setEmptyDataIDF(tDataIDF dataIDF);
 
 // pomocne debugovanie funckie
 char* convert_to_char(int token);

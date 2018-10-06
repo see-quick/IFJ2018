@@ -37,6 +37,9 @@ typedef struct{
     tDataIDF token_data;
 }tItem;
 
+tItem* tempItemForPositionOne; /* GLOBALNY ITEM pre stack pri pravidle E -> i */
+tItem* tempItemForPositionThree; /* GLOBALNY ITEM pre stack pri pravidlach E -> E + E, E -> E - E a podobne. */
+tItem* item; /* GLOBALNY ITEM pre stack pri pravidlach E -> E + E, E -> E - E a podobne. */
 
 tStack* stack_init(unsigned memory);
 int stack_error();

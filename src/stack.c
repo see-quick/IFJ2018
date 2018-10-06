@@ -19,9 +19,6 @@
 #include <stdlib.h>
 #include "prece.h"
 
-
-tItem* item;
-
 /* Zakladne funckie so Stackom */
 
 /**
@@ -179,7 +176,7 @@ void stack_print(tStack *stack){
 void stack_refresh(tStack *stack){
     for(int i = 0; i < stack_get_size(stack); i++){
         stack->arrayOfNumbers[i] = 15;
-        setEmptyDataIDF(&stack->arrayOfItems[i]);
+        setEmptyDataIDF(stack->arrayOfItems[i]);
     }
     stack->top = -1;
     stack->finderOfParenthesis = -1;
@@ -192,12 +189,45 @@ void stack_refresh(tStack *stack){
 void stack_free(tStack *stack)
 {
     stack->memory = 0;
-    if (item != NULL){
+    stack->finderOfParenthesis = -1;
+    stack->top = -1;
+
+    // if (item != NULL){
+
+    //     free(&item->token_data.value.string);
+    //     free(&item->token_data.value);
+    //     free(&item->token_data);
+    //     free(item);
+    // }
+    // if(tempItemForPositionOne != NULL){
+    //     free(&tempItemForPositionOne->token_data.value.string);
+    //     //free(&tempItemForPositionOne->token_data.value);
+    //     free(&tempItemForPositionOne->token_data);
+    //     free(tempItemForPositionOne);
+    // }
+
+    // if (tempItemForPositionThree != NULL){
+    //     free(&tempItemForPositionThree->token_data.value.string);
+    //     // free(&tempItemForPositionThree->token_data.value);
+    //     free(&tempItemForPositionThree->token_data);
+    //     free(tempItemForPositionThree);
+    // }
+    if ( item != NULL){
         free(item);
     }
+    if (tempItemForPositionOne != NULL){
+        free(tempItemForPositionOne);
+    }
+    if (tempItemForPositionThree != NULL){
+        free(tempItemForPositionThree);
+    }
+
     free(stack->arrayOfNumbers);
     free(stack->arrayOfItems);
     free(stack);
+
+    //item->token_number = stack->arrayOfNumbers[stack->top];
+    //item->token_data = stack->arrayOfItems[stack->top];
 }
 
 /**

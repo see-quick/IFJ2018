@@ -92,11 +92,11 @@ void local_map_put ( LocalMap* ptrMap, String key, tDataIDF data ) {
         }
         temp = temp->ptrnext;
     }
-    LocalMapItem* globalMapItem = (LocalMapItem*)malloc(sizeof(LocalMapItem));
-    globalMapItem->key = key;
-    globalMapItem->localData = data;
-    globalMapItem->ptrnext = list;
-    ptrMap->list[position] = globalMapItem;
+    LocalMapItem* localMapItem = (LocalMapItem*)malloc(sizeof(LocalMapItem));
+    localMapItem->key = key;
+    localMapItem->localData = data;
+    localMapItem->ptrnext = list;
+    ptrMap->list[position] = localMapItem;
 }
 
 /**
@@ -489,27 +489,27 @@ void global_map_print( GlobalMap* ptrMap ) {
     int maxlen = 0;
     int sumcnt = 0;
 
-    printf ("------------HASH TABLE--------------\n");
-    for ( int i=0; i<=sizeof(ptrMap); i++ ) {
-        printf ("%i:",i);
+    printf("------------HASH TABLE--------------\n");
+    for (int i = 0; i <= sizeof(ptrMap); i++) {
+        printf("%i:", i);
         int cnt = 0;
-        GlobalMapItem* ptr = (ptrMap->list[i]);
-        
-        while ( ptr != NULL ) {
-            printf (" (%s, %d)",ptr->key,ptr->globalData.type);
+        GlobalMapItem *ptr = (ptrMap->list[i]);
+
+        while (ptr != NULL) {
+            printf(" (%s, %d)", ptr->key, ptr->globalData.type);
             cnt++;
             ptr = ptr->ptrnext;
         }
-        printf ("\n");
+        printf("\n");
 
         if (cnt > maxlen)
             maxlen = cnt;
-        sumcnt+=cnt;
+        sumcnt += cnt;
     }
 
-    printf ("------------------------------------\n");
-    printf ("Items count %i   The longest list %i\n",sumcnt,maxlen);
-    printf ("------------------------------------\n");
+    printf("------------------------------------\n");
+    printf("Items count %i   The longest list %i\n", sumcnt, maxlen);
+    printf("------------------------------------\n");
 
 
     /************************ KONIEC FUNKCII PRE GLOBALNU MAPU ****************************/

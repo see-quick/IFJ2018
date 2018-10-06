@@ -150,10 +150,6 @@ void parse_instructions(tList *instr_list)  {
       break;
 
       case INSTRUCT_LABEL:
-          printf("Type of label:%d\n", act_instr->data.address1.type);
-
-          // tady je nejaky problem
-         // printf("Label name %s\n", act_instr->data.address1.value.s);
           printf("LABEL %s\n", act_instr->data.address1.value.s);
       break;
 
