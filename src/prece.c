@@ -44,9 +44,9 @@ prece_states prece_table [SIZEOFTABLE][SIZEOFTABLE] = {
 
 
 void setEmptyDataIDF(tDataIDF* dataIDF) {
-    dataIDF->value.i = 0;
-    dataIDF->type = 501;
-    dataIDF->defined = true;
+    dataIDF->type = 500;
+    dataIDF->defined = false;
+    dataIDF->value.nil = true;
 }
 
 
@@ -127,23 +127,20 @@ expr_return parse_expr(LocalMap* lMap, tList* list, char * varName){
     if (temporary == NULL){
         printf("Zatim nevim, co se ma stat, asi interni chyba...\n");
     }
-    else{
+    else {
         // --debug vypis typu a hodnoty
         printf("Typ operandu: %d\n", temporary->type);
-        if (temporary->type == 501){
-            printf("Oparand value: %d\n", temporary->value.i);
-        }
-        else if (temporary->type == 502){
-            printf("Operand value: %f", temporary->value.d);
-        }
-        else if (temporary->type == 503){ // string
-            printf("Operand value: %s", temporary->value.string.str);
-        }
-        else{ //nil
-            printf("Operand type: nil\n");
+        switch (temporary->type) {
+            case 501: // integer
+                printf("Oparand value: %d\n", temporary->value.i);
+            case 502: // float
+                printf("Operand value: %f", temporary->value.d);
+            case 503: // string
+                printf("Operand value: %s", temporary->value.string.str);
+            default: //nil
+                printf("Operand type: nil\n");
         }
     }
-
 
     /* Inicializace struktury pro informaci o operandu vyrazu*/
     tDataIDF* dataIDF = (tDataIDF*)malloc(sizeof(tDataIDF));
@@ -152,12 +149,9 @@ expr_return parse_expr(LocalMap* lMap, tList* list, char * varName){
     /* INICIALIZACIA STRUKTUR */
     expr_return resultOfPrece = {.result=SUCCESS};
 
-    tStack* stack = stack_init(15);
+    tStack* stack = stack_init(6);
 
     stack_refresh(stack);   // vycistenie stacku
-
-
-
 
     // prvni push
 
@@ -185,7 +179,7 @@ expr_return parse_expr(LocalMap* lMap, tList* list, char * varName){
     dataIDF->defined = true;
 
     stack_push(stack, eDOLAR, *dataIDF); // pushnutie na stack $
-    stack_print_prece(stack);
+//    stack_print_prece(stack);
 
     // proc je type u vsech polozek 501?
     stack_print(stack);
