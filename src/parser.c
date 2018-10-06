@@ -846,6 +846,9 @@ int func(void){
 	instr1.type = 706;
 	instr1.value.s = tmp_str3;
 
+	printf("Test %s\n", tmp_str3);
+	printf("Test2 %s\n", instr1.value.s);
+
 	insert_item(ilist, &instr_type, &instr1, &instr2, &instr3);
 
 	// KONTROLA TF PRAZDNY - dopsat

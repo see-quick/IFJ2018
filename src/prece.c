@@ -18,8 +18,10 @@
 #include "stack.h"
 
 
- #define RULE_OF_OPERATORS stack_pops(4, stack);stack_push(stack, E, *dataIDF);stack_print_prece(stack);break
- #define RULE_OF_IDENTIFICATOR stack_pops(2, stack);stack_push(stack, E, *dataIDF);stack_print_prece(stack)
+ // #define RULE_OF_OPERATORS stack_pops(4, stack);stack_push(stack, E, *dataIDF);stack_print_prece(stack);break
+#define RULE_OF_OPERATORS stack_pops(4, stack);stack_push(stack, E, *dataIDF);break
+ // #define RULE_OF_IDENTIFICATOR stack_pops(2, stack);stack_push(stack, E, *dataIDF);stack_print_prece(stack)
+ #define RULE_OF_IDENTIFICATOR stack_pops(2, stack);stack_push(stack, E, *dataIDF);
 
 
 int counterVar = 1;
@@ -122,25 +124,25 @@ char* convert_to_char(int token){
 expr_return parse_expr(LocalMap* lMap, tList* list, char * varName){
 
     // --- DEBUG varName node v mape ---
-    printf("Operand: %s\n", varName);
-    tDataIDF* temporary = local_map_get_pointer_to_value(lMap, varName);
-    if (temporary == NULL){
-        printf("Zatim nevim, co se ma stat, asi interni chyba...\n");
-    }
-    else {
-        // --debug vypis typu a hodnoty
-        printf("Typ operandu: %d\n", temporary->type);
-        switch (temporary->type) {
-            case 501: // integer
-                printf("Oparand value: %d\n", temporary->value.i);
-            case 502: // float
-                printf("Operand value: %f", temporary->value.d);
-            case 503: // string
-                printf("Operand value: %s", temporary->value.string.str);
-            default: //nil
-                printf("Operand type: nil\n");
-        }
-    }
+    // printf("Operand: %s\n", varName);
+    // tDataIDF* temporary = local_map_get_pointer_to_value(lMap, varName);
+    // if (temporary == NULL){
+    //     printf("Zatim nevim, co se ma stat, asi interni chyba...\n");
+    // }
+    // else {
+    //     // --debug vypis typu a hodnoty
+    //     printf("Typ operandu: %d\n", temporary->type);
+    //     switch (temporary->type) {
+    //         case 501: // integer
+    //             printf("Oparand value: %d\n", temporary->value.i);
+    //         case 502: // float
+    //             printf("Operand value: %f", temporary->value.d);
+    //         case 503: // string
+    //             printf("Operand value: %s", temporary->value.string.str);
+    //         default: //nil
+    //             printf("Operand type: nil\n");
+    //     }
+    // }
 
     /* Inicializace struktury pro informaci o operandu vyrazu*/
     tDataIDF* dataIDF = (tDataIDF*)malloc(sizeof(tDataIDF));
@@ -182,7 +184,7 @@ expr_return parse_expr(LocalMap* lMap, tList* list, char * varName){
 //    stack_print_prece(stack);
 
     // proc je type u vsech polozek 501?
-    stack_print(stack);
+    //stack_print(stack);
 
     int actTokenIndexToPreceTable = 0;
     int stackTopTokenIndexToPreceTable = 0;
@@ -224,9 +226,9 @@ expr_return parse_expr(LocalMap* lMap, tList* list, char * varName){
                 //stack_print_prece(stack);
                 token = getToken();     //zavolanie si noveho tokenu
 
-                if (token == LEX_NUMBER || token == LEX_REAL_NUMBER || token == LEX_STRING){
-                    printf("Pridat do tDataIDF\n");
-                }
+                // if (token == LEX_NUMBER || token == LEX_REAL_NUMBER || token == LEX_STRING){
+                //     printf("Pridat do tDataIDF\n");
+                // }
 
                 break;
             case L:
@@ -309,7 +311,7 @@ expr_return parse_expr(LocalMap* lMap, tList* list, char * varName){
                         return resultOfPrece;
                     }
 //                    if(stack_top(stack) == eDOLAR)
-                    printf("STATE: $E$ -> EVERYTHING OK\n");
+                    // printf("STATE: $E$ -> EVERYTHING OK\n");
                     // uvolnenie stacku
                     stack_free(stack);
                     //printf("Vraciam -> %d\n", resultOfPrece.result);
