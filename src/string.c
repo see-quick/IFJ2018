@@ -41,7 +41,7 @@ int strAdd (tString *s, char c)
 {
   if (s->memory == s->length) {
     s->memory += SIZE;
-    if ((s->str = (char *) realloc(s->str, s->memory * sizeof(char)) ) == NULL)
+    if ((s->str = (char *) realloc(s->str, s->memory * sizeof(char))  ) == NULL)
       return INT_ERR;
   }
 
@@ -91,7 +91,7 @@ int strClear (tString *s)
 
 int strCopy (tString *s, char *array)
 {
-  array = (char *) calloc(s->length + 1, sizeof(char));
+  array = (char *) realloc(array, s->length + 1);
   if (array == NULL)
     return INT_ERR;
 

@@ -132,7 +132,7 @@
 tToken gToken;
 int token;
 
-#define SIZE            10
+#define SIZE            8
 #define KEYWORD_COUNT   16
 #define SHIFT           10
 

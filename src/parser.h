@@ -40,13 +40,13 @@ int parse(GlobalMap* , tList *);
 int prog(void);
 int main_p(void);
 int st_list();
-int stat(char *);
-int sth(LocalMap*, char *);
+int stat();
+int sth(LocalMap*);
 int pm_list();
 int pm_list2();
 int term_list(void);
 int term_list2(void);
-int func(char *);
+int func();
 int one_term(void);
 
 int parse_expression(void);

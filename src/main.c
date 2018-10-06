@@ -25,6 +25,8 @@
 #include "instr_parse.h"
 #include "list.h"
 
+#include "parser_list_test.c"
+
 int main(int argc, char** argv) {
    
   int result = SUCCESS;
@@ -41,6 +43,8 @@ int main(int argc, char** argv) {
   //set_active(list);
 
   //parse_instructions(list);
+
+  //Parser_list_test();
 
   global_map_free(globalMap);
 

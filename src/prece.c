@@ -124,11 +124,11 @@ char* convert_to_char(int token){
 // @lMap je lokalni Mapa
 expr_return parse_expr(LocalMap* lMap, tList* list){
 
-    printf("Jsem v prec analyze\n");
+    //printf("Jsem v prec analyze\n");
 
-    // --- DEBUG varName node v mape ---
-    //if(DEBUG){printf("Operand: %s\n", varName);}
-    //tDataIDF* temporary = local_map_get_pointer_to_value(lMap, varName);
+    //--- DEBUG varName node v mape ---
+    // if(DEBUG){printf("Operand: %s\n", varName);}
+    // tDataIDF* temporary = local_map_get_pointer_to_value(lMap, varName);
     // if (temporary == NULL){
     //     printf("Zatim nevim, co se ma stat, asi interni chyba...\n");
     // }

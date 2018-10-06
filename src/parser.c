@@ -23,6 +23,8 @@
 #include "error.h"
 #include "prece.h"
 
+#include "parser_list.h"
+
 int token;        	         // aktualni token
 GlobalMap* gMap;		     // globalni tabulka symbolu
 tDataFunction *gDataptr;	 // ukazatel na uzel globalni tabulky symbolu
@@ -31,10 +33,8 @@ tInstructionTypes instr_type;
 LocalMap* localMap;
 tDataIDF lData;
 
-// char * str;
-// char * tmp_str;
-// char * tmp_str2;
-// char * tmp_str3;
+
+tListOfIDF * parse_list;
 
 
 tList * ilist;
@@ -72,6 +72,9 @@ int error_int(void){
 int checkTokenType(int tokenType){ //funkce na kotnrolu typu tokenu
 	return (token == tokenType) ? 1 : 0;
 }
+
+
+
 
 
 
@@ -232,7 +235,7 @@ int term_list(void){
 }
 
 
-int sth(LocalMap* localMap, char *saved){
+int sth(LocalMap* localMap){
 	int result = SUCCESS;
 	expr_return res;
 	tDataFunction *tmp;
@@ -250,7 +253,8 @@ int sth(LocalMap* localMap, char *saved){
 					return SEM_ERR;
 				}
 
-				strcpy(saved, gToken.data.str);
+				// saved = realloc(saved, gToken.data.length);
+				// strcpy(saved, gToken.data.str);
 
 				// vytvoreni docasneho ramce pro funkce
 				instr_type =  INSTRUCT_CREATEFREAME;
@@ -295,9 +299,9 @@ int sth(LocalMap* localMap, char *saved){
 				}
 
 
-				if ( tmp->paramCount != argCount ){
-					fprintf(stderr, "Semanticka chyba, pocet parametru funkce %s nesouvisi s poctem argumentu na radku %d\n", saved , gToken.row);
-				}
+				// if ( tmp->paramCount != argCount ){
+				// 	fprintf(stderr, "Semanticka chyba, pocet parametru funkce %s nesouvisi s poctem argumentu na radku %d\n",saved , gToken.row);
+				// }
 
 				// pro dalsi volani funkce
 				argCount = 0;
@@ -311,7 +315,7 @@ int sth(LocalMap* localMap, char *saved){
 				instr1.value.s = "";
 				//printf("String1: %s\n", instr1.value.s);
 				//printf("String2: %s\n", tmp_str);
-				instr1.value.s = saved;
+				//instr1.value.s = saved;
 				//printf("String1: %s\n", instr1.value.s);
 
 				insert_item(ilist, &instr_type, &instr1, &instr2, &instr3);
@@ -341,19 +345,17 @@ int sth(LocalMap* localMap, char *saved){
 	return result;
 }
 
-int stat(char * saved){
+int stat(){
 	int result = SUCCESS;
 	expr_return res;
 
-	// char * tmp_str2;
-	// tmp_str2 = (char *)malloc(sizeof(char *));
 
 	switch(token){
 		//<STAT> -> id = <STH>
 		case LEX_ID:
 
 
-			strcpy(saved, gToken.data.str);
+			listInsertLast(parse_list, gToken.data.str);
 
 			// INT ERR dopsat
 
@@ -371,20 +373,23 @@ int stat(char * saved){
 				return SYN_ERR;
 			}
 
-			// // ulozeni promenne do lokalni mapy, hodnota nil, typ nil
+			// ulozeni promenne do lokalni mapy, hodnota nil, typ nil
 
 			lData.defined = 1;
 			lData.value.nil = true;
 			lData.type = 500; // typ nil - NONE
 
-			local_map_put(localMap, saved, lData);
+			char *item = listGetData(parse_list);
+			printf("DEBUG\n");
+			printf("%s\n", item);
+
+			local_map_put(localMap, item, lData);
 			//local_map_print(localMap);
 
 			// instrukce pro definice promenne s typem nil a hodnotou nil
 			instr_type = INSTRUCT_DEFVAR;
 			instr1.type = 700; // GF
-			instr1.value.s = saved;
-			//printf("Tets %s - %s\n", tmp_str2, instr1.value.s);
+			//instr1.value.s = saved;
 			insert_item(ilist, &instr_type, &instr1, &instr2, &instr3);
 
 
@@ -399,15 +404,10 @@ int stat(char * saved){
 
 
 			// volani pravidla sth()
-			result = sth(localMap, saved);
+			result = sth(localMap);
 			if(result != SUCCESS){
 				return result;
 			}
-
-			printf("RESULT of prece %d\n", result);
-			printf("%s\n", saved);
-
-			// ulozit hodnotu do tmp_str;
 
 
 			// jen pro testovani
@@ -416,24 +416,18 @@ int stat(char * saved){
 			lData.type = 501; // typ int - INTEGER
 
 
-			local_map_put(localMap, saved, lData);
+			local_map_put(localMap, item, lData);
 
-			//tmp_str2 = "";
-
-			//local_map_print(localMap);
 
 
 			// MOVE GF@tmp TF@%retval
 			instr_type = INSTRUCT_MOVE;
 			instr1.type = 700;
-			instr1.value.s = saved;
+			//instr1.value.s = saved;
 			instr2.type = 702;
 			instr2.value.s = "%retval";
 
 			insert_item(ilist, &instr_type, &instr1, &instr2, &instr3);
-
-			//free(tmp_str2);
-			//tmp_str2 = "";
 
 			return result;
 		break;
@@ -645,14 +639,7 @@ int stat(char * saved){
 
 int st_list(){
 	int result = SUCCESS;
-	//printf("st list %d\n", token);
 	//pravidlo <ST-LIST> -> <STAT> eol <ST-LIST>
-
-
-	char * saved;
-	saved = (char *)malloc(sizeof(char));
-
-
 	switch(token){
 
 		case KW_IF:
@@ -660,15 +647,12 @@ int st_list(){
 		case LEX_ID:
 
 			//podle pravidla zavolame stat()
-			result = stat(saved);
+			result = stat();
 			if(result != SUCCESS){
 				resetToken();
 				return result;
 			}
 
-			//printf("kone stat, st-list\n");
-
-			//returnToken();
 
 			// token nacteny z stat() muze byt dalsi statment nebo LEX_EOL/LEX_EOF
 
@@ -676,13 +660,9 @@ int st_list(){
 				return SUCCESS;
 			}
 			else{
-
-				//printf("%d\n", token);
 				token = getToken();
 				return st_list();
 			}
-
-			free(saved);
 
 
 		// case KW_PRINT
@@ -737,7 +717,7 @@ int st_list(){
 
       case KW_DEF:
 
-			result = func(saved);
+			result = func();
 			if(result != SUCCESS){
 				resetToken();
 				return result;
@@ -757,11 +737,9 @@ int st_list(){
 				return INT_ERR;
 			}
 
-			//global_map_print(gMap);
 		
 			return st_list();
 
-			free(saved);
 
       break;
 
@@ -825,12 +803,6 @@ int pm_list2(){
 int pm_list(){
 	int result = SUCCESS;
 
-	// LocalMap* lMap;
-
-	// localMap = (LocalMap*) malloc ( sizeof(LocalMap) );
- //    local_map_init(localMap);
-
-
 	if (token == LEX_ID){
 		token = getToken();
 
@@ -846,8 +818,6 @@ int pm_list(){
 
 		// dalsi semanticke akce -> pridat....
 
-
-
 		// pocet parametru funkce ulozit
 		paramCount++;
 
@@ -860,7 +830,7 @@ int pm_list(){
 	return result;
 }
 
-int func(char * saved){
+int func(){
 	int result;
 
 	//pravidlo <func> -> def ID ( <pm_list> ) eol <ST-LIST> end
@@ -879,13 +849,15 @@ int func(char * saved){
 		return SYN_ERR;
 	}
 
-	strcpy(saved, gToken.data.str);
 
-	//printf("tmp_str3 %s\n", tmp_str3);
+	// saved = realloc(saved, gToken.data.length);
+	// strcpy(saved, gToken.data.str);
+
+
 
 	instr_type = INSTRUCT_LABEL;
 	instr1.type = 706;
-	instr1.value.s = saved;
+	//instr1.value.s = saved;
 
 	insert_item(ilist, &instr_type, &instr1, &instr2, &instr3);
 
@@ -910,24 +882,20 @@ int func(char * saved){
 
 	insert_item(ilist, &instr_type, &instr1, &instr2, &instr3);
 
-	// the next instruction are instr. of function .... <st-list>
-	// udelat param-list!!
-
-
 
     // ukladam do GTS definice funkce
     // pokud tam ID neni tak vepsat
 
-    //printf("Ukladam do GTS %s\n", tmp_str3);
+  
 
-    if (!global_map_contain(gMap, saved)){
-    	gData.defined = 1;
-    	global_map_put(gMap, saved, gData);
-    }else {
-        //uz byla definovana
-        fprintf(stderr, "Radek %d: Semanticka chyba, funkce '%s' jiz byla definovana.\n", gToken.row, gToken.data.str);
-        return SEM_ERR;
-    }
+    // if (!global_map_contain(gMap, saved)){
+    // 	gData.defined = 1;
+    // 	global_map_put(gMap, saved, gData);
+    // }else {
+    //     //uz byla definovana
+    //     fprintf(stderr, "Radek %d: Semanticka chyba, funkce '%s' jiz byla definovana.\n", gToken.row, gToken.data.str);
+    //     return SEM_ERR;
+    // }
 
 
    	//dalsi token musi byt '('
@@ -977,7 +945,7 @@ int func(char * saved){
 
 	// ulozeni poctu formalnich parametru funkce
 	gData.paramCount = paramCount;
-	global_map_put(gMap, saved, gData);
+	//global_map_put(gMap, saved, gData);
 
 	// pro dalsi funkce
 	paramCount = 0;
@@ -1098,8 +1066,6 @@ int main_p(void){
 				return INT_ERR;
 			}
 
-			//printf("main p %d\n", token)
-
 
 			return SUCCESS;
 		break;
@@ -1131,10 +1097,6 @@ int prog(){
 				return result;
 			}
 
-			//printf("in prog\n");
-
-			//sprintf("%d\n", token);
-
 			//token nacten z main_p() = EOF
 			if(!checkTokenType(LEX_EOL) && !checkTokenType(LEX_EOF)) {
 				fprintf(stderr, "Ocekavano 'eof' 'eol' na radku %d \n", gToken.row);
@@ -1163,12 +1125,10 @@ int parse(GlobalMap* globalMap, tList *list) {
 	gDataptr = &gData;
 	ilist = list;
 
-	// tmp_str = malloc(sizeof(char *));
-	// str = (char *)malloc(sizeof(char *));
-	// tmp_str2 = (char *)malloc(sizeof(char *));
-	//tmp_str3 = malloc(sizeof(char *));
-
 	localMap = local_map_init(MAX_SIZE_OF_HASH_TABLE);
+
+	parse_list = (tListOfIDF *)malloc(sizeof(tListOfIDF));
+	listInit(parse_list);
 
 	if(initToken() == INT_ERR){
 		fprintf(stderr, "Nepodařilo se inicializovat strukturu pro token \n");
@@ -1192,12 +1152,9 @@ int parse(GlobalMap* globalMap, tList *list) {
 
 	strFree(&(gToken.data));
 
-	// free(tmp_str);
-	// free(str);
-	// free(tmp_str2);
-	// free(tmp_str3);
+	listFree(parse_list);
 
-	//local_map_print(localMap);
+	local_map_print(localMap);
 
 	local_map_free(localMap);
 
