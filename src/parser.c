@@ -359,11 +359,8 @@ int stat(){
 		//<STAT> -> id = <STH>
 		case LEX_ID:
 
-			printf("Token data : %s\n", gToken.data.str);
+			DLIsImportant(&tlist);
 
-			// DOPSAT SEMANTICKOU AKCI PRO PRIRAZENI HODNOTY
-
-			// INT ERR dopsat
 
 			//dalsi musi byt '='
 			token = getToken();
@@ -379,23 +376,25 @@ int stat(){
 				return SYN_ERR;
 			}
 
-			// ulozeni promenne do lokalni mapy, hodnota nil, typ nil
 
+			// ulozeni promenne do lokalni mapy, hodnota nil, typ nil
 			lData.defined = 1;
 			lData.value.nil = true;
 			lData.type = 500; // typ nil - NONE
 
+	
+
+			// nazev promenne ziskame z list pro tokeny pomoci funkce DLCOPYFISRT
+			local_map_put(localMap, DLCopyFirst(&tlist), lData);
 
 
-			//local_map_put(localMap, item, lData);
-			//local_map_print(localMap);
+			
 
-			// instrukce pro definice promenne s typem nil a hodnotou nil
+			// generovani instrukce pro definice promenne s typem nil a hodnotou nil
 			instr_type = INSTRUCT_DEFVAR;
 			instr1.type = 700; // GF
-			//instr1.value.s = saved;
+			instr1.value.s = DLCopyFirst(&tlist); // nazev promenne
 			insert_item(ilist, &instr_type, &instr1, &instr2, &instr3);
-
 
 			// nacteni dalsiho tokenu , musi byt identifikator nebo vyraz
 			token = getToken();
@@ -408,9 +407,14 @@ int stat(){
 
 			// volani pravidla sth()
 			result = sth(localMap);
+
 			if(result != SUCCESS){
 				return result;
 			}
+
+			// tady mi ma prijit vysledek prirazeni
+
+			// vratit se na nekolik pozic driv
 
 
 			// jen pro testovani
@@ -419,7 +423,8 @@ int stat(){
 			lData.type = 501; // typ int - INTEGER
 
 
-			//local_map_put(localMap, item, lData);
+
+			local_map_put(localMap, DLFirstImportant(&tlist), lData);
 
 
 

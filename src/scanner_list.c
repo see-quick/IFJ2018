@@ -56,6 +56,7 @@ void DLInsertFirst (tDLList *L, char * val) {
 	else 
 	{
 		pomocny->data = val; //nahrame data
+		pomocny->is_important = 0;
 		pomocny->lptr = NULL; 
 		pomocny->rptr = L->First; 
 		if(L->Last == NULL) 
@@ -108,18 +109,18 @@ void DLLast (tDLList *L) {
 	L->Act = L->Last;	
 }
 
-void DLCopyFirst (tDLList *L, char *val) {
+char * DLCopyFirst (tDLList *L) {
 /*
 ** Prostřednictvím parametru val vrátí hodnotu prvního prvku seznamu L.
 ** Pokud je seznam L prázdný, volá funkci DLError().
 **/
 	if(L->First == NULL) 
 	{
-		DLError();
+		return NULL;
 	}
 	else 
 	{
-		val = L->First->data;
+		return L->First->data;
 	}	
 }
 
@@ -379,6 +380,7 @@ void print_elements_of_list(tDLList TL)	{
 	printf("-------TOKEN LIST-------");
 
 	while ((TempList.First!=NULL) && (CurrListLength<100))	{
+		// printf("\n \t%s - important: %d",TempList.First->data, TempList.First->is_important);
 		printf("\n \t%s",TempList.First->data);
 		if ((TempList.First==TL.Act) && (TL.Act!=NULL))
 			printf("\t <= toto je aktivní prvek ");
@@ -388,4 +390,23 @@ void print_elements_of_list(tDLList TL)	{
     if (CurrListLength>=100)
         printf("\nList exceeded maximum length!");
 	printf("\n----------------------\n");     
+}
+
+
+void DLIsImportant(tDLList *L){
+	L->First->is_important = 1;
+}
+
+
+char * DLFirstImportant(tDLList *L){
+	while((L->Last->lptr != NULL) && (L->Last != NULL)){
+		if (L->Last->is_important == 1){
+			L->Last->is_important = 0;
+			return L->Last->data;
+		}
+		else{
+			L->Last = L->Last->lptr;
+		}
+	}
+	return NULL;
 }

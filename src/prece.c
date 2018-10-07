@@ -124,29 +124,6 @@ char* convert_to_char(int token){
 // @lMap je lokalni Mapa
 expr_return parse_expr(LocalMap* lMap, tList* list){
 
-    //printf("Jsem v prec analyze\n");
-
-    //--- DEBUG varName node v mape ---
-    // if(DEBUG){printf("Operand: %s\n", varName);}
-    // tDataIDF* temporary = local_map_get_pointer_to_value(lMap, varName);
-    // if (temporary == NULL){
-    //     printf("Zatim nevim, co se ma stat, asi interni chyba...\n");
-    // }
-    // else {
-    //     // --debug vypis typu a hodnoty
-    //     if(DEBUG)printf("Typ operandu: %d\n", temporary->type);
-    //     switch (temporary->type) {
-    //         case 501: // integer
-    //             if(DEBUG)printf("Operand value: %d\n", temporary->value.i);
-    //         case 502: // float
-    //             if(DEBUG)printf("Operand value: %f", temporary->value.d);
-    //         case 503: // string
-    //             if(DEBUG)printf("Operand value: %s", temporary->value.string.str);
-    //         default: //nil
-    //             if(DEBUG)printf("Operand type: nil\n");
-    //     }
-    // }
-
     /* Inicializace struktury pro informaci o operandu vyrazu*/
     //dataIDF = malloc(sizeof(tDataIDF));
     setEmptyDataIDF(dataIDF);               // nastavenie default hodnot
