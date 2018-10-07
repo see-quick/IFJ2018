@@ -55,8 +55,8 @@ int strAdd (tString *s, char c)
 
 int strFree (tString *s)
 {
-  if (s->str)
-    free(s->str);
+  // if (s->str)
+  //   free(s->str);  -- UVOLNIT AZ NA KONCI, TOTO DELALO NEJVETSI PROBLEMY
   s->str = NULL;
   s->memory = 0;
   s->length = 0;

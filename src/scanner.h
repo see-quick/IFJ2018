@@ -29,6 +29,7 @@
 #include <string.h>
 #include <stdbool.h>
 #include "string.h"
+#include "scanner_list.h"
 
 /* Koncove stavy konecneho automatu Lexilakniho analyzatoru */
 
@@ -132,10 +133,13 @@
 tToken gToken;
 int token;
 
+
+// SEZNAM TOKENU 
+tDLList tlist;
+
 #define SIZE            8
 #define KEYWORD_COUNT   16
 #define SHIFT           10
-
 
 
 

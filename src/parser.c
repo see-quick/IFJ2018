@@ -23,28 +23,41 @@
 #include "error.h"
 #include "prece.h"
 
-#include "parser_list.h"
-
 int token;        	         // aktualni token
+
+
+
+/*********************************************************************/
+/*LOKALNI TABULKA SYMBOLU*/
+LocalMap* localMap;
+tDataIDF lData;
+/*********************************************************************/
+
+
+
+
+/*********************************************************************/
+/* GLOBALNI TABULKA SYMBOLU */
 GlobalMap* gMap;		     // globalni tabulka symbolu
 tDataFunction *gDataptr;	 // ukazatel na uzel globalni tabulky symbolu
 tDataFunction gData;
-tInstructionTypes instr_type;
-LocalMap* localMap;
-tDataIDF lData;
-
-
-tListOfIDF * parse_list;
-
-
-tList * ilist;
-
 int paramCount = 0;          // pocet parametru funkce
 int argCount = 0;            // pocet argumentu pri volani funkce
 
+/*********************************************************************/
+
+
+
+
+
+/*********************************************************************/
+/*GLOBALNI PROMENNE PRO UKLADANI INSTRUKCI DO PASKY TRIADRESNEHO KODU*/
+tList * ilist;               // instruction list
+tInstructionTypes instr_type;
 tInstructionData instr1;
 tInstructionData instr2;
 tInstructionData instr3;
+/*********************************************************************/
 
 
 /*Funkce pro vypsani lexikalni chyby na standardni chybovy vystup*/
@@ -72,9 +85,6 @@ int error_int(void){
 int checkTokenType(int tokenType){ //funkce na kotnrolu typu tokenu
 	return (token == tokenType) ? 1 : 0;
 }
-
-
-
 
 
 
@@ -330,14 +340,10 @@ int sth(LocalMap* localMap){
 
 		//pokud neni token LEX_ID_F, prozenem to precedencni SA
 		default:
-//			result = parse_expression();
 			res = parse_expr(localMap, ilist);
 			result = res.result;
 
 			return result;
-
-			
-			//local_map_print(localMap);
 	}
 
 
@@ -349,13 +355,13 @@ int stat(){
 	int result = SUCCESS;
 	expr_return res;
 
-
 	switch(token){
 		//<STAT> -> id = <STH>
 		case LEX_ID:
 
+			printf("Token data : %s\n", gToken.data.str);
 
-			listInsertLast(parse_list, gToken.data.str);
+			// DOPSAT SEMANTICKOU AKCI PRO PRIRAZENI HODNOTY
 
 			// INT ERR dopsat
 
@@ -379,11 +385,9 @@ int stat(){
 			lData.value.nil = true;
 			lData.type = 500; // typ nil - NONE
 
-			char *item = listGetData(parse_list);
-			printf("DEBUG\n");
-			printf("%s\n", item);
 
-			local_map_put(localMap, item, lData);
+
+			//local_map_put(localMap, item, lData);
 			//local_map_print(localMap);
 
 			// instrukce pro definice promenne s typem nil a hodnotou nil
@@ -391,7 +395,6 @@ int stat(){
 			instr1.type = 700; // GF
 			//instr1.value.s = saved;
 			insert_item(ilist, &instr_type, &instr1, &instr2, &instr3);
-
 
 
 			// nacteni dalsiho tokenu , musi byt identifikator nebo vyraz
@@ -416,7 +419,7 @@ int stat(){
 			lData.type = 501; // typ int - INTEGER
 
 
-			local_map_put(localMap, item, lData);
+			//local_map_put(localMap, item, lData);
 
 
 
@@ -445,7 +448,7 @@ int stat(){
 
 			res = parse_expr(localMap, ilist);
 			result = res.result;
-//			result = parse_expression();
+
 			if(result != SUCCESS){
 				resetToken();
 				return result;
@@ -553,7 +556,8 @@ int stat(){
 
 			res = parse_expr(localMap, ilist);
 			result = res.result;
-//			result = parse_expression();
+
+
 			if(result != SUCCESS){
 				resetToken();
 				return result;
@@ -620,22 +624,6 @@ int stat(){
 
 
 }
-//int parse_expression(void){
-//
-//	// testovani pro a = 2 + 2 ( jen dva operandy), ale od precedencni analyzy se ocekava posledni token, bud je to EOL/EOF
-//	// nebo dalsi statement
-//
-//	//returnToken();
-// 	token = getToken();
-//
-//	token = getToken();
-//
-//	token = getToken();
-//	token = getToken();
-//
-//	return SUCCESS;
-//}
-
 
 int st_list(){
 	int result = SUCCESS;
@@ -850,11 +838,6 @@ int func(){
 	}
 
 
-	// saved = realloc(saved, gToken.data.length);
-	// strcpy(saved, gToken.data.str);
-
-
-
 	instr_type = INSTRUCT_LABEL;
 	instr1.type = 706;
 	//instr1.value.s = saved;
@@ -1007,14 +990,12 @@ int func(){
 	// POPFRAME
 
 	instr_type = INSTRUCT_POPFRAME;
-	// otazka: instr1 je prazdny??
 	insert_item(ilist, &instr_type, &instr1, &instr2, &instr3);
 
 
 	// return retval of function
 	instr_type = INSTRUCT_RETURN;
 	insert_item(ilist, &instr_type, &instr1, &instr2, &instr3);
-
 	// end of function, navrat na predchozi pozici
 
 
@@ -1127,13 +1108,14 @@ int parse(GlobalMap* globalMap, tList *list) {
 
 	localMap = local_map_init(MAX_SIZE_OF_HASH_TABLE);
 
-	parse_list = (tListOfIDF *)malloc(sizeof(tListOfIDF));
-	listInit(parse_list);
 
 	if(initToken() == INT_ERR){
 		fprintf(stderr, "Nepodařilo se inicializovat strukturu pro token \n");
 		result = INT_ERR;
 	}
+
+	// inicializace listu pro tokeny
+	DLInitList(&tlist);
 
 	do {
 		if((token = getToken()) == ERROR_LEX) {
@@ -1150,12 +1132,13 @@ int parse(GlobalMap* globalMap, tList *list) {
 		result = prog();
 	}
 
+
+	print_elements_of_list(tlist);
+
+	DLDisposeList(&tlist);
+
 	strFree(&(gToken.data));
-
-	listFree(parse_list);
-
 	local_map_print(localMap);
-
 	local_map_free(localMap);
 
 	return result;

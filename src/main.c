@@ -25,12 +25,10 @@
 #include "instr_parse.h"
 #include "list.h"
 
-#include "parser_list_test.c"
 
 int main(int argc, char** argv) {
    
   int result = SUCCESS;
-
 
   tList *list = list_init();
 
@@ -44,7 +42,6 @@ int main(int argc, char** argv) {
 
   //parse_instructions(list);
 
-  //Parser_list_test();
 
   global_map_free(globalMap);
 
