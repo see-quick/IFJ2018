@@ -192,42 +192,36 @@ void stack_free(tStack *stack)
     stack->finderOfParenthesis = -1;
     stack->top = -1;
 
-    // if (item != NULL){
-
+     if (item != NULL){
     //     free(&item->token_data.value.string);
     //     free(&item->token_data.value);
     //     free(&item->token_data);
-    //     free(item);
-    // }
-    // if(tempItemForPositionOne != NULL){
-    //     free(&tempItemForPositionOne->token_data.value.string);
-    //     //free(&tempItemForPositionOne->token_data.value);
-    //     free(&tempItemForPositionOne->token_data);
-    //     free(tempItemForPositionOne);
-    // }
+         free(item);
+     }
+//     if(tempItemForPositionOne != NULL){
+//         free(&tempItemForPositionOne->token_data.value.string);
+//         free(&tempItemForPositionOne->token_data.value);
+//         free(&tempItemForPositionOne->token_data);
+//         free(tempItemForPositionOne);
+//     }
 
-    // if (tempItemForPositionThree != NULL){
-    //     free(&tempItemForPositionThree->token_data.value.string);
-    //     // free(&tempItemForPositionThree->token_data.value);
-    //     free(&tempItemForPositionThree->token_data);
-    //     free(tempItemForPositionThree);
-    // }
-    if ( item != NULL){
-        free(item);
-    }
-    if (tempItemForPositionOne != NULL){
-        free(tempItemForPositionOne);
-    }
-    if (tempItemForPositionThree != NULL){
-        free(tempItemForPositionThree);
-    }
+//     if (tempItemForPositionThree != NULL){
+//         free(&tempItemForPositionThree->token_data.value.string);
+//         free(&tempItemForPositionThree->token_data.value);
+//         free(&tempItemForPositionThree->token_data);
+//         free(tempItemForPositionThree);
+//     }
+
+//    if (tempItemForPositionOne != NULL){
+//        free(tempItemForPositionOne);
+//    }
+//    if (tempItemForPositionThree != NULL){
+//        free(tempItemForPositionThree);
+//    }
 
     free(stack->arrayOfNumbers);
     free(stack->arrayOfItems);
     free(stack);
-
-    //item->token_number = stack->arrayOfNumbers[stack->top];
-    //item->token_data = stack->arrayOfItems[stack->top];
 }
 
 /**

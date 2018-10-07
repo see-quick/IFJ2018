@@ -37,8 +37,7 @@ typedef struct{
     tDataIDF token_data;
 }tItem;
 
-tItem* tempItemForPositionOne; /* GLOBALNY ITEM pre stack pri pravidle E -> i */
-tItem* tempItemForPositionThree; /* GLOBALNY ITEM pre stack pri pravidlach E -> E + E, E -> E - E a podobne. */
+
 tItem* item; /* GLOBALNY ITEM pre stack pri pravidlach E -> E + E, E -> E - E a podobne. */
 
 tStack* stack_init(unsigned memory);
@@ -55,5 +54,7 @@ void stack_print(tStack *stack);
 void stack_print_prece(tStack *stack);
 void stack_refresh(tStack *stack);
 void stack_search_for_theorem(tStack *stack);
+
+void  stack_pop_free(tStack *stack, tItem* item);
 
 #endif //STACK_STACK_H
