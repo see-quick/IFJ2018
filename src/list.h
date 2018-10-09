@@ -115,7 +115,7 @@ typedef enum
 typedef struct value
 {
     int i;
-    double d;
+    double f;
     char *s;
 } tValue;
 

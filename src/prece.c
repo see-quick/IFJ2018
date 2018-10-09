@@ -20,9 +20,14 @@
 #define RULE_OF_OPERATORS stack_pops(4, stack);stack_push(stack, E, dataIDF);stack_print_prece(stack);break
 #define RULE_OF_IDENTIFICATOR stack_pops(2, stack);stack_push(stack, E, *dataIDF);stack_print_prece(stack)
 
+tInstructionTypes instr_type;
+tInstructionData instr1;
+tInstructionData instr2;
+tInstructionData instr3;
+
 
 int counterVar = 1;
-int DEBUG = 1;  /* premenna na debugovanie  0 --> pre ziadnej vypis, 1 --> pre vypis */
+int DEBUG = 0;  /* premenna na debugovanie  0 --> pre ziadnej vypis, 1 --> pre vypis */
 
 prece_states prece_table [SIZEOFTABLE][SIZEOFTABLE] = {
 /*        +    -    *    /    <    >   <=   >=   ==   !=   i    (    )    $         <------- ACT TOKEN */
@@ -174,26 +179,49 @@ expr_return parse_expr(LocalMap* lMap, tList* list){
         // SEMANTICKA AKCE
         // pushnuti do stackofItems strukturu pro token, ktery prave prisel od PARSERU
         // muze byt LEX_ID, LEX_NUMBER, LEX_REAL_NUMBER, LEX_STRING
+        instr_type = INSTRUCT_MOVE;
+
         if (token == LEX_NUMBER){
             dataIDF.type = INTEGER;
             dataIDF.value.i = atoi(gToken.data.str);
+            instr2.type = I;
+            instr2.value.i = atoi(gToken.data.str);;
+            insert_item(list, &instr_type, &instr1, &instr2, &instr3);
             // generovanie kodu MOVE %s@%s int@%s
         }
         else if (token == LEX_REAL_NUMBER){
             dataIDF.type = FLOAT;
             dataIDF.value.d = atof(gToken.data.str);
+            instr2.type = F;
+            instr2.value.f = atof(gToken.data.str);;
             // generovanie kodu "MOVE %s@%s float@%s
 
         }
         else if (token == LEX_STRING){
             dataIDF.type = STRING;
             dataIDF.value.string.str = gToken.data.str;
+            instr2.type = S;
+            instr2.value.s = gToken.data.str;
             // generovanie kodu  MOVE %s@%s string@%s
         }
         else if(token == LEX_ID){
             // ak sa premenna nachadza v lokalnej mape tak
             if(local_map_contain(lMap, dataIDF.value.string.str)){
                 dataIDF = local_map_get_value(lMap, dataIDF.value.string.str);
+                switch (dataIDF.type) {
+                    case INTEGER:
+                        instr2.type = I;
+                        insert_item(list, &instr_type, &instr1, &instr2, &instr3);
+                        break;
+                    case FLOAT:
+                        instr2.type = F;
+                        insert_item(list, &instr_type, &instr1, &instr2, &instr3);
+                        break;
+                    case STRING:
+                        instr2.type = S;
+                        insert_item(list, &instr_type, &instr1, &instr2, &instr3);
+                        break;
+                }
                 // sem sa bude generovat MOVE %s@%s %s@%s
                 // generovanie buduceho $1
             }
@@ -260,7 +288,6 @@ expr_return parse_expr(LocalMap* lMap, tList* list){
 
                     dataIDF = tempItemForPositionOne->token_data;   // do struktury nahrame adresu token->data
                     break;
-//                     RULE_OF_OPERATORS;
                 }
                 else {
                      int concreteOperator = stack->arrayOfNumbers[stack->finderOfParenthesis + 2];
@@ -268,10 +295,12 @@ expr_return parse_expr(LocalMap* lMap, tList* list){
                          // PRAVIDLO E -> E + E
                          case ePLUS:
                              if ((&stack->arrayOfNumbers[stack->finderOfParenthesis + 3]) != NULL) {
+                                 instr_type = INSTRUCT_DEFVAR;
                                  // generovanie DEFVAR %s@%s
                                  if ((stack->arrayOfItems[stack->finderOfParenthesis + 1].type == STRING) &&
                                      (stack->arrayOfItems[stack->finderOfParenthesis + 3].type == STRING)) {
                                      dataIDF.type = STRING;
+                                     instr_type = INSTRUCT_CONCAT;
                                      // generovnaie CONCAT %s@%s %s@%s %s@%s
                                  } else if ((stack->arrayOfItems[stack->finderOfParenthesis + 1].type == STRING) &&
                                             (stack->arrayOfItems[stack->finderOfParenthesis + 3].type != STRING)) {
@@ -284,20 +313,26 @@ expr_return parse_expr(LocalMap* lMap, tList* list){
                                  } else if ((stack->arrayOfItems[stack->finderOfParenthesis + 1].type == INTEGER) &&
                                             (stack->arrayOfItems[stack->finderOfParenthesis + 3].type == INTEGER)) {
                                      dataIDF.type = INTEGER;
+                                     instr_type = INSTRUCT_ADD;
                                      // generovanie ADD %s@%s %s@%s %s@%s
                                  } else if ((stack->arrayOfItems[stack->finderOfParenthesis + 1].type == INTEGER) &&
                                             (stack->arrayOfItems[stack->finderOfParenthesis + 3].type == FLOAT)) {
                                      dataIDF.type = FLOAT;
+                                     instr_type = INSTRUCT_INT2FLOAT;
+                                     instr_type = INSTRUCT_ADD;
                                      // generovanie  INT2FLOAT %s@%s %s@%s
                                      // generovanie  ADD %s@%s %s@%s %s@%s
                                  } else if ((stack->arrayOfItems[stack->finderOfParenthesis + 1].type == FLOAT) &&
                                             (stack->arrayOfItems[stack->finderOfParenthesis + 3].type == INTEGER)) {
                                      dataIDF.type = FLOAT;
+                                     instr_type = INSTRUCT_INT2FLOAT;
+                                     instr_type = INSTRUCT_ADD;
                                      // generovanie INT@FLOAT %s@%s %s@%s
                                      // generovanie ADD %s@%s %s@%s %s@%s
                                  } else if ((stack->arrayOfItems[stack->finderOfParenthesis + 1].type == FLOAT) &&
                                             (stack->arrayOfItems[stack->finderOfParenthesis + 3].type == FLOAT)) {
                                      dataIDF.type = FLOAT;
+                                     instr_type = INSTRUCT_ADD;
                                      // generovanie ADD %s@%s %s@%s %s@%s
                                  } else {
                                      resultOfPrece.result = ERR_INCOMPATIBLE_TYPE;
@@ -317,38 +352,50 @@ expr_return parse_expr(LocalMap* lMap, tList* list){
                              if (DEBUG)
                                  stack_print(stack);
                              break;
-//                            RULE_OF_OPERATORS;
+
                              // PRAVIDLO E -> E - E
                          case eMINUS:
                              if ((&stack->arrayOfNumbers[stack->finderOfParenthesis + 3]) != NULL) {
                                  // generovanie DEFVAR %s@%s
+                                 instr_type = INSTRUCT_DEFVAR;
                                  if ((stack->arrayOfItems[stack->finderOfParenthesis + 1].type == STRING) ||
                                      (stack->arrayOfItems[stack->finderOfParenthesis + 3].type == STRING)) {
                                      resultOfPrece.result = ERR_INCOMPATIBLE_TYPE;
                                      return resultOfPrece;
-                                 } else if ((stack->arrayOfItems[stack->finderOfParenthesis + 1].type == INTEGER) &&
+                                 }
+                                 else if ((stack->arrayOfItems[stack->finderOfParenthesis + 1].type == INTEGER) &&
                                             (stack->arrayOfItems[stack->finderOfParenthesis + 3].type == INTEGER)) {
                                      dataIDF.type = INTEGER;
+                                     instr_type = INSTRUCT_SUB;
                                      // generovanie SUB %s@%s %s@%s %s@%s
-                                 } else if ((stack->arrayOfItems[stack->finderOfParenthesis + 1].type == INTEGER) &&
+                                 }
+                                 else if ((stack->arrayOfItems[stack->finderOfParenthesis + 1].type == INTEGER) &&
                                             (stack->arrayOfItems[stack->finderOfParenthesis + 3].type == FLOAT)) {
                                      dataIDF.type = FLOAT;
+                                     instr_type = INSTRUCT_INT2FLOAT;
+                                     instr_type = INSTRUCT_SUB;
                                      // generovanie  INT2FLOAT %s@%s %s@%s
                                      // generovnaie  SUB %s@%s %s@%s %s@%s
-                                 } else if ((stack->arrayOfItems[stack->finderOfParenthesis + 1].type == FLOAT) &&
+                                 }
+                                 else if ((stack->arrayOfItems[stack->finderOfParenthesis + 1].type == FLOAT) &&
                                             (stack->arrayOfItems[stack->finderOfParenthesis + 3].type == INTEGER)) {
                                      dataIDF.type = FLOAT;
+                                     instr_type = INSTRUCT_INT2FLOAT;
+                                     instr_type = INSTRUCT_SUB;
                                      // generovanie  INT2FLOAT %s@%s %s@%s
                                      // generovnaie  SUB %s@%s %s@%s %s@%s
-                                 } else if ((stack->arrayOfItems[stack->finderOfParenthesis + 1].type == FLOAT) &&
+                                 }
+                                 else if ((stack->arrayOfItems[stack->finderOfParenthesis + 1].type == FLOAT) &&
                                             (stack->arrayOfItems[stack->finderOfParenthesis + 3].type == FLOAT)) {
                                      dataIDF.type = FLOAT;
-                                     // generovanie  INT2FLOAT %s@%s %s@%s
+                                     instr_type = INSTRUCT_SUB;
                                      // generovanie  SUB %s@%s %s@%s %s@%s
-                                 } else {
+                                 }
+                                 else {
                                      resultOfPrece.result = ERR_INCOMPATIBLE_TYPE;
                                  }
-                             } else {
+                             }
+                             else {
                                  resultOfPrece.result = SYN_ERR;
                                  return resultOfPrece;
                              }
@@ -366,6 +413,7 @@ expr_return parse_expr(LocalMap* lMap, tList* list){
                          case eMUL:
                              if (&stack->arrayOfItems[stack->finderOfParenthesis + 3] != NULL) {
                                  // generovanie DEFVAR %s@%s
+                                 instr_type = INSTRUCT_DEFVAR;
                                  if ((stack->arrayOfItems[stack->finderOfParenthesis + 1].type == STRING) ||
                                      (stack->arrayOfItems[stack->finderOfParenthesis + 3].type == STRING)) {
                                      resultOfPrece.result = ERR_INCOMPATIBLE_TYPE;
@@ -373,27 +421,33 @@ expr_return parse_expr(LocalMap* lMap, tList* list){
                                  } else if ((stack->arrayOfItems[stack->finderOfParenthesis + 1].type == INTEGER) &&
                                             (stack->arrayOfItems[stack->finderOfParenthesis + 3].type == INTEGER)) {
                                      dataIDF.type = INTEGER;
+                                     instr_type = INSTRUCT_MUL;
                                      //generovanie MUL %s@%s %s@%s %s@%s
                                  } else if ((stack->arrayOfItems[stack->finderOfParenthesis + 1].type == INTEGER) &&
                                             (stack->arrayOfItems[stack->finderOfParenthesis + 3].type == FLOAT)) {
                                      dataIDF.type = FLOAT;
+                                     instr_type = INSTRUCT_INT2FLOAT;
+                                     instr_type = INSTRUCT_MUL;
                                      // generovanie INT2FLOAT %s@%s %s@%s
                                      //generovanie MUL %s@%s %s@%s %s@%s
                                  } else if ((stack->arrayOfItems[stack->finderOfParenthesis + 1].type == FLOAT) &&
                                             (stack->arrayOfItems[stack->finderOfParenthesis + 3].type == INTEGER)) {
                                      dataIDF.type = FLOAT;
+                                     instr_type = INSTRUCT_INT2FLOAT;
+                                     instr_type = INSTRUCT_MUL;
                                      //generovanie INT2FLOAT %s@%s %s@%
                                      //generovanie MUL %s@%s %s@%s %s@%s
+
                                  } else if ((stack->arrayOfItems[stack->finderOfParenthesis + 1].type == FLOAT) &&
                                             (stack->arrayOfItems[stack->finderOfParenthesis + 3].type == FLOAT)) {
                                      dataIDF.type = FLOAT;
+                                     instr_type = INSTRUCT_MUL;
                                      //generovanie MUL %s@%s %s@%s %s@%s
-                                 } else {   //printf("semnticky eror BOOL \n");
+                                 } else {
                                      resultOfPrece.result = ERR_INCOMPATIBLE_TYPE;
                                  }
 
                              } else {
-                                 // printf("ERROR dal si zle tokeny\n");
                                  resultOfPrece.result = SYN_ERR;
                                  return resultOfPrece;
                              }
@@ -411,6 +465,7 @@ expr_return parse_expr(LocalMap* lMap, tList* list){
                          case eDIV:
                              if (&stack->arrayOfItems[stack->finderOfParenthesis + 3] != NULL) {
                                  // generovanie DEFVAR %s@%s
+                                 instr_type = INSTRUCT_DEFVAR;
                                  if ((stack->arrayOfItems[stack->finderOfParenthesis + 1].type == STRING) ||
                                      (stack->arrayOfItems[stack->finderOfParenthesis + 3].type == STRING)) {
                                      resultOfPrece.result = ERR_INCOMPATIBLE_TYPE;
@@ -418,18 +473,22 @@ expr_return parse_expr(LocalMap* lMap, tList* list){
                                  } else if ((stack->arrayOfItems[stack->finderOfParenthesis + 1].type == INTEGER) &&
                                             (stack->arrayOfItems[stack->finderOfParenthesis + 3].type == INTEGER)) {
                                      dataIDF.type = FLOAT;
+                                     instr_type = INSTRUCT_DIV;
                                      //generovanie DIV %s@%s %s@%s %s@%s
                                  } else if ((stack->arrayOfItems[stack->finderOfParenthesis + 1].type == INTEGER) &&
                                             (stack->arrayOfItems[stack->finderOfParenthesis + 3].type == FLOAT)) {
                                      dataIDF.type = FLOAT;
+                                     instr_type = INSTRUCT_DIV;
                                      // generovanie DIV %s@%s %s@%s %s@%s
                                  } else if ((stack->arrayOfItems[stack->finderOfParenthesis + 1].type == FLOAT) &&
                                             (stack->arrayOfItems[stack->finderOfParenthesis + 3].type == INTEGER)) {
                                      dataIDF.type = FLOAT;
+                                     instr_type = INSTRUCT_DIV;
                                      // generovanie  DIV %s@%s %s@%s %s@%s
                                  } else if ((stack->arrayOfItems[stack->finderOfParenthesis + 1].type == FLOAT) &&
                                             (stack->arrayOfItems[stack->finderOfParenthesis + 3].type == FLOAT)) {
                                      dataIDF.type = FLOAT;
+                                     instr_type = INSTRUCT_DIV;
                                      // generovanie  DIV %s@%s %s@%s %s@%s
                                  } else {   //printf("semanticky error BOOL \n");
                                      resultOfPrece.result = ERR_INCOMPATIBLE_TYPE;
@@ -452,40 +511,56 @@ expr_return parse_expr(LocalMap* lMap, tList* list){
                              // PRAVIDLO E -> E < E
                          case eLESS:
                              if (&stack->arrayOfItems[stack->finderOfParenthesis + 3] != NULL) {
+                                 // generovanie DEFVAR %s@%s
+                                 instr_type = INSTRUCT_DEFVAR;
                                  if ((stack->arrayOfItems[stack->finderOfParenthesis + 1].type == STRING) &&
                                      (stack->arrayOfItems[stack->finderOfParenthesis + 3].type == STRING)) {
-                                     // printf(" nejake lexiko porovnanie retazcov  !!\n");
+                                     int result = strCompare(&stack->arrayOfItems[stack->finderOfParenthesis + 1].value.string, &stack->arrayOfItems[stack->finderOfParenthesis + 3].value.string);
+                                     if(result < 0){
+                                         resultOfPrece.bool_result = 1; // true
+                                     }
+                                     resultOfPrece.bool_result = 0; // false
                                      dataIDF.type = BOOLEAN;
+                                     instr_type = INSTRUCT_LT;
+                                     // generovanie LT %s@%s %s@%s %s@%s
                                  }
                                  else if ((stack->arrayOfItems[stack->finderOfParenthesis + 1].type == INTEGER) &&
                                           (stack->arrayOfItems[stack->finderOfParenthesis + 3].type == INTEGER)) {
                                      dataIDF.type = BOOLEAN;
-                                     // printf("integer to integer rozdielnost asi int   \n");
+                                     resultOfPrece.bool_result = 1; // true
+                                     instr_type = INSTRUCT_LT;
+                                     // generovanie LT %s@%s %s@%s %s@%s
                                  }
                                  else if ((stack->arrayOfItems[stack->finderOfParenthesis + 1].type == INTEGER) &&
                                           (stack->arrayOfItems[stack->finderOfParenthesis + 3].type == FLOAT)) {
                                      dataIDF.type = BOOLEAN;
-                                     //  printf("integer ?? dobule  takze prvy operand na FLOAT    \n");
+                                     resultOfPrece.bool_result = 1; // true
+                                     instr_type = INSTRUCT_FLOAT2INT; // asi najskor previest na integer a potom porovanat
+                                     instr_type = INSTRUCT_LT;
+                                     // generovanie LT %s@%s %s@%s %s@%s
                                  }
                                  else if ((stack->arrayOfItems[stack->finderOfParenthesis + 1].type == FLOAT) &&
                                           (stack->arrayOfItems[stack->finderOfParenthesis + 3].type == INTEGER)) {
                                      dataIDF.type = BOOLEAN;
-                                     //printf("double ?? integer  takze druhy na double \n");
+                                     resultOfPrece.bool_result = 1; // true
+                                     instr_type = INSTRUCT_FLOAT2INT; // asi najskor previest na integer a potom porovanat
+                                     instr_type = INSTRUCT_LT;
+                                     // generovanie LT %s@%s %s@%s %s@%s
                                  }
                                  else if ((stack->arrayOfItems[stack->finderOfParenthesis + 1].type == FLOAT) &&
                                           (stack->arrayOfItems[stack->finderOfParenthesis + 3].type == FLOAT)) {
                                      dataIDF.type = BOOLEAN;
-                                     // printf("double to double rozdielnost ziadna konverzia   \n");
+                                     resultOfPrece.bool_result = 1; // true
+                                     instr_type = INSTRUCT_LT;
+                                     // generovanie LT %s@%s %s@%s %s@%s
                                  }
                                  else {
-                                     //printf("sem eror u porovnania 3\n");
                                      resultOfPrece.result = ERR_INCOMPATIBLE_TYPE;
                                      return resultOfPrece;
                                  }
                              }
                              else {
                                  resultOfPrece.result = SYN_ERR;
-                                 // printf("ERROR dal si zle tokeny\n");
                                  return resultOfPrece;
                              }
                              tempItemForPositionOne = stack_pop(stack);      // ulozenie si prveho E
@@ -500,41 +575,58 @@ expr_return parse_expr(LocalMap* lMap, tList* list){
                              break;
                              // PRAVIDLO E -> E > E
                          case eGREAT:
+
                              if (&stack->arrayOfItems[stack->finderOfParenthesis + 3] != NULL) {
+                                 // generovanie DEFVAR %s@%s
+                                 instr_type = INSTRUCT_DEFVAR;
                                  if ((stack->arrayOfItems[stack->finderOfParenthesis + 1].type == STRING) &&
                                      (stack->arrayOfItems[stack->finderOfParenthesis + 3].type == STRING)) {
-                                     // printf(" nejake lexiko porovnanie retazcov  !!\n");
+                                     int result = strCompare(&stack->arrayOfItems[stack->finderOfParenthesis + 1].value.string, &stack->arrayOfItems[stack->finderOfParenthesis + 3].value.string);
+                                     if(result > 0){
+                                         resultOfPrece.bool_result = 1; // true
+                                     }
+                                     resultOfPrece.bool_result = 0; // false
                                      dataIDF.type = BOOLEAN;
+                                     // generovanie GT %s@%s %s@%s %s@%s
+                                     instr_type = INSTRUCT_GT;
                                  }
                                  else if ((stack->arrayOfItems[stack->finderOfParenthesis + 1].type == INTEGER) &&
                                           (stack->arrayOfItems[stack->finderOfParenthesis + 3].type == INTEGER)) {
                                      dataIDF.type = BOOLEAN;
-                                     // printf("integer to integer rozdielnost asi int   \n");
+                                     resultOfPrece.bool_result = 1; // true
+                                     // generovanie GT %s@%s %s@%s %s@%s
+                                     instr_type = INSTRUCT_GT;
                                  }
                                  else if ((stack->arrayOfItems[stack->finderOfParenthesis + 1].type == INTEGER) &&
                                           (stack->arrayOfItems[stack->finderOfParenthesis + 3].type == FLOAT)) {
                                      dataIDF.type = BOOLEAN;
-                                     //  printf("integer ?? dobule  takze prvy operand na FLOAT    \n");
+                                     resultOfPrece.bool_result = 1; // true
+                                     // generovanie GT %s@%s %s@%s %s@%s
+                                     instr_type = INSTRUCT_FLOAT2INT;
+                                     instr_type = INSTRUCT_GT;
                                  }
                                  else if ((stack->arrayOfItems[stack->finderOfParenthesis + 1].type == FLOAT) &&
                                           (stack->arrayOfItems[stack->finderOfParenthesis + 3].type == INTEGER)) {
                                      dataIDF.type = BOOLEAN;
-                                     //printf("double ?? integer  takze druhy na double \n");
+                                     resultOfPrece.bool_result = 1; // true
+                                     // generovanie GT %s@%s %s@%s %s@%s
+                                     instr_type = INSTRUCT_FLOAT2INT;
+                                     instr_type = INSTRUCT_GT;
                                  }
                                  else if ((stack->arrayOfItems[stack->finderOfParenthesis + 1].type == FLOAT) &&
                                           (stack->arrayOfItems[stack->finderOfParenthesis + 3].type == FLOAT)) {
                                      dataIDF.type = BOOLEAN;
-                                     // printf("double to double rozdielnost ziadna konverzia   \n");
+                                     resultOfPrece.bool_result = 1; // true
+                                     // generovanie GT %s@%s %s@%s %s@%s
+                                     instr_type = INSTRUCT_GT;
                                  }
                                  else {
-                                     //printf("sem eror u porovnania 3\n");
                                      resultOfPrece.result = ERR_INCOMPATIBLE_TYPE;
                                      return resultOfPrece;
                                  }
                              }
                              else {
                                  resultOfPrece.result = SYN_ERR;
-                                 // printf("ERROR dal si zle tokeny\n");
                                  return resultOfPrece;
                              }
                              tempItemForPositionOne = stack_pop(stack);      // ulozenie si prveho E
@@ -551,40 +643,52 @@ expr_return parse_expr(LocalMap* lMap, tList* list){
                              // PRAVIDLO E -> E <= E
                          case eLEQUAL: // <=
                              if (&stack->arrayOfItems[stack->finderOfParenthesis + 3] != NULL) {
+                                 // generovanie DEFVAR %s@%s
+                                 instr_type = INSTRUCT_DEFVAR;
                                  if ((stack->arrayOfItems[stack->finderOfParenthesis + 1].type == STRING) &&
                                      (stack->arrayOfItems[stack->finderOfParenthesis + 3].type == STRING)) {
-                                     // printf(" nejake lexiko porovnanie retazcov  !!\n");
+                                     resultOfPrece.bool_result = 1; // true
                                      dataIDF.type = BOOLEAN;
+                                     // generovanie LTS %s@%s %s@%s %s@%s
+                                     instr_type = INSTRUCT_LTS;
                                  }
                                  else if ((stack->arrayOfItems[stack->finderOfParenthesis + 1].type == INTEGER) &&
                                           (stack->arrayOfItems[stack->finderOfParenthesis + 3].type == INTEGER)) {
+                                     resultOfPrece.bool_result = 1; // true
                                      dataIDF.type = BOOLEAN;
-                                     // printf("integer to integer rozdielnost asi int   \n");
+                                     // generovanie LTS %s@%s %s@%s %s@%s
+                                     instr_type = INSTRUCT_LTS;
                                  }
                                  else if ((stack->arrayOfItems[stack->finderOfParenthesis + 1].type == INTEGER) &&
                                           (stack->arrayOfItems[stack->finderOfParenthesis + 3].type == FLOAT)) {
+                                     resultOfPrece.bool_result = 1; // true
                                      dataIDF.type = BOOLEAN;
-                                     //  printf("integer ?? dobule  takze prvy operand na FLOAT    \n");
+                                     // generovanie LTS %s@%s %s@%s %s@%s
+                                     instr_type = INSTRUCT_FLOAT2INT;
+                                     instr_type = INSTRUCT_LTS;
                                  }
                                  else if ((stack->arrayOfItems[stack->finderOfParenthesis + 1].type == FLOAT) &&
                                           (stack->arrayOfItems[stack->finderOfParenthesis + 3].type == INTEGER)) {
+                                     resultOfPrece.bool_result = 1; // true
                                      dataIDF.type = BOOLEAN;
-                                     //printf("double ?? integer  takze druhy na double \n");
+                                     // generovanie LTS %s@%s %s@%s %s@%s
+                                     instr_type = INSTRUCT_FLOAT2INT;
+                                     instr_type = INSTRUCT_LTS;
                                  }
                                  else if ((stack->arrayOfItems[stack->finderOfParenthesis + 1].type == FLOAT) &&
                                           (stack->arrayOfItems[stack->finderOfParenthesis + 3].type == FLOAT)) {
+                                     resultOfPrece.bool_result = 1; // true
                                      dataIDF.type = BOOLEAN;
-                                     // printf("double to double rozdielnost ziadna konverzia   \n");
+                                     // generovanie LTS %s@%s %s@%s %s@%s
+                                     instr_type = INSTRUCT_LTS;
                                  }
                                  else {
-                                     //printf("sem eror u porovnania 3\n");
                                      resultOfPrece.result = ERR_INCOMPATIBLE_TYPE;
                                      return resultOfPrece;
                                  }
                              }
                              else {
                                  resultOfPrece.result = SYN_ERR;
-                                 // printf("ERROR dal si zle tokeny\n");
                                  return resultOfPrece;
                              }
                              tempItemForPositionOne = stack_pop(stack);      // ulozenie si prveho E
@@ -599,41 +703,53 @@ expr_return parse_expr(LocalMap* lMap, tList* list){
                              break;
                              // PRAVIDLO E -> E >= E
                          case eGEQUAL: // >=
+                             // generovanie DEFVAR %s@%s
+                             instr_type = INSTRUCT_DEFVAR;
                              if (&stack->arrayOfItems[stack->finderOfParenthesis + 3] != NULL) {
                                  if ((stack->arrayOfItems[stack->finderOfParenthesis + 1].type == STRING) &&
                                      (stack->arrayOfItems[stack->finderOfParenthesis + 3].type == STRING)) {
-                                     // printf(" nejake lexiko porovnanie retazcov  !!\n");
+                                     resultOfPrece.bool_result = 1; // true
                                      dataIDF.type = BOOLEAN;
+                                     // generovanie GTS %s@%s %s@%s %s@%s
+                                     instr_type = INSTRUCT_GTS;
                                  }
                                  else if ((stack->arrayOfItems[stack->finderOfParenthesis + 1].type == INTEGER) &&
                                             (stack->arrayOfItems[stack->finderOfParenthesis + 3].type == INTEGER)) {
+                                     resultOfPrece.bool_result = 1; // true
                                      dataIDF.type = BOOLEAN;
-                                     // printf("integer to integer rozdielnost asi int   \n");
+                                     // generovanie GTS %s@%s %s@%s %s@%s
+                                     instr_type = INSTRUCT_GTS;
                                  }
                                  else if ((stack->arrayOfItems[stack->finderOfParenthesis + 1].type == INTEGER) &&
                                             (stack->arrayOfItems[stack->finderOfParenthesis + 3].type == FLOAT)) {
+                                     resultOfPrece.bool_result = 1; // true
                                      dataIDF.type = BOOLEAN;
-                                     //  printf("integer ?? dobule  takze prvy operand na FLOAT    \n");
+                                     // generovanie GTS %s@%s %s@%s %s@%s
+                                     instr_type = INSTRUCT_FLOAT2INT;
+                                     instr_type = INSTRUCT_GTS;
                                  }
                                  else if ((stack->arrayOfItems[stack->finderOfParenthesis + 1].type == FLOAT) &&
                                             (stack->arrayOfItems[stack->finderOfParenthesis + 3].type == INTEGER)) {
+                                     resultOfPrece.bool_result = 1; // true
                                      dataIDF.type = BOOLEAN;
-                                     //printf("double ?? integer  takze druhy na double \n");
+                                     // generovanie GTS %s@%s %s@%s %s@%s
+                                     instr_type = INSTRUCT_FLOAT2INT;
+                                     instr_type = INSTRUCT_GTS;
                                  }
                                  else if ((stack->arrayOfItems[stack->finderOfParenthesis + 1].type == FLOAT) &&
                                             (stack->arrayOfItems[stack->finderOfParenthesis + 3].type == FLOAT)) {
+                                     resultOfPrece.bool_result = 1; // true
                                      dataIDF.type = BOOLEAN;
-                                     // printf("double to double rozdielnost ziadna konverzia   \n");
+                                     // generovanie GTS %s@%s %s@%s %s@%s
+                                     instr_type = INSTRUCT_GTS;
                                  }
                                  else {
-                                     //printf("sem eror u porovnania 3\n");
                                      resultOfPrece.result = ERR_INCOMPATIBLE_TYPE;
                                      return resultOfPrece;
                                  }
                              }
                              else {
                                  resultOfPrece.result = SYN_ERR;
-                                 // printf("ERROR dal si zle tokeny\n");
                                  return resultOfPrece;
                              }
                              tempItemForPositionOne = stack_pop(stack);      // ulozenie si prveho E
@@ -648,41 +764,56 @@ expr_return parse_expr(LocalMap* lMap, tList* list){
                              break;
                              // PRAVIDLO E -> E == E
                          case eEQUAL: // ==
+                             // generovanie DEFVAR %s@%s
+                             instr_type = INSTRUCT_DEFVAR;
                              if (&stack->arrayOfItems[stack->finderOfParenthesis + 3] != NULL) {
                                  if ((stack->arrayOfItems[stack->finderOfParenthesis + 1].type == STRING) &&
                                      (stack->arrayOfItems[stack->finderOfParenthesis + 3].type == STRING)) {
-                                     // printf(" nejake lexiko porovnanie retazcov  !!\n");
+                                     int result = strCompare(&stack->arrayOfItems[stack->finderOfParenthesis + 1].value.string, &stack->arrayOfItems[stack->finderOfParenthesis + 3].value.string);
+                                     if(result < 0){
+                                         resultOfPrece.bool_result = 1; // true
+                                     }
+                                     resultOfPrece.bool_result = 0; // false
                                      dataIDF.type = BOOLEAN;
+                                     // generovanie EQ %s@%s %s@%s %s@%s
+                                     instr_type = INSTRUCT_EQ;
                                  }
                                  else if ((stack->arrayOfItems[stack->finderOfParenthesis + 1].type == INTEGER) &&
                                             (stack->arrayOfItems[stack->finderOfParenthesis + 3].type == INTEGER)) {
                                      dataIDF.type = BOOLEAN;
-                                     // printf("integer to integer rozdielnost asi int   \n");
+                                     resultOfPrece.bool_result = 1; // true
+                                     // generovanie EQ %s@%s %s@%s %s@%s
+                                     instr_type = INSTRUCT_EQ;
                                  }
                                  else if ((stack->arrayOfItems[stack->finderOfParenthesis + 1].type == INTEGER) &&
                                             (stack->arrayOfItems[stack->finderOfParenthesis + 3].type == FLOAT)) {
                                      dataIDF.type = BOOLEAN;
-                                     //  printf("integer ?? dobule  takze prvy operand na FLOAT    \n");
+                                     resultOfPrece.bool_result = 1; // true
+                                     // generovanie EQ %s@%s %s@%s %s@%s
+                                     instr_type = INSTRUCT_FLOAT2INT;
+                                     instr_type = INSTRUCT_EQ;
                                  }
                                  else if ((stack->arrayOfItems[stack->finderOfParenthesis + 1].type == FLOAT) &&
                                             (stack->arrayOfItems[stack->finderOfParenthesis + 3].type == INTEGER)) {
                                      dataIDF.type = BOOLEAN;
-                                     //printf("double ?? integer  takze druhy na double \n");
+                                     resultOfPrece.bool_result = 1; // true
+                                     // generovanie EQ %s@%s %s@%s %s@%s
+                                     instr_type = INSTRUCT_FLOAT2INT;
+                                     instr_type = INSTRUCT_EQ;
                                  }
                                  else if ((stack->arrayOfItems[stack->finderOfParenthesis + 1].type == FLOAT) &&
                                             (stack->arrayOfItems[stack->finderOfParenthesis + 3].type == FLOAT)) {
                                      dataIDF.type = BOOLEAN;
-                                     // printf("double to double rozdielnost ziadna konverzia   \n");
+                                     resultOfPrece.bool_result = 1; // true
+                                     instr_type = INSTRUCT_EQ;
                                  }
                                  else {
-                                     //printf("sem eror u porovnania 3\n");
                                      resultOfPrece.result = ERR_INCOMPATIBLE_TYPE;
                                      return resultOfPrece;
                                  }
                              }
                              else {
                                  resultOfPrece.result = SYN_ERR;
-                                 // printf("ERROR dal si zle tokeny\n");
                                  return resultOfPrece;
                              }
                              tempItemForPositionOne = stack_pop(stack);      // ulozenie si prveho E
@@ -697,41 +828,67 @@ expr_return parse_expr(LocalMap* lMap, tList* list){
                              break;
                              // PRAVIDLO E -> E != E
                          case eNEQUAL: // !=
+                             // generovanie DEFVAR %s@%s
+                             instr_type = INSTRUCT_DEFVAR;
                              if (&stack->arrayOfItems[stack->finderOfParenthesis + 3] != NULL) {
                                  if ((stack->arrayOfItems[stack->finderOfParenthesis + 1].type == STRING) &&
                                      (stack->arrayOfItems[stack->finderOfParenthesis + 3].type == STRING)) {
-                                     //printf(" nejake lexiko porovnanie retazcov  !!\n");
+                                     int result = strCompare(&stack->arrayOfItems[stack->finderOfParenthesis + 1].value.string, &stack->arrayOfItems[stack->finderOfParenthesis + 3].value.string);
+                                     if(result != 0){
+                                         resultOfPrece.bool_result = 1; // true
+                                     }
+                                     resultOfPrece.bool_result = 0; // false
                                      dataIDF.type = BOOLEAN;
+                                     // generovanie NOT %s@%s %s@%s %s@%s
+                                     // generovanie EQ %s@%s %s@%s %s@%s
+                                     instr_type = INSTRUCT_NOT;
+                                     instr_type = INSTRUCT_EQ;
                                  }
                                  else if ((stack->arrayOfItems[stack->finderOfParenthesis + 1].type == INTEGER) &&
                                             (stack->arrayOfItems[stack->finderOfParenthesis + 3].type == INTEGER)) {
                                      dataIDF.type = BOOLEAN;
-                                     //printf("integer to integer rozdielnost asi int   \n");
+                                     resultOfPrece.bool_result = 1; // true
+                                     // generovanie NOT %s@%s %s@%s %s@%s
+                                     // generovanie EQ %s@%s %s@%s %s@%s
+                                     instr_type = INSTRUCT_NOT;
+                                     instr_type = INSTRUCT_EQ;
                                  }
                                  else if ((stack->arrayOfItems[stack->finderOfParenthesis + 1].type == INTEGER) &&
                                             (stack->arrayOfItems[stack->finderOfParenthesis + 3].type == FLOAT)) {
                                      dataIDF.type = BOOLEAN;
-                                     //printf("integer ?? dobule  takze prvy operand na FLOAT    \n");
+                                     resultOfPrece.bool_result = 1; // true
+                                     // generovanie NOT %s@%s %s@%s %s@%s
+                                     // generovanie EQ %s@%s %s@%s %s@%s
+                                     instr_type = INSTRUCT_FLOAT2INT;
+                                     instr_type = INSTRUCT_NOT;
+                                     instr_type = INSTRUCT_EQ;
                                  }
                                  else if ((stack->arrayOfItems[stack->finderOfParenthesis + 1].type == FLOAT) &&
                                             (stack->arrayOfItems[stack->finderOfParenthesis + 3].type == INTEGER)) {
                                      dataIDF.type = BOOLEAN;
-                                     // printf("FLOAT ?? integer  takze druhy na FLOAT \n");
+                                     resultOfPrece.bool_result = 1; // true
+                                     // generovanie NOT %s@%s %s@%s %s@%s
+                                     // generovanie EQ %s@%s %s@%s %s@%s
+                                     instr_type = INSTRUCT_FLOAT2INT;
+                                     instr_type = INSTRUCT_NOT;
+                                     instr_type = INSTRUCT_EQ;
                                  }
                                  else if ((stack->arrayOfItems[stack->finderOfParenthesis + 1].type == FLOAT) &&
                                             (stack->arrayOfItems[stack->finderOfParenthesis + 3].type == FLOAT)) {
                                      dataIDF.type = BOOLEAN;
-                                     // printf("double to double rozdielnost ziadna konverzia   \n");
+                                     resultOfPrece.bool_result = 1; // true
+                                     // generovanie NOT %s@%s %s@%s %s@%s
+                                     // generovanie EQ %s@%s %s@%s %s@%s
+                                     instr_type = INSTRUCT_NOT;
+                                     instr_type = INSTRUCT_EQ;
                                  }
                                  else {
-                                     // printf("sem eror u porovnania <>\n");
                                      resultOfPrece.result = ERR_INCOMPATIBLE_TYPE;
                                      return resultOfPrece;
                                  }
                              }
                              else {
                                  resultOfPrece.result = SYN_ERR;
-                                 //printf("ERROR dal si zle tokeny\n");
                                  return resultOfPrece;
                              }
                              tempItemForPositionOne = stack_pop(stack);      // ulozenie si prveho E
