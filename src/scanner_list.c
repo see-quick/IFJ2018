@@ -410,3 +410,17 @@ char * DLFirstImportant(tDLList *L){
 	}
 	return NULL;
 }
+
+
+char * DLLastImportant(tDLList *L){
+	while((L->First->rptr != NULL) && (L->First != NULL)){
+		if (L->First->is_important == 1){
+			L->First->is_important = 0;
+			return L->First->data;
+		}
+		else{
+			L->First = L->First->rptr;
+		}
+	}
+	return NULL;
+}

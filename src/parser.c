@@ -256,15 +256,14 @@ int sth(LocalMap* localMap){
 		case LEX_ID_F:
 		case LEX_ID:
 
+				DLIsImportant(&tlist);
+
 				//SEMANTICKA AKCE, KONTROLA DEFINICE FUNKCE
 				tmp = global_map_get_pointer_to_value(gMap, gToken.data.str);
 				if (tmp == NULL){
 					fprintf(stderr, "Semanticka chyba, funkce %s neni definovana, radek %d\n", gToken.data.str, gToken.row);
 					return SEM_ERR;
 				}
-
-				// saved = realloc(saved, gToken.data.length);
-				// strcpy(saved, gToken.data.str);
 
 				// vytvoreni docasneho ramce pro funkce
 				instr_type =  INSTRUCT_CREATEFREAME;
@@ -309,24 +308,18 @@ int sth(LocalMap* localMap){
 				}
 
 
-				// if ( tmp->paramCount != argCount ){
-				// 	fprintf(stderr, "Semanticka chyba, pocet parametru funkce %s nesouvisi s poctem argumentu na radku %d\n",saved , gToken.row);
-				// }
+				if ( tmp->paramCount != argCount ){
+					fprintf(stderr, "Semanticka chyba, pocet parametru funkce %s nesouvisi s poctem argumentu na radku %d\n",gToken.data.str , gToken.row);
+				}
 
 				// pro dalsi volani funkce
 				argCount = 0;
-
 
 				// instrukce pro volani funkce
 
 				instr_type = INSTRUCT_CALL;
 				instr1.type = 706;
-				//printf("String1: %s\n", instr1.value.s);
-				instr1.value.s = "";
-				//printf("String1: %s\n", instr1.value.s);
-				//printf("String2: %s\n", tmp_str);
-				//instr1.value.s = saved;
-				//printf("String1: %s\n", instr1.value.s);
+				instr1.value.s = DLLastImportant(&tlist);
 
 				insert_item(ilist, &instr_type, &instr1, &instr2, &instr3);
 
@@ -342,6 +335,26 @@ int sth(LocalMap* localMap){
 		default:
 			res = parse_expr(localMap, ilist);
 			result = res.result;
+
+
+
+			// tady mam provest kontrolu x = 
+
+			// char * imp = DlFirstImportant();
+			// tDataIDF tmp = local_map_get_value(localMap, imp);
+			// if (res.type == NIL && tmp.type == INTEGER){
+			//		tmp.type = INTEGER;                       -- 701 asi ?
+			//      local_map_put(localMap, imp, tmp);
+			//
+			//}
+			// else if (res.type == INTEGER && tmp.type == INTEGER){
+				// nic se nemeni
+			//}
+
+
+			// atd
+
+			// TOHLE JE ZPRACOVANI PRECEDENCNI ANALYZY
 
 			return result;
 	}
@@ -386,9 +399,7 @@ int stat(){
 
 			// nazev promenne ziskame z list pro tokeny pomoci funkce DLCOPYFISRT
 			local_map_put(localMap, DLCopyFirst(&tlist), lData);
-
-
-			
+		
 
 			// generovani instrukce pro definice promenne s typem nil a hodnotou nil
 			instr_type = INSTRUCT_DEFVAR;
@@ -414,7 +425,7 @@ int stat(){
 
 			// tady mi ma prijit vysledek prirazeni
 
-			// vratit se na nekolik pozic driv
+			// SEMANTICKA AKCE
 
 
 			// jen pro testovani
@@ -422,16 +433,16 @@ int stat(){
 			lData.value.i = 3;
 			lData.type = 501; // typ int - INTEGER
 
+			char * imp = DLFirstImportant(&tlist);
 
 
-			local_map_put(localMap, DLFirstImportant(&tlist), lData);
-
+			local_map_put(localMap, imp, lData);
 
 
 			// MOVE GF@tmp TF@%retval
 			instr_type = INSTRUCT_MOVE;
 			instr1.type = 700;
-			//instr1.value.s = saved;
+			instr1.value.s = imp;
 			instr2.type = 702;
 			instr2.value.s = "%retval";
 
@@ -845,7 +856,7 @@ int func(){
 
 	instr_type = INSTRUCT_LABEL;
 	instr1.type = 706;
-	//instr1.value.s = saved;
+	instr1.value.s = DLCopyFirst(&tlist);
 
 	insert_item(ilist, &instr_type, &instr1, &instr2, &instr3);
 
@@ -871,19 +882,8 @@ int func(){
 	insert_item(ilist, &instr_type, &instr1, &instr2, &instr3);
 
 
-    // ukladam do GTS definice funkce
-    // pokud tam ID neni tak vepsat
+	DLIsImportant(&tlist); // nastaveni priznaku navratu
 
-  
-
-    // if (!global_map_contain(gMap, saved)){
-    // 	gData.defined = 1;
-    // 	global_map_put(gMap, saved, gData);
-    // }else {
-    //     //uz byla definovana
-    //     fprintf(stderr, "Radek %d: Semanticka chyba, funkce '%s' jiz byla definovana.\n", gToken.row, gToken.data.str);
-    //     return SEM_ERR;
-    // }
 
 
    	//dalsi token musi byt '('
@@ -929,11 +929,28 @@ int func(){
 		return SYN_ERR;
 	}
 
-
-
 	// ulozeni poctu formalnich parametru funkce
 	gData.paramCount = paramCount;
-	//global_map_put(gMap, saved, gData);
+
+
+	// ukladam do GTS definice funkce
+    // pokud tam ID neni tak vepsat
+
+    char * function_name = DLFirstImportant(&tlist);
+
+
+
+    if (!global_map_contain(gMap, function_name)){
+    	gData.defined = 1;
+    	global_map_put(gMap, function_name, gData);
+    }else {
+        //uz byla definovana
+        fprintf(stderr, "Radek %d: Semanticka chyba, funkce '%s' jiz byla definovana.\n", gToken.row, gToken.data.str);
+        return SEM_ERR;
+    }
+
+	
+	global_map_put(gMap, function_name, gData);
 
 	// pro dalsi funkce
 	paramCount = 0;
@@ -1138,12 +1155,12 @@ int parse(GlobalMap* globalMap, tList *list) {
 	}
 
 
-	print_elements_of_list(tlist);
+	//print_elements_of_list(tlist);
 
 	DLDisposeList(&tlist);
 
 	strFree(&(gToken.data));
-	local_map_print(localMap);
+	//local_map_print(localMap);
 	local_map_free(localMap);
 
 	return result;

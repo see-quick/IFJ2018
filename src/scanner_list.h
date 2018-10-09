@@ -43,3 +43,5 @@ int DLActive (tDLList *);
 void print_elements_of_list(tDLList);
 void DLIsImportant(tDLList *);
 char * DLFirstImportant(tDLList *L);
+
+char * DLLastImportant(tDLList *L);
