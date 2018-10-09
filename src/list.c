@@ -193,7 +193,7 @@ int temporary_exists(tList *instr_list)  {
  */
 void operand_type(char* order, tValue instr_operand, tDatType instr_type)  {
   if(instr_type == I)  printf("%s operand value: %d type: %u\n\t", order, instr_operand.i, instr_type);
-  else if(instr_type == F)  printf("%s operand value: %f type: %u\n\t", order, instr_operand.d, instr_type);
+  else if(instr_type == F)  printf("%s operand value: %f type: %u\n\t", order, instr_operand.f, instr_type);
   else  printf("%s operand value: %s type: %u\n\t", order, instr_operand.s, instr_type);
 }
 

@@ -877,7 +877,7 @@ int func(){
 	instr1.type = 701;
 	instr1.value.s = "%retval";
 	instr2.type = 704;
-	instr2.value.d = 0.0;
+	instr2.value.f = 0.0;
 
 	insert_item(ilist, &instr_type, &instr1, &instr2, &instr3);
 
