@@ -22,7 +22,7 @@
 
 #include <stdio.h>
 #include "string.h"
-#include "hashtable.h"
+#include "symtable.h"
 
 typedef struct{
     int top;

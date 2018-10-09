@@ -14,7 +14,7 @@
 
 */
 
-#include "../src/hashtable.h"
+#include "../src/symtable.h"
 #include <stdio.h>
 
 /**
