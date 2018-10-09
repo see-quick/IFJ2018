@@ -55,4 +55,5 @@ char *getStr(tString *);
 int strClear (tString *str);
 
 
+
 #endif

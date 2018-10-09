@@ -4,11 +4,11 @@ def foo(n)
 	n = 5
 end
 
-_foo(n)
+def _foo(n)
 	n = 5
 end
 
-fOO(n)
+def fOO(n)
 	n = 5
 end
 
@@ -28,8 +28,8 @@ def _foo?(n)
 	n = 5
 end
 
-def __myFUNCTIONidentifier99__!(n)
-	n = 5
-end
+#def __myFUNCTIONidentifier99__!(n)
+#	n = 5
+#end
 
 

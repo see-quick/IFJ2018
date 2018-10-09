@@ -19,6 +19,7 @@
 #define IFJ_SYNTACTICANALYZER_H
 
 #include "hashtable.h"
+#include "list.h"
 
 
 int error_lex(void);
@@ -30,7 +31,7 @@ int error_int(void);
 **/
 int checkTokenType(int);
 
-int parse(GlobalMap* );
+int parse(GlobalMap* , tList *);
 
 /**
 ** Pocatecni stav pruchodu
@@ -38,16 +39,17 @@ int parse(GlobalMap* );
 **/
 int prog(void);
 int main_p(void);
-int st_list(void);
-int stat(void);
-int parse_expr(void);
-int sth(void);
-int pm_list(LocalMap* , tDataIDF );
-int pm_list2(LocalMap* , tDataIDF );
+int st_list();
+int stat();
+int sth(LocalMap*);
+int pm_list();
+int pm_list2();
 int term_list(void);
 int term_list2(void);
-int func(void);
+int func();
 int one_term(void);
+
+int parse_expression(void);
 
 #endif
 

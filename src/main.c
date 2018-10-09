@@ -21,16 +21,32 @@
 #include "scanner.h"
 #include "error.h"
 #include "parser.h"
+#include "list.h"
+#include "instr_parse.h"
+#include "list.h"
+
 
 int main(int argc, char** argv) {
-  int result;
-  GlobalMap* globalMap;
+   
+  int result = SUCCESS;
 
+  tList *list = list_init();
+
+  GlobalMap* globalMap;
   globalMap = global_map_init(MAX_SIZE_OF_HASH_TABLE);
 
-  result = parse(globalMap);
+  result = parse(globalMap, list);
+
+  if(result == SUCCESS) {
+      reverse(&(list->first));
+      set_active(list);
+      parse_instructions(list);
+  }
 
   global_map_free(globalMap);
+
+  dispose_list(list);
+  free(list);
 
   return result;  
 }

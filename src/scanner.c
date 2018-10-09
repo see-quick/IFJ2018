@@ -89,6 +89,7 @@ int isKeyword(tString *word){
 /*Navratovy typ - typ lexemu ****************************************/
 /********************************************************************/
 int getToken(){
+
     //Reset tokenu do pocatecniho stavu
     resetToken();
 
@@ -121,21 +122,21 @@ int getToken(){
                 }
 
                 if(c == ' ' || c == '\r' || c == '\t') break;
-                else if(c == '\n'){ pushToken(c); return LEX_EOL; }
+                else if(c == '\n'){ pushToken(c); DLInsertFirst(&tlist, gToken.data.str); return LEX_EOL; }
                 else if(c == EOF){ return LEX_EOF; }
-                else if(c == '(') { pushToken(c); return LEX_L_BRACKET; }      // leva zavorka
-                else if(c == ')') { pushToken(c); return LEX_R_BRACKET; }      // prava zavorka
-                else if(c == '[') { pushToken(c); return LEX_L_SBRACKET; }     // leva hranata zavorka
-                else if(c == ']') { pushToken(c); return LEX_R_SBRACKET; }     // prava hranata zavorka
-                else if(c == '+') { pushToken(c); return LEX_ADDITION; }       // plus
+                else if(c == '(') { pushToken(c); DLInsertFirst(&tlist, gToken.data.str); return LEX_L_BRACKET; }      // leva zavorka
+                else if(c == ')') { pushToken(c); DLInsertFirst(&tlist, gToken.data.str); return LEX_R_BRACKET; }      // prava zavorka
+                else if(c == '[') { pushToken(c); DLInsertFirst(&tlist, gToken.data.str); return LEX_L_SBRACKET; }     // leva hranata zavorka
+                else if(c == ']') { pushToken(c); DLInsertFirst(&tlist, gToken.data.str); return LEX_R_SBRACKET; }     // prava hranata zavorka
+                else if(c == '+') { pushToken(c); DLInsertFirst(&tlist, gToken.data.str); return LEX_ADDITION; }       // plus
                 else if(c == '-') { pushToken(c); state = S_NEG_NUMBER; }   // minus || zaporne cislo
-                else if(c == '*') { pushToken(c); return LEX_MULTIPLICATION; } // hvezdicka
-                else if(c == '/') { pushToken(c); return LEX_DIVISION; }       // deleni
+                else if(c == '*') { pushToken(c); DLInsertFirst(&tlist, gToken.data.str); return LEX_MULTIPLICATION; } // hvezdicka
+                else if(c == '/') { pushToken(c); DLInsertFirst(&tlist, gToken.data.str); return LEX_DIVISION; }       // deleni
                 else if(c == '=') { pushToken(c); state = S_EQUAL; }          // rovnitko
-                else if(c == ',') { pushToken(c); return LEX_COMMA; }          // carka
-                else if(c == ':') { pushToken(c); return LEX_COLON; }          // dvojtecka
-                else if(c == '.') { pushToken(c); return LEX_DOT; }            // tecka
-                else if(c == ';') { pushToken(c); return LEX_SEMICOLON;}       // strednik
+                else if(c == ',') { pushToken(c); DLInsertFirst(&tlist, gToken.data.str); return LEX_COMMA; }          // carka
+                else if(c == ':') { pushToken(c); DLInsertFirst(&tlist, gToken.data.str); return LEX_COLON; }          // dvojtecka
+                else if(c == '.') { pushToken(c); DLInsertFirst(&tlist, gToken.data.str); return LEX_DOT; }            // tecka
+                else if(c == ';') { pushToken(c); DLInsertFirst(&tlist, gToken.data.str); return LEX_SEMICOLON;}       // strednik
 
                 else if(c == '!') { pushToken(c); state = S_AS_EXCM; }                       // vykricnik
                 else if(c == '>') { pushToken(c); state = S_GREATER; }                       // vetsitko
@@ -283,6 +284,7 @@ int getToken(){
             case S_EQUAL:
                 if (c == '='){
                     pushToken(c);
+                    DLInsertFirst(&tlist, gToken.data.str);
                     return LEX_DOUBLE_EQUAL;
                 }
                 else if (c == 'b'){
@@ -317,6 +319,7 @@ int getToken(){
               else {
                 ungetc(c, stdin);
                 sub = false;
+                DLInsertFirst(&tlist, gToken.data.str);
                 return LEX_SUBSTRACTION;
               }
             break;
@@ -346,8 +349,10 @@ int getToken(){
                         /*else if (digit_check == 1){
                             return ERROR_LEX;
                         }*/
-                        else if(isspace(c) || c == ',' || c == ')' || c == '+' || c == '-'){     // is delimiter     && digit_lock == false
+                        else if(isspace(c) || c == ',' || c == ')' || c == '+' || c == '-' || c == '*' || c == '/'
+                                  || c == '>' || c == '<'    ){     // is delimiter     && digit_lock == false
                             expr = true;
+                            DLInsertFirst(&tlist, gToken.data.str);
                             return LEX_NUMBER;
                         }
                         else return ERROR_LEX;
@@ -410,6 +415,7 @@ int getToken(){
                     else{
                         zero_cnt = 0;
                         expr = true;
+                        DLInsertFirst(&tlist, gToken.data.str);
                         return LEX_REAL_NUMBER;
                     }
                 }
@@ -429,13 +435,14 @@ int getToken(){
                   ungetc(c, stdin);
                   if ( (temp = isKeyword(&(gToken.data))) != SUCCESS)
                     return temp;
-                  else expr = true; return LEX_ID;
+                  else expr = true; DLInsertFirst(&tlist, gToken.data.str); return LEX_ID;
                 }
                 break;
                 
             case S_ID_F_END:
                 if (isspace(c) || ',' || ')'){ // is delimiter
                     ungetc(c, stdin);
+                    DLInsertFirst(&tlist, gToken.data.str);
                     return LEX_ID_F;
                 }
                 else{
@@ -500,6 +507,7 @@ int getToken(){
             case S_LESSER:
                 if(c == '='){
                     pushToken(c);
+                    DLInsertFirst(&tlist, gToken.data.str);
                     return LEX_LESSER_EQUAL;
                 }
                 else{
@@ -512,6 +520,7 @@ int getToken(){
             case S_GREATER:
                 if(c == '='){
                     pushToken(c);
+                    DLInsertFirst(&tlist, gToken.data.str);
                     return LEX_GREATER_EQUAL;
                 }
                 else{
@@ -591,7 +600,7 @@ int getToken(){
                     ungetc(c, stdin);
                     char *endptr = NULL;
                     long ascii_tmp = strtol(ascii_val, &endptr, 16);
-                    printf("%d  %d  %d ", *endptr, ascii_tmp, ascii_val);
+                    printf("%d  %ld  %s ", *endptr, ascii_tmp, ascii_val);
                     if (*endptr != '\0' || strcmp(endptr, ascii_val) == 0){
                         printf("asci err here 2");
                         return ERROR_LEX;
@@ -610,10 +619,12 @@ int getToken(){
             case S_AS_EXCM:
                 if(c == '='){
                     pushToken(c);
+                    DLInsertFirst(&tlist, gToken.data.str);
                     return LEX_UNEQUAL;
                 }
                 else{
                     ungetc(c, stdin);
+                    DLInsertFirst(&tlist, gToken.data.str);
                     return LEX_EXCM;
                 }
                 break;
