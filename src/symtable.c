@@ -15,7 +15,7 @@
 */
 
 #include <stdio.h>
-#include "hashtable.h"
+#include "symtable.h"
 
 /**
  * Hashovacia funckia, moznost vylepsenia...

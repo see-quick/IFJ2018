@@ -22,7 +22,7 @@
 #include "error.h"
 #include <stdbool.h>
 #include "scanner.h"
-#include "hashtable.h"
+#include "symtable.h"
 #include "list.h"
 #include "stack.h"
 

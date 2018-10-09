@@ -18,7 +18,7 @@
 #ifndef IFJ_SYNTACTICANALYZER_H
 #define IFJ_SYNTACTICANALYZER_H
 
-#include "hashtable.h"
+#include "symtable.h"
 #include "list.h"
 
 
