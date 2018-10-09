@@ -45,6 +45,7 @@
 #define	eRBAR		12 // )
 #define eDOLAR      13 // dolar $
 
+
 #define eSOLVING_RULE   22 // preventujeme kvoli situacii kde ak najde symbol < a pride dalsi < tak nech sa z toho nezblazni
 #define E               42  // E - non terminal
 
