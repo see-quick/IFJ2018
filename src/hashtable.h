@@ -44,6 +44,7 @@ typedef union DataTypes
     int i;
     double d;
     tString string;
+    bool nil;
 } dType;
 
 /** stucture for data of indetificator (for local map) **/
@@ -52,23 +53,6 @@ typedef struct DataIdentificator { // (toto bude obsah pre localnu mapu)
     dType value;                    // hodnota identifikatora
     bool defined;                   // zda bola premmena definovana (ale taktiez to zistime tak ak bude nebude value
 } tDataIDF;
-
-/** stucture for data of function (for global map) **/
-typedef struct DataFunction {
-    Types type;                     // typ parametrov
-    Types returnType;               // navratova hodnota
-    int positionOfParameter;        // pozicia parametrov  //TODO: toto bude fungovat iba pre 0 a 1 argument, implementovat to ako list(v GTS bude typ a hodnota daneho parametru), LTS(key -> nazov premmenej, value -> typ, hodnota(v pripade arguemntov NONE(prazdna)))
-    bool defined;                   // zda bola funckcia definovana
-    int paramCount;                 // pocet parametrov vo funckii
-    tString functionParametersNames;//
-} tDataFunction;
-
-/*Datová položka TRP s explicitně řetězenými synonymy pre Globalnu mapu*/
-typedef struct GlobalMapItem{
-    String key;                 // kluc
-    tDataFunction globalData;   // obsah pre globalnu mapu
-    struct GlobalMapItem* ptrnext;  // ukazatel na dalsi synonym
-} GlobalMapItem;
 
 /*Datová položka TRP s explicitně řetězenými synonymy pre Localnu mapu*/
 typedef struct LocalMapItem{
@@ -81,6 +65,26 @@ typedef struct LocalMap{
     int size;
     struct LocalMapItem **list;
 }LocalMap;
+
+
+/** stucture for data of function (for global map) **/
+typedef struct DataFunction {
+    Types type;                     // typ parametrov
+    Types returnType;               // navratova hodnota
+    int positionOfParameter;        // pozicia parametrov  //TODO: toto bude fungovat iba pre 0 a 1 argument, implementovat to ako list(v GTS bude typ a hodnota daneho parametru), LTS(key -> nazov premmenej, value -> typ, hodnota(v pripade arguemntov NONE(prazdna)))
+    bool defined;                   // zda bola funckcia definovana
+    int paramCount;                 // pocet parametrov vo funckii
+    tString functionParametersNames;
+    LocalMap* lMap;
+} tDataFunction;
+
+/*Datová položka TRP s explicitně řetězenými synonymy pre Globalnu mapu*/
+typedef struct GlobalMapItem{
+    String key;                 // kluc
+    tDataFunction globalData;   // obsah pre globalnu mapu
+    struct GlobalMapItem* ptrnext;  // ukazatel na dalsi synonym
+} GlobalMapItem;
+
 
 typedef struct GlobalMap{
     int size;

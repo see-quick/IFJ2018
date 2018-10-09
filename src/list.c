@@ -37,8 +37,8 @@ tList* list_init ()  {
   if(instr_list == NULL)  {
     list_error();
   }
-	instr_list->first = NULL;
-	instr_list->last = NULL;
+  instr_list->first = NULL;
+  instr_list->last = NULL;
   instr_list->act = NULL;
   //instr_list->stream = NULL;
 
@@ -63,6 +63,7 @@ void insert_item (tList *instr_list, tInstructionTypes *instr_name , tInstructio
     new_instr->data.type = *instr_name;
     new_instr->data.address1.type = addr1->type;
     new_instr->data.address1.value = addr1->value;
+    //printf("Test2: %s\n", new_instr->data.address1.value.s);
     new_instr->data.address2.type = addr2->type;
     new_instr->data.address2.value = addr2->value;
     new_instr->data.address3.type = addr3->type;
@@ -76,6 +77,16 @@ void insert_item (tList *instr_list, tInstructionTypes *instr_name , tInstructio
 
   }
 }
+
+
+
+// doplnit defaultni hodnoty!!!!!!!!!!!!!]
+// spravne alokovat pamet
+
+
+
+
+
 
 /**
  * Uvolnuje vsetky prvky listu
@@ -105,7 +116,7 @@ tNode* return_instruct(tList *instr_list) {
     return instr_list->act;
   }
   else  {
-    fprintf (stderr, "*ERROR* The program has performed an illegal operation.\n");
+    //fprintf (stderr, "*ERROR* The program has performed an illegal operation.\n");
     return NULL;
   }
 }
@@ -153,6 +164,26 @@ void reverse(struct Node** head_ref)  {
     }
     *head_ref = prev;
 }
+/*
+ * Prejde cely list a hlada instrukciu na temporary frame
+ * @param instr_list list instrukcii
+ * @return instrukcia na TF existuje -> 1 inak vracia 0
+ */
+int temporary_exists(tList *instr_list)  {
+  tNode *list_head = instr_list->first;
+  int exists = -1;
+
+  while(list_head)  {
+    if(list_head->data.address1.type == TF || list_head->data.address2.type == TF || list_head->data.address3.type == TF) {
+      exists = 1;
+    }
+    else exists = 0;
+
+    list_head = list_head->next;
+  }
+
+  return exists;
+}
 
 /**
  * Zistuje co sme naplnili do unionu instrukcie a printuje to
@@ -170,7 +201,7 @@ void operand_type(char* order, tValue instr_operand, tDatType instr_type)  {
  * Vytlacenie vsetkych instrukcii listu
  * @param instr_list list ktory chceme vytlacit
  */
-void print_list_elements(tList *instr_list)	{
+void print_list_elements(tList *instr_list) {
 
   tList *tmp_list = (tList*)malloc(sizeof(tList));
   *tmp_list = *instr_list;
@@ -182,8 +213,8 @@ void print_list_elements(tList *instr_list)	{
 
   printf("Header of the list\n-----------------\n");
 
-  while (tmp_list->first != NULL)	{
-		printf("\n\t INSTRUCT enum number = %d\n\t", tmp_list->first->data.type);
+  while (tmp_list->first != NULL) {
+    printf("\n\t INSTRUCT enum number = %d\n\t", tmp_list->first->data.type);
     if((tmp_list->first->data.address1.type) != 0 ) {
       operand_type(first,tmp_list->first->data.address1.value, tmp_list->first->data.address1.type);
     }
@@ -195,10 +226,10 @@ void print_list_elements(tList *instr_list)	{
     }
     printf("\n---------------------------------\n");
 
-		tmp_list->first = tmp_list->first->next;
-	}
+    tmp_list->first = tmp_list->first->next;
+  }
 
   free(tmp_list);
-	printf("\n\nEnd of the list\n-----------------\n");
+  printf("\n\nEnd of the list\n-----------------\n");
 }
 /* Koniec list.c */
