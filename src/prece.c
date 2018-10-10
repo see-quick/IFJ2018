@@ -17,6 +17,7 @@
 #include "prece.h"
 #include "stack.h"
 #include "string.h"
+//#include "parser.c" // zobratie globalnej mapy
 
 #define RULE_OF_OPERATORS stack_pops(4, stack);stack_push(stack, E, dataIDF);stack_print_prece(stack);break
 #define RULE_OF_IDENTIFICATOR stack_pops(2, stack);stack_push(stack, E, *dataIDF);stack_print_prece(stack)
@@ -31,21 +32,23 @@ int counterVar = 1;
 int DEBUG = 1;  /* premenna na debugovanie  0 --> pre ziadnej vypis, 1 --> pre vypis */
 
 prece_states prece_table [SIZEOFTABLE][SIZEOFTABLE] = {
-/*        +    -    *    /    <    >   <=   >=   ==   !=   i    (    )    $         <------- ACT TOKEN */
-/* + */ { G ,  G,   L,   L,   G,   G,  G,   G,   G,   G,   L,   L,   G,   G},
-/* - */ { G ,  G,   L,   L,   G,   G,  G,   G,   G,   G,   L,   L,   G,   G},
-/* * */ { G ,  G,   G,   G,   G,   G,  G,   G,   G,   G,   L,   L,   G,   G},     // TODO: ocekovat na zakladne zadania
-/* / */ { G ,  G,   G,   G,   G,   G,  G,   G,   G,   G,   L,   L,   G,   G},
-/* < */ { L ,  L,   L,   L,   G,   G,  G,   G,   G,   G,   L,   L,   G,   G},
-/* > */ { L ,  L,   L,   L,   G,   G,  G,   G,   G,   G,   L,   L,   G,   G},
-/* <=*/ { L ,  L,   L,   L,   G,   G,  G,   G,   G,   G,   L,   L,   G,   G},
-/* >=*/ { L ,  L,   L,   L,   G,   G,  G,   G,   G,   G,   L,   L,   G,   G},
-/* ==*/ { L ,  L,   L,   L,   L,   L,  L,   L,   G,   G,   L,   L,   G,   G},
-/* !=*/ { L ,  L,   L,   L,   L,   L,  L,   L,   G,   G,   L,   L,   G,   G},
-/* i */ { G ,  G,   G,   G,   G,   G,  G,   G,   G,   G, Err, Err,   G,   G},
-/* ( */ { L ,  L,   L,   L,   L,   L,  L,   L,   L,   L,   L,   L,  EQ, Err},
-/* ) */ { G ,  G,   G,   G,   G,   G,  G,   G,   G,   G, Err, Err,   G,   G},
-/* $ */ { L ,  L,   L,   L,   L,   L,  L,   L,   L,   L,   L,   L, Err, Err},
+/*        +    -    *    /    <    >   <=   >=   ==   !=   i    (    )    $   ,   f          <------- ACT TOKEN */
+/* + */ { G ,  G,   L,   L,   G,   G,  G,   G,   G,   G,   L,   L,   G,   G,  G,  L},
+/* - */ { G ,  G,   L,   L,   G,   G,  G,   G,   G,   G,   L,   L,   G,   G,  G,  L},
+/* * */ { G ,  G,   G,   G,   G,   G,  G,   G,   G,   G,   L,   L,   G,   G,  G,  L},     // TODO: ocekovat na zakladne zadania
+/* / */ { G ,  G,   G,   G,   G,   G,  G,   G,   G,   G,   L,   L,   G,   G,  G,  L},
+/* < */ { L ,  L,   L,   L,   G,   G,  G,   G,   G,   G,   L,   L,   G,   G,  G,  L},
+/* > */ { L ,  L,   L,   L,   G,   G,  G,   G,   G,   G,   L,   L,   G,   G,  G,  L},
+/* <=*/ { L ,  L,   L,   L,   G,   G,  G,   G,   G,   G,   L,   L,   G,   G,  G,  L},
+/* >=*/ { L ,  L,   L,   L,   G,   G,  G,   G,   G,   G,   L,   L,   G,   G,  G,  L},
+/* ==*/ { L ,  L,   L,   L,   L,   L,  L,   L,   G,   G,   L,   L,   G,   G,  G,  L},
+/* !=*/ { L ,  L,   L,   L,   L,   L,  L,   L,   G,   G,   L,   L,   G,   G,  G,  L},
+/* i */ { G ,  G,   G,   G,   G,   G,  G,   G,   G,   G, Err, Err,   G,   G,  G,Err},
+/* ( */ { L ,  L,   L,   L,   L,   L,  L,   L,   L,   L,   L,   L,  EQ, Err, EQ,  L},
+/* ) */ { G ,  G,   G,   G,   G,   G,  G,   G,   G,   G, Err, Err,   G,   G,  G,Err},
+/* $ */ { L ,  L,   L,   L,   L,   L,  L,   L,   L,   L,   L,   L, Err, Err, Err, L},
+/* , */ { L  , L  , L ,  L ,  L ,  L  ,L  , L  , L  , L  , L ,  L  , EQ , L ,EQ,  L},
+/* f */ {Err, Err, Err, Err, Err, Err,Err,Err, Err , Err , Err, EQ, Err, Err,Err,Err},
 };
 
 tString* generateVariable(tString* variable){
@@ -92,7 +95,14 @@ int indexerOfPreceTable (int indexer)
         case LEX_L_BRACKET: type = eLBAR; break;        // (
         case LEX_R_BRACKET: type = eRBAR; break;        // )
         /* IDENTIFIKATOR STAVY */
-        case LEX_ID: type = eIDENT; break;              // id // TODO: sem bude treba skontrolovat ci sa nachadza v lmap -> ak ano tak vyhodit chybu
+        case LEX_ID: type = eIDENT;
+//            if(global_map_contain(gMap, gToken.data.str)){
+////
+////            }
+
+
+            break;              // id // TODO: sem bude treba skontrolovat ci sa nachadza v lmap -> ak ano tak vyhodit chybu
+
         case LEX_STRING: type = eIDENT; break;          // ked pride string  premenime ho na index 10 cize identifikator
         case LEX_NUMBER: type = eIDENT; break;          // ked pride cislo -> i
         case LEX_REAL_NUMBER: type= eIDENT; break;      // ked pride cislo -> i
@@ -101,6 +111,9 @@ int indexerOfPreceTable (int indexer)
         case LEX_EOF: type = eDOLAR; break;             // v pripade ze to bude EOF na konci suboru
         case KW_THEN: type = eDOLAR; break;             // v pripade ze to bude then taktiez ukoncuj
         case KW_DO: type = eDOLAR; break;               // v pripade ze pripde DO
+        /* COMMA a FCE */
+        case LEX_COMMA: type = eCOMMA; break;       // comma ,
+        case KW_DEF: type = eFCE; break;            // funkcie
         default:
             /* SYNTAKTICKA CHYBA */
             printf("indexerOfPreceTable():Syntactic Error\n");
@@ -168,10 +181,11 @@ expr_return parse_expr(LocalMap* lMap, tList* list){
         }
 
         // akonahle sa vo fucnkii indexerOfPreceTable nenajde ziadny znak tak vyhadzujem syntaticku chybu
-        if(actTokenIndexToPreceTable == eSYNTERROR){
+        if(actTokenIndexToPreceTable == eSYNTERROR) {
             resultOfPrece.result = SYN_ERR;
             return resultOfPrece;
         }
+        printf("This is token -> %s\n", gToken.data.str);
 
         // SEMANTICKA AKCE
         // pushnuti do stackofItems strukturu pro token, ktery prave prisel od PARSERU
@@ -233,6 +247,8 @@ expr_return parse_expr(LocalMap* lMap, tList* list){
             dataIDF.defined = true;
         }
 
+        stack_print(stack);
+        stack_print_prece(stack);
         if(DEBUG)printf("This is act token    number -> |%d| and char -> |%s|\n", actTokenIndexToPreceTable, convert_to_char(actTokenIndexToPreceTable));
         if(DEBUG) printf("This is act stackTop number -> |%d| and char -> |%s|\n", stackTopTokenIndexToPreceTable, convert_to_char(stackTopTokenIndexToPreceTable));
 
@@ -290,6 +306,16 @@ expr_return parse_expr(LocalMap* lMap, tList* list){
                     stack_push(stack, E, dataIDF);                       // nakoniec pushneme E + datovu strukturu
                     dataIDF = tempItemForPositionOne->token_data;   // do struktury nahrame adresu token->data
                     break;
+                }
+                        /** PRAVIDLOO E -> f()  **/
+                else if(((stack->arrayOfNumbers[stack->finderOfParenthesis+1]) == eFCE) && ((stack->arrayOfNumbers[stack->finderOfParenthesis + 2]) == eLBAR) && ((stack->arrayOfNumbers[stack->finderOfParenthesis+3]) == eRBAR)){
+                     stack_pop_free(stack);                               // popnutie zatvorky )
+                     stack_pop_free(stack);                               // popnutie zatvorky (
+                     tempItemForPositionOne = stack_pop(stack);           // popnutie ale ziskanie si f
+                     // nachadza sa v globalnej tabulke
+                     // treba skontroloval pocet parametrov == 0, ak nebude vyhodit semanticku, + ziskat si return typ pre buduci $1
+                     stack_pop_free(stack);                               // popnutie znamienka <
+                     stack_push(stack, E, dataIDF);                       // nakoniec pushneme E + datovu strukturu
                 }
                 else {
                      int concreteOperator = stack->arrayOfNumbers[stack->finderOfParenthesis + 2];
@@ -923,8 +949,8 @@ expr_return parse_expr(LocalMap* lMap, tList* list){
                     resultOfPrece.uniqueID->str = stack_top_token_data(stack)->nameOfTheNonTerminal;     // vratenie UNIQUE nazvu identifikatora
                     resultOfPrece.data_type = stack_top_token_data(stack)->type;                    // vratenie typu identificatora
 
-                    stack_print(stack);
-                    stack_print_prece(stack);
+//                    stack_print(stack);
+//                    stack_print_prece(stack);
                     stack_free(stack);
                     if(DEBUG)printf("Return exiting value -> |%d|, returning value -> |%s| abd returning type -> |%d|\n", resultOfPrece.result, resultOfPrece.uniqueID->str, resultOfPrece.data_type);
                     return resultOfPrece;

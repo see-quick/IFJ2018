@@ -26,7 +26,7 @@
 #include "list.h"
 #include "stack.h"
 
-#define SIZEOFTABLE 14
+#define SIZEOFTABLE 16
 
 /* VSTUPNY TOKEN (identifikator) */
 /* e = expresion */
@@ -44,6 +44,8 @@
 #define	eLBAR		11 // (
 #define	eRBAR		12 // )
 #define eDOLAR      13 // dolar $
+#define eCOMMA     14 // ,
+#define eFCE        15 // fce()
 
 
 #define eSOLVING_RULE   22 // preventujeme kvoli situacii kde ak najde symbol < a pride dalsi < tak nech sa z toho nezblazni

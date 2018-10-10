@@ -951,6 +951,7 @@ int func(){
 
 	
 	global_map_put(gMap, function_name, gData);
+	global_map_print(gMap);
 
 	// pro dalsi funkce
 	paramCount = 0;
