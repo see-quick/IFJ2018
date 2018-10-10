@@ -17,6 +17,7 @@
 #include "prece.h"
 #include "stack.h"
 #include "string.h"
+#include "parser.h"
 //#include "parser.c" // zobratie globalnej mapy
 
 #define RULE_OF_OPERATORS stack_pops(4, stack);stack_push(stack, E, dataIDF);stack_print_prece(stack);break
@@ -76,7 +77,7 @@ void setEmptyDataIDF(tDataIDF dataIDF) {
 
 
 /* KVOLI INDEXOVANIU NA PRECEDENCNI TABULKU */
-int indexerOfPreceTable (int indexer)
+int indexerOfPreceTable (int indexer, LocalMap* lMap)
 {
     int type = indexer;          // vyberieme si co je aktualny token a budeme ho indexovat
     switch (type)
@@ -95,13 +96,21 @@ int indexerOfPreceTable (int indexer)
         case LEX_L_BRACKET: type = eLBAR; break;        // (
         case LEX_R_BRACKET: type = eRBAR; break;        // )
         /* IDENTIFIKATOR STAVY */
-        case LEX_ID: type = eIDENT;
-//            if(global_map_contain(gMap, gToken.data.str)){
-////
-////            }
-
-
-            break;              // id // TODO: sem bude treba skontrolovat ci sa nachadza v lmap -> ak ano tak vyhodit chybu
+        case LEX_ID:
+            if(global_map_contain(gMap, gToken.data.str)){
+                type = eFCE;            // nachadza sa to v gMap je to funckia
+                printf("==================================================================Je to FCE\n");
+            }
+            else if(local_map_contain(lMap, gToken.data.str)){
+                printf("=========================================================Je to LEX_ID\n");
+                type = eIDENT;         // nachadza sa to v lMap je to premenna
+            }
+            else{
+                printf("================================================================KOKOTn");
+                // nie je to ani fce ani identificator
+                return eSYNTERROR;
+            }
+            break;
 
         case LEX_STRING: type = eIDENT; break;          // ked pride string  premenime ho na index 10 cize identifikator
         case LEX_NUMBER: type = eIDENT; break;          // ked pride cislo -> i
@@ -172,11 +181,11 @@ expr_return parse_expr(LocalMap* lMap, tList* list){
         stack->finderOfParenthesis = stack->top; // vyrovnanie top so finderom
         //v pripade ze je na vrchole zasobniku non terminal E pozerame sa o 1 miesto nizsie
         if(stack->arrayOfNumbers[stack->top] == E){
-            actTokenIndexToPreceTable = indexerOfPreceTable(token);  // pretypovanie na dany index
+            actTokenIndexToPreceTable = indexerOfPreceTable(token, lMap);  // pretypovanie na dany index
             stackTopTokenIndexToPreceTable = stack->arrayOfNumbers[stack->finderOfParenthesis - 1];     // pozerame sa o jedno miesto nizsie
         }
         else{
-            actTokenIndexToPreceTable = indexerOfPreceTable(token);  // pretypovanie na dany index
+            actTokenIndexToPreceTable = indexerOfPreceTable(token, lMap);  // pretypovanie na dany index
             stackTopTokenIndexToPreceTable  = stack_top_token_number(stack); // pretypovanie na dany index
         }
 
@@ -285,8 +294,9 @@ expr_return parse_expr(LocalMap* lMap, tList* list){
 
                              /** PRAVIDLO E -> i **/
                  if((stack->arrayOfNumbers[stack->finderOfParenthesis+1]) == eIDENT){
-                    // generovanie non termu
+                     //TODO: dorobiť generovanie termu na vsetky redukcie
                     tempItemForPositionOne = stack_pop(stack);
+                     // generovanie non termu
                     tempItemForPositionOne->token_data.nameOfTheNonTerminal = generateVariable(resultOfPrece.uniqueID)->str;        // generovanie UNIQUE
                     stack_pop(stack);
                     stack_push(stack, E, tempItemForPositionOne->token_data);
@@ -317,6 +327,7 @@ expr_return parse_expr(LocalMap* lMap, tList* list){
                      stack_pop_free(stack);                               // popnutie znamienka <
                      stack_push(stack, E, dataIDF);                       // nakoniec pushneme E + datovu strukturu
                 }
+                // TODO: pravidlo -> E -> f(E), E -> f(E, E), E -> f(E, E , E ), E -> f(E, E, ...)
                 else {
                      int concreteOperator = stack->arrayOfNumbers[stack->finderOfParenthesis + 2];
                      switch (concreteOperator) {

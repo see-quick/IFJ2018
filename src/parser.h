@@ -21,6 +21,8 @@
 #include "symtable.h"
 #include "list.h"
 
+GlobalMap* gMap;		     // globalni tabulka symbolu
+
 
 int error_lex(void);
 int error_int(void);

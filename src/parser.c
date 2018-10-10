@@ -38,7 +38,7 @@ tDataIDF lData;
 
 /*********************************************************************/
 /* GLOBALNI TABULKA SYMBOLU */
-GlobalMap* gMap;		     // globalni tabulka symbolu
+
 tDataFunction *gDataptr;	 // ukazatel na uzel globalni tabulky symbolu
 tDataFunction gData;
 int paramCount = 0;          // pocet parametru funkce
