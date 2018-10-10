@@ -185,15 +185,14 @@ expr_return parse_expr(LocalMap* lMap, tList* list){
             dataIDF.type = INTEGER;
             dataIDF.value.i = atoi(gToken.data.str);
             instr2.type = I;
-            instr2.value.i = atoi(gToken.data.str);;
-            insert_item(list, &instr_type, &instr1, &instr2, &instr3);
+            instr2.value.i = dataIDF.value.i;
             // generovanie kodu MOVE %s@%s int@%s
         }
         else if (token == LEX_REAL_NUMBER){
             dataIDF.type = FLOAT;
-            dataIDF.value.d = atof(gToken.data.str);
+            dataIDF.value.f = atof(gToken.data.str);
             instr2.type = F;
-            instr2.value.f = atof(gToken.data.str);;
+            instr2.value.f = dataIDF.value.f;
             // generovanie kodu "MOVE %s@%s float@%s
 
         }
@@ -272,10 +271,11 @@ expr_return parse_expr(LocalMap* lMap, tList* list){
                     tempItemForPositionOne = stack_pop(stack);
                     stack_pop(stack);
                     stack_push(stack, E, tempItemForPositionOne->token_data);
-                    if(DEBUG) printf("Toto su data -> %d\n", tempItemForPositionOne->token_data.value.i);
-                    if(DEBUG) printf("StackTop NUMBER -> %s\n", convert_to_char(stack_top_token_number(stack)));
-                    if(DEBUG) printf("StackTop DATA -> %d\n", stack_top_token_data(stack)->value.i);
-                    if(DEBUG)stack_print_prece(stack);
+                    if (DEBUG) printf("Toto su data -> %d\n", tempItemForPositionOne->token_data.value.i);
+                    if (DEBUG) printf("StackTop NUMBER -> %s\n", convert_to_char(stack_top_token_number(stack)));
+                    if (DEBUG) printf("StackTop DATA -> %d\n", stack_top_token_data(stack)->value.i);
+                    if (DEBUG)stack_print_prece(stack);
+                    break;
 //                    RULE_OF_IDENTIFICATOR;
                 }
                             /** PRAVIDLO E -> (E) **/
@@ -568,13 +568,13 @@ expr_return parse_expr(LocalMap* lMap, tList* list){
                              tempItemForPositionThree = stack_pop(stack);    // ulozenie si druheho E
                              stack_pop(stack);                               // popnutie znamienak <
 //                            tempItemForPositionOne->token_data.value.i != tempItemForPositionThree->token_data.value.i; //  E >= E // TOTO JE IBA PRE KONTROLU
-                             dataIDF = tempItemForPositionOne->token_data;  // do struktury nahrame adresu token->data
-                             stack_push(stack, E, dataIDF);                 // nakoniec pushneme E + datovu strukturu
-                             if (DEBUG)
-                                 stack_print(stack);
-                             break;
-                             // PRAVIDLO E -> E > E
-                         case eGREAT:
+                            dataIDF = tempItemForPositionOne->token_data;  // do struktury nahrame adresu token->data
+                            stack_push(stack, E, dataIDF);                 // nakoniec pushneme E + datovu strukturu
+                            if (DEBUG)
+                                stack_print(stack);
+                            break;
+                            // PRAVIDLO E -> E > E
+                        case eGREAT:
 
                              if (&stack->arrayOfItems[stack->finderOfParenthesis + 3] != NULL) {
                                  // generovanie DEFVAR %s@%s

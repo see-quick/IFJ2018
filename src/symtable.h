@@ -42,7 +42,7 @@ typedef enum Types
 typedef union DataTypes
 {
     int i;
-    double d;
+    double f;
     tString string;
     bool nil;
 } dType;
