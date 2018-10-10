@@ -52,7 +52,12 @@ char* instruct_type(tDatType instruction) {
           return instr_type = "TF";
     break;
 
+    case FCE:
+    case EMPTY:
+      break;
   }
+  
+  return NULL;  //else -> ERROR
 }
 /*
  * Printuje symbol na zaklade jeho typu(int,id,float..)
@@ -106,6 +111,8 @@ void print_arit_instr(tNode *act_instr) {
     case INSTRUCT_CONCAT: name = "CONCAT"; break;
     case INSTRUCT_GETCHAR: name = "GETCHAR"; break;
     case INSTRUCT_SETCHAR: name = "SETCHAR"; break;
+    default:
+      break;
   }
 
   printf("%s %s@%s %s@", name, instruct_type(act_instr->data.address1.type), act_instr->data.address1.value.s, instruct_type(act_instr->data.address2.type));
