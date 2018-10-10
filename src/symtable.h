@@ -52,6 +52,7 @@ typedef struct DataIdentificator { // (toto bude obsah pre localnu mapu)
     Types type;                     // typ identifikatora
     dType value;                    // hodnota identifikatora
     bool defined;                   // zda bola premmena definovana (ale taktiez to zistime tak ak bude nebude value
+    char* nameOfTheNonTerminal;     // nazov nonterminalu $1, $240 atd.
 } tDataIDF;
 
 /*Datová položka TRP s explicitně řetězenými synonymy pre Localnu mapu*/

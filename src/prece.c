@@ -16,6 +16,7 @@
 */
 #include "prece.h"
 #include "stack.h"
+#include "string.h"
 
 #define RULE_OF_OPERATORS stack_pops(4, stack);stack_push(stack, E, dataIDF);stack_print_prece(stack);break
 #define RULE_OF_IDENTIFICATOR stack_pops(2, stack);stack_push(stack, E, *dataIDF);stack_print_prece(stack)
@@ -27,7 +28,7 @@ tInstructionData instr3;
 
 
 int counterVar = 1;
-int DEBUG = 0;  /* premenna na debugovanie  0 --> pre ziadnej vypis, 1 --> pre vypis */
+int DEBUG = 1;  /* premenna na debugovanie  0 --> pre ziadnej vypis, 1 --> pre vypis */
 
 prece_states prece_table [SIZEOFTABLE][SIZEOFTABLE] = {
 /*        +    -    *    /    <    >   <=   >=   ==   !=   i    (    )    $         <------- ACT TOKEN */
@@ -47,26 +48,22 @@ prece_states prece_table [SIZEOFTABLE][SIZEOFTABLE] = {
 /* $ */ { L ,  L,   L,   L,   L,   L,  L,   L,   L,   L,   L,   L, Err, Err},
 };
 
+tString* generateVariable(tString* variable){
+// generuje jedinecne nazvy identifikatoru
+// nazev se sklada ze znaku $ nasledovanym cislem
+// postupne se tu generuji prirozena cisla a do nazvu promenne se ukladaji
+// v reverzovanem poradi - na funkcnost to nema vliv, ale je jednodussi implementace
+    int i = counterVar;
+    strClear(variable);
+    strAdd(variable, '$');
+    while (i != 0) {
+        strAdd(variable, (char)(i + '0'));
+        i = i / 10;
+    }
+    counterVar++;
 
-/* TOTO TREBA URCITE */
-//void generateVariable(tString* variable)
-//// generuje jedinecne nazvy identifikatoru
-//// nazev se sklada ze znaku $ nasledovanym cislem
-//// postupne se tu generuji prirozena cisla a do nazvu promenne se ukladaji
-//// v reverzovanem poradi - na funkcnost to nema vliv, ale je jednodussi implementace
-//
-//{
-//    strClear(variable);
-//    strAdd(variable, '$');
-//    int i;
-//    i = counterVar;
-//    while (i != 0)
-//    {
-//        strAdd(variable, (char)(i % 10 + '0'));
-//        i = i / 10;
-//    }
-//    counterVar ++;
-//}
+    return variable;
+}
 
 void setEmptyDataIDF(tDataIDF dataIDF) {
     dataIDF.type = 500;
@@ -146,7 +143,7 @@ expr_return parse_expr(LocalMap* lMap, tList* list){
     /* INICIALIZACIA STRUKTUR */
     tItem* tempItemForPositionOne; /* GLOBALNY ITEM pre stack pri pravidle E -> i */
     tItem* tempItemForPositionThree; /* GLOBALNY ITEM pre stack pri pravidlach E -> E + E, E -> E - E a podobne. */
-    expr_return resultOfPrece = {.result=SUCCESS, .string="", .bool_result=""};
+    expr_return resultOfPrece = {.result=SUCCESS, .bool_result=""};
     tStack* stack = stack_init(12);
     int actTokenIndexToPreceTable = 0;
     int stackTopTokenIndexToPreceTable = 0;
@@ -184,6 +181,7 @@ expr_return parse_expr(LocalMap* lMap, tList* list){
         if (token == LEX_NUMBER){
             dataIDF.type = INTEGER;
             dataIDF.value.i = atoi(gToken.data.str);
+            resultOfPrece.uniqueID = &gToken.data;
             instr2.type = I;
             instr2.value.i = dataIDF.value.i;
             // generovanie kodu MOVE %s@%s int@%s
@@ -191,6 +189,7 @@ expr_return parse_expr(LocalMap* lMap, tList* list){
         else if (token == LEX_REAL_NUMBER){
             dataIDF.type = FLOAT;
             dataIDF.value.f = atof(gToken.data.str);
+            resultOfPrece.uniqueID = &gToken.data;
             instr2.type = F;
             instr2.value.f = dataIDF.value.f;
             // generovanie kodu "MOVE %s@%s float@%s
@@ -199,6 +198,7 @@ expr_return parse_expr(LocalMap* lMap, tList* list){
         else if (token == LEX_STRING){
             dataIDF.type = STRING;
             dataIDF.value.string.str = gToken.data.str;
+            resultOfPrece.uniqueID = &gToken.data;
             instr2.type = S;
             instr2.value.s = gToken.data.str;
             // generovanie kodu  MOVE %s@%s string@%s
@@ -207,6 +207,7 @@ expr_return parse_expr(LocalMap* lMap, tList* list){
             // ak sa premenna nachadza v lokalnej mape tak
             if(local_map_contain(lMap, dataIDF.value.string.str)){
                 dataIDF = local_map_get_value(lMap, dataIDF.value.string.str);
+                resultOfPrece.uniqueID = &gToken.data;
                 switch (dataIDF.type) {
                     case INTEGER:
                         instr2.type = I;
@@ -268,7 +269,9 @@ expr_return parse_expr(LocalMap* lMap, tList* list){
 
                              /** PRAVIDLO E -> i **/
                  if((stack->arrayOfNumbers[stack->finderOfParenthesis+1]) == eIDENT){
+                    // generovanie non termu
                     tempItemForPositionOne = stack_pop(stack);
+                    tempItemForPositionOne->token_data.nameOfTheNonTerminal = generateVariable(resultOfPrece.uniqueID)->str;        // generovanie UNIQUE
                     stack_pop(stack);
                     stack_push(stack, E, tempItemForPositionOne->token_data);
                     if (DEBUG) printf("Toto su data -> %d\n", tempItemForPositionOne->token_data.value.i);
@@ -280,12 +283,11 @@ expr_return parse_expr(LocalMap* lMap, tList* list){
                 }
                             /** PRAVIDLO E -> (E) **/
                 else if(((stack->arrayOfNumbers[stack->finderOfParenthesis+1]) == eLBAR) && ((stack->arrayOfNumbers[stack->finderOfParenthesis + 2]) == E) && ((stack->arrayOfNumbers[stack->finderOfParenthesis+3]) == eRBAR)){
-                    stack_pop(stack);                               // popnutie zatvorky )
-                    tempItemForPositionOne = stack_pop(stack);      // ulozenie si E
-                    stack_pop(stack);                               // popnutie zatvorky (
-                    stack_pop(stack);                               // popnutie znamienka <
-                    stack_push(stack, E, dataIDF);                 // nakoniec pushneme E + datovu strukturu
-
+                    stack_pop_free(stack);                               // popnutie zatvorky )
+                    tempItemForPositionOne = stack_pop(stack);           // ulozenie si E
+                    stack_pop_free(stack);                               // popnutie zatvorky (
+                    stack_pop_free(stack);                               // popnutie znamienka <
+                    stack_push(stack, E, dataIDF);                       // nakoniec pushneme E + datovu strukturu
                     dataIDF = tempItemForPositionOne->token_data;   // do struktury nahrame adresu token->data
                     break;
                 }
@@ -343,9 +345,9 @@ expr_return parse_expr(LocalMap* lMap, tList* list){
                              }
 
                              tempItemForPositionOne = stack_pop(stack);      // ulozenie si prveho E
-                             stack_pop(stack);                               // popnutie znamienka +
+                             stack_pop_free(stack);                               // popnutie znamienka +
                              tempItemForPositionThree = stack_pop(stack);    // ulozenie si druheho E
-                             stack_pop(stack);                               // popnutie znamienak <
+                             stack_pop_free(stack);                               // popnutie znamienak <
                              tempItemForPositionOne->token_data.value.i += tempItemForPositionThree->token_data.value.i; //  E + E // TOTO JE IBA PRE KONTROLU
                              dataIDF = tempItemForPositionOne->token_data;  // do struktury nahrame adresu token->data
                              stack_push(stack, E, dataIDF);                 // nakoniec pushneme E + datovu strukturu
@@ -915,11 +917,16 @@ expr_return parse_expr(LocalMap* lMap, tList* list){
                     }
                      if(DEBUG)printf("STATE: $E$ -> EVERYTHING OK\n");
                     // uvolnenie stacku
-                    stack_free(stack);
                      if(DEBUG)printf("Vysledok operacie pre INT %d\n", dataIDF.value.i);
 
-                    resultOfPrece.result = SUCCESS;
-                    if(DEBUG)printf("Return exiting value -> |%d|, mapkey -> |%s||\n", resultOfPrece.result, resultOfPrece.string);
+                    resultOfPrece.result = SUCCESS;                                 // vratenie navratovej hodnoty
+                    resultOfPrece.uniqueID->str = stack_top_token_data(stack)->nameOfTheNonTerminal;     // vratenie UNIQUE nazvu identifikatora
+                    resultOfPrece.data_type = stack_top_token_data(stack)->type;                    // vratenie typu identificatora
+
+                    stack_print(stack);
+                    stack_print_prece(stack);
+                    stack_free(stack);
+                    if(DEBUG)printf("Return exiting value -> |%d|, returning value -> |%s| abd returning type -> |%d|\n", resultOfPrece.result, resultOfPrece.uniqueID->str, resultOfPrece.data_type);
                     return resultOfPrece;
                 }
                 if(DEBUG)printf("Error\n");
