@@ -260,7 +260,9 @@ int sth(LocalMap* localMap){
 		case LEX_ID_F:
 		case LEX_ID:
 
-				//DLIsImportant(&tlist);
+				DLIsImportant(&tlist);
+
+				//print_elements_of_list(tlist);
 
 				//SEMANTICKA AKCE, KONTROLA DEFINICE FUNKCE
 				tmp = global_map_get_pointer_to_value(gMap, gToken.data.str);
@@ -280,7 +282,10 @@ int sth(LocalMap* localMap){
 
 							// MOVE GF@promenna / LF@promenna  TF@%retval
 							instr_type = INSTRUCT_MOVE;
-							instr1.type = GF; // zatim bude GF
+							if (is_LF) {instr1.type = LF;}
+							else{
+								instr1.type = GF;
+							}
 							instr1.value.s = DLFirstImportant(&tlist);
 							instr2.type = TF;
 							instr2.value.s = res.uniqueID->str;
@@ -303,6 +308,10 @@ int sth(LocalMap* localMap){
 						
 				}
 				else{
+
+						is_LF = true;
+
+
 						// vytvoreni docasneho ramce pro funkce
 						instr_type =  INSTRUCT_CREATEFREAME;
 						insert_item(ilist, &instr_type, &instr1, &instr2, &instr3);
@@ -375,12 +384,16 @@ int sth(LocalMap* localMap){
 			res = parse_expr(localMap, ilist);
 			result = res.result;
 
+
 			if (result == SUCCESS){
 				// instrukce MOVE
 
-							// MOVE GF@promenna / LF@promenna  TF@%retval
+					// MOVE GF@promenna / LF@promenna  TF@%retval
 					instr_type = INSTRUCT_MOVE;
-					instr1.type = GF; // zatim bude GF
+					if (is_LF) {instr1.type = LF;}
+					else{
+						instr1.type = GF;
+					}
 					instr1.value.s = DLFirstImportant(&tlist);
 					instr2.type = TF;
 					instr2.value.s = res.uniqueID->str;
@@ -438,18 +451,22 @@ int stat(){
 				lData.type = 500; // typ nil - NONE
 
 
-
 				// nazev promenne ziskame z list pro tokeny pomoci funkce DLCOPYFISRT
 				local_map_put(localMap, DLCopyFirst(&tlist), lData);
 		
 
 				// generovani instrukce pro definice promenne s typem nil a hodnotou nil
 				instr_type = INSTRUCT_DEFVAR;
-				instr1.type = GF; // GF
+				if (is_LF) {instr1.type = LF;}
+				else{
+					instr1.type = GF;
+				}
+
 				instr1.value.s = DLCopyFirst(&tlist); // nazev promenne
 				insert_item(ilist, &instr_type, &instr1, &instr2, &instr3);
 				
 			}
+			// else promenna uz existuje, nedefinovat
 
 			
 			// nacteni dalsiho tokenu , musi byt identifikator nebo vyraz
@@ -460,6 +477,7 @@ int stat(){
 				return INT_ERR;
 			}
 
+			//print_elements_of_list(tlist);
 
 			// volani pravidla sth()
 			result = sth(localMap);
@@ -686,7 +704,7 @@ int st_list(){
 			}
 			else{
 				token = getToken();
-				return st_list(is_LF);
+				return st_list();
 			}
 
 
@@ -741,6 +759,8 @@ int st_list(){
 
 
       case KW_DEF:
+
+      		is_LF = true;
 
 			result = func();
 			if(result != SUCCESS){
@@ -973,13 +993,10 @@ int func(){
 	// ukladam do GTS definice funkce
     // pokud tam ID neni tak vepsat
 
-    char * function_name = DLFirstImportant(&tlist);
 
-
-
-    if (!global_map_contain(gMap, function_name)){
+    if (!global_map_contain(gMap, DLFirstImportant(&tlist))){
     	gData.defined = 1;
-    	global_map_put(gMap, function_name, gData);
+    	global_map_put(gMap, DLFirstImportant(&tlist), gData);
     }else {
         //uz byla definovana
         fprintf(stderr, "Radek %d: Semanticka chyba, funkce '%s' jiz byla definovana.\n", gToken.row, gToken.data.str);
@@ -987,10 +1004,12 @@ int func(){
     }
 
 	
-	global_map_put(gMap, function_name, gData);
+	global_map_put(gMap, DLFirstImportant(&tlist), gData);
 
 	// pro dalsi funkce
 	paramCount = 0;
+
+	DLNotImportant(&tlist);
 
 
 
