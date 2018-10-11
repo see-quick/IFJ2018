@@ -26,7 +26,7 @@
 int token;        	         // aktualni token
 
 
-bool is_LF = false;
+extern bool is_LF = false;
 
 
 
