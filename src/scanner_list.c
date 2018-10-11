@@ -401,7 +401,7 @@ void DLIsImportant(tDLList *L){
 char * DLFirstImportant(tDLList *L){
 	while((L->Last->lptr != NULL) && (L->Last != NULL)){
 		if (L->Last->is_important == 1){
-			L->Last->is_important = 0;
+			//L->Last->is_important = 0;
 			return L->Last->data;
 		}
 		else{
@@ -409,6 +409,18 @@ char * DLFirstImportant(tDLList *L){
 		}
 	}
 	return NULL;
+}
+
+void DLNotImportant(tDLList *L){
+	while((L->Last->lptr != NULL) && (L->Last != NULL)){
+		if (L->Last->is_important == 1){
+			L->Last->is_important = 0;
+			//return L->Last->data;
+		}
+		else{
+			L->Last = L->Last->lptr;
+		}
+	}
 }
 
 

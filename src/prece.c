@@ -30,7 +30,7 @@ tInstructionData instr3;
 
 
 int counterVar = 1;
-int DEBUG = 1;  /* premenna na debugovanie  0 --> pre ziadnej vypis, 1 --> pre vypis */
+int DEBUG = 0;  /* premenna na debugovanie  0 --> pre ziadnej vypis, 1 --> pre vypis */
 
 prece_states prece_table [SIZEOFTABLE][SIZEOFTABLE] = {
 /*        +    -    *    /    <    >   <=   >=   ==   !=   i    (    )    $   ,   f          <------- ACT TOKEN */
@@ -162,6 +162,7 @@ char* convert_to_char(int token){
 // @varName pravidlo id = <sth>
 // @lMap je lokalni Mapa
 expr_return parse_expr(LocalMap* lMap, tList* list){
+
     /* INICIALIZACIA STRUKTUR */
     tItem* tempItemForPositionOne; /* GLOBALNY ITEM pre stack pri pravidle E -> i */
     tItem* tempItemForPositionThree; /* GLOBALNY ITEM pre stack pri pravidlach E -> E + E, E -> E - E a podobne. */
@@ -227,9 +228,10 @@ expr_return parse_expr(LocalMap* lMap, tList* list){
             // generovanie kodu  MOVE %s@%s string@%s
         }
         else if(token == LEX_ID){
+            
             // ak sa premenna nachadza v lokalnej mape tak
-            if(local_map_contain(lMap, dataIDF.value.string.str)){
-                dataIDF = local_map_get_value(lMap, dataIDF.value.string.str);
+            if(local_map_contain(lMap, gToken.data.str)){
+                dataIDF = local_map_get_value(lMap, gToken.data.str);
                 resultOfPrece.uniqueID = &gToken.data;
                 switch (dataIDF.type) {
                     case INTEGER:
@@ -250,14 +252,15 @@ expr_return parse_expr(LocalMap* lMap, tList* list){
             }
             else{
                 // premenna nebola najdena v localnej mape a tym padom sa jedna o semanticku chybu
+                fprintf(stderr, "Promenna %s neni definovana, radek %d\n", gToken.data.str, gToken.row);
                 resultOfPrece.result = SEM_ERR;
                 return resultOfPrece;
             }
             dataIDF.defined = true;
         }
 
-        stack_print(stack);
-        stack_print_prece(stack);
+        //stack_print(stack);
+        //stack_print_prece(stack);
         if(DEBUG)printf("This is act token    number -> |%d| and char -> |%s|\n", actTokenIndexToPreceTable, convert_to_char(actTokenIndexToPreceTable));
         if(DEBUG) printf("This is act stackTop number -> |%d| and char -> |%s|\n", stackTopTokenIndexToPreceTable, convert_to_char(stackTopTokenIndexToPreceTable));
 
