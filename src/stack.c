@@ -118,7 +118,7 @@ tItem* stack_pop(tStack *stack){
         item = (tItem *)malloc(sizeof(tItem));
         item->token_number = stack->arrayOfNumbers[stack->top];
         item->token_data = stack->arrayOfItems[stack->top];
-        stack->arrayOfNumbers[stack->top] = 15;
+        stack->arrayOfNumbers[stack->top] = 30; // pre printf funckiu -> mapujeme 30 ako prazdny znak
         stack->top--;
         stack->finderOfParenthesis--;
         return item;
@@ -134,7 +134,7 @@ void  stack_pop_free(tStack *stack){
     // ak zasobnik nie je prazdny
     if(!(stack_empty(stack))){
         free(&(stack->arrayOfItems[stack->top]));
-        stack->arrayOfNumbers[stack->top] = 15;
+        stack->arrayOfNumbers[stack->top] = 30;
         stack->top--;
         stack->finderOfParenthesis--;
         }
@@ -189,7 +189,7 @@ void stack_print(tStack *stack){
  */
 void stack_refresh(tStack *stack){
     for(int i = 0; i < stack_get_size(stack); i++){
-        stack->arrayOfNumbers[i] = 15;
+        stack->arrayOfNumbers[i] = 30;
         setEmptyDataIDF(stack->arrayOfItems[i]);
     }
     stack->top = -1;
