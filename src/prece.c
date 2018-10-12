@@ -20,8 +20,10 @@
 #include "parser.h"
 //#include "parser.c" // zobratie globalnej mapy
 
-#define RULE_OF_OPERATORS stack_pops(4, stack);stack_push(stack, E, dataIDF);stack_print_prece(stack);break
-#define RULE_OF_IDENTIFICATOR stack_pops(2, stack);stack_push(stack, E, *dataIDF);stack_print_prece(stack)
+// #define RULE_OF_OPERATORS stack_pops(4, stack);stack_push(stack, E, dataIDF);stack_print_prece(stack);break
+#define RULE_OF_OPERATORS stack_pops(4, stack);stack_push(stack, E, dataIDF);break
+// #define RULE_OF_IDENTIFICATOR stack_pops(2, stack);stack_push(stack, E, *dataIDF);stack_print_prece(stack)
+#define RULE_OF_IDENTIFICATOR stack_pops(2, stack);stack_push(stack, E, *dataIDF);
 
 tInstructionTypes instr_type;
 tInstructionData instr1;
@@ -30,7 +32,7 @@ tInstructionData instr3;
 
 
 int counterVar = 1;
-int DEBUG = 1;  /* premenna na debugovanie  0 --> pre ziadnej vypis, 1 --> pre vypis */
+int DEBUG = 0;  /* premenna na debugovanie  0 --> pre ziadnej vypis, 1 --> pre vypis */
 
 prece_states prece_table [SIZEOFTABLE][SIZEOFTABLE] = {
 /*        +    -    *    /    <    >   <=   >=   ==   !=   i    (    )    $   ,   f          <------- ACT TOKEN */
@@ -197,7 +199,7 @@ expr_return parse_expr(LocalMap* lMap, tList* list){
             resultOfPrece.result = SYN_ERR;
             return resultOfPrece;
         }
-        printf("This is token -> %s\n", gToken.data.str);
+        //printf("This is token -> %s\n", gToken.data.str);
 
         // SEMANTICKA AKCE
         // pushnuti do stackofItems strukturu pro token, ktery prave prisel od PARSERU

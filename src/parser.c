@@ -26,7 +26,7 @@
 int token;        	         // aktualni token
 
 
-extern bool is_LF = false;
+bool is_LF = false;
 
 
 
@@ -61,6 +61,28 @@ tInstructionData instr1;
 tInstructionData instr2;
 tInstructionData instr3;
 /*********************************************************************/
+
+
+
+void insert_build_in_functions(){
+	gData.paramCount = 1;
+    global_map_put(gMap, "length", gData);
+
+    gData.paramCount = 3;
+    global_map_put(gMap, "substr", gData);
+
+    gData.paramCount = 2;
+    global_map_put(gMap, "ord", gData);
+
+    gData.paramCount = 1;
+    global_map_put(gMap, "chr", gData);
+
+    gData.paramCount = 0;
+    global_map_put(gMap, "inputs", gData);
+    global_map_put(gMap, "inputi", gData);
+    global_map_put(gMap, "inputf", gData);
+}
+
 
 
 /*Funkce pro vypsani lexikalni chyby na standardni chybovy vystup*/
@@ -259,10 +281,15 @@ int sth(LocalMap* localMap){
 		// case LEX_ID_F:
 		case LEX_ID_F:
 		case LEX_ID:
+		case KW_LENGTH:
+		case KW_SUBSTR:
+		case KW_ORD:
+		case KW_CHR:
+		case KW_INPUT_S:
+		case KW_INPUT_I:
+		case KW_INPUT_F:
 
 				DLIsImportant(&tlist);
-
-				//print_elements_of_list(tlist);
 
 				//SEMANTICKA AKCE, KONTROLA DEFINICE FUNKCE
 				tmp = global_map_get_pointer_to_value(gMap, gToken.data.str);
@@ -375,6 +402,7 @@ int sth(LocalMap* localMap){
 
 		// semanticka chyba prirazeni
 		case LEX_EOL:
+		case LEX_EOF:
 			fprintf(stderr, "Ocekavan vyraz v prirazeni na radku %d \n", gToken.row);
 			return SEM_ERR;
 		break;
@@ -413,8 +441,6 @@ int sth(LocalMap* localMap){
 
 			return result;
 	}
-
-
 
 	return result;
 }
@@ -485,10 +511,73 @@ int stat(){
 			if(result != SUCCESS){
 				return result;
 			}
+
+			token = getToken();
+			if(!error_lex()){
+				return ERROR_LEX;
+			} else if (!error_int()){
+				return INT_ERR;
+			}
 			
 
 			return SUCCESS;
 		break;
+
+		case KW_PRINT:
+
+			token = getToken();
+			if(!error_lex()){
+				return ERROR_LEX;
+			} else if (!error_int()){
+				return INT_ERR;
+			}
+
+			if(!checkTokenType(LEX_L_BRACKET)){
+				fprintf(stderr, "Ocekavano '(' na radku %d\n", gToken.row);
+				resetToken();
+				return SYN_ERR;
+			}
+
+			token = getToken();
+			if(!error_lex()){
+				return ERROR_LEX;
+			} else if (!error_int()){
+				return INT_ERR;
+			}
+
+			//volane term_list()
+			result = term_list();
+			if(result != SUCCESS){
+				resetToken();
+				return result;
+			}
+
+			//dalsi token je nacten, musi = ')'
+
+			if(!checkTokenType(LEX_R_BRACKET)){
+				fprintf(stderr, "Ocekavana ')' na radku %d \n", gToken.row);
+				resetToken();
+				return SYN_ERR;
+			}
+
+			instr_type = INSTRUCT_CALL;
+			instr1.type = FCE;
+			instr1.value.s = "print";
+
+			insert_item(ilist, &instr_type, &instr1, &instr2, &instr3);
+
+			token = getToken();
+			if(!error_lex()){
+				return ERROR_LEX;
+			} else if (!error_int()){
+				return INT_ERR;
+			}
+
+
+		break;
+
+
+
 
 		//<STAT> -> if <EXPR> then eol <ST-LIST> else eol <ST-LIST> end if
 		case KW_IF:
@@ -592,6 +681,11 @@ int stat(){
 			}
 
 			token = getToken();
+			if(!error_lex()){
+				return ERROR_LEX;
+			} else if (!error_int()){
+				return INT_ERR;
+			}
 
 
 			return SUCCESS;
@@ -688,6 +782,7 @@ int st_list(){
 		case KW_IF:
 		case KW_WHILE:
 		case LEX_ID:
+		case KW_PRINT:
 
 			//podle pravidla zavolame stat()
 			result = stat();
@@ -708,55 +803,11 @@ int st_list(){
 			}
 
 
-		// case KW_PRINT
-
 		//<ST-LIST> -> nic
       case KW_ELSE:
       case KW_END:
       		return SUCCESS;
       	break;
-
-      case KW_PRINT:
-
-      		token = getToken();
-			if(!error_lex()){
-				return ERROR_LEX;
-			} else if (!error_int()){
-				return INT_ERR;
-			}
-
-			if(!checkTokenType(LEX_L_BRACKET)){
-				fprintf(stderr, "Ocekavana '(' na radku %d\n", gToken.row);
-				resetToken();
-				return SYN_ERR;
-			}
-
-			token = getToken();
-			if(!error_lex()){
-				return ERROR_LEX;
-			} else if (!error_int()){
-				return INT_ERR;
-			}
-
-			result = term_list();
-
-			if(result != SUCCESS){
-				resetToken();
-				return result;
-			}
-
-			// dalsi token pro st_list
-			token = getToken();
-			if(!error_lex()){
-				return ERROR_LEX;
-			} else if (!error_int()){
-				return INT_ERR;
-			}
-
-			return st_list();
-
-      break;
-
 
       case KW_DEF:
 
@@ -1104,10 +1155,6 @@ int main_p(void){
 		//case KW_INPUTS:
 		// case KW_INPUTI:
 		//case KW_INPUTF:
-		case KW_LENGTH:
-		//case KW_CHR:
-		//case KW_ORD:
-		//case KW_SUBSTR:
 
 			//volani st_list()
 			result = st_list();
@@ -1158,6 +1205,7 @@ int prog(){
 
 			//token nacten z main_p() = EOF
 			if(!checkTokenType(LEX_EOL) && !checkTokenType(LEX_EOF)) {
+				returnToken();
 				fprintf(stderr, "Ocekavano 'eof' 'eol' na radku %d \n", gToken.row);
 				resetToken();
 				return SYN_ERR;
@@ -1185,6 +1233,9 @@ int parse(GlobalMap* globalMap, tList *list) {
 	ilist = list;
 
 	localMap = local_map_init(MAX_SIZE_OF_HASH_TABLE);
+
+
+	insert_build_in_functions();
 
 
 	if(initToken() == INT_ERR){
