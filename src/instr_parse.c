@@ -386,6 +386,25 @@ void parse_instructions(tList *instr_list)  {
           printf("DPRINT %s@", instruct_type(act_instr->data.address1.type));
           print_symb(act_instr->data.address1);
       break;
+
+      case INSTRUCT_LENGTH:
+          printf("LABEL length\n");
+          printf("DEFVAR GF@$$var_integer\n");
+          printf("STRLEN GF$$var_integer LF@param1\n");
+          printf("RETURN\n");
+      break;
+
+      case INSTRUCT_SUBSTR:
+      case INSTRUCT_CHR:
+      case INSTRUCT_ORD:
+      case INSTRUCT_PRINT:
+      case INSTRUCT_INPUT_S:
+      case INSTRUCT_INPUT_I:
+      case INSTRUCT_INPUT_F:
+        printf("TODO\n");
+      break;
+
     }
   }
 }
+

@@ -116,16 +116,65 @@ int checkTokenType(int tokenType){ //funkce na kotnrolu typu tokenu
 int term(void){
 	int result = SUCCESS;
 
+	char s;
+
 	switch(token){
 		case LEX_ID:
 		case LEX_NUMBER:
 		case LEX_REAL_NUMBER:
 		case LEX_STRING:
-			//  semanticka kontrola dalsich parametru
-			// kontrola, zda je dana promenna deklarovana
-			// jinak vytvor vnitrni promennou s hodnotou
+			// semanticka akce
+			// if LEX_ID -> zkontrolovat zda je promenna definovana
+			// pokud je to LEX_ID, LEX_NUMBER, LEX_REAL, LEX_STRING , podle typu vytvorit vnitrni promennou s hodnotou argumentu
 
-			// semanticka chyba nesouhlas pocet parametru funkce
+
+			instr_type = INSTRUCT_DEFVAR;
+			instr1.type = TF;
+
+			//printf("Paramcount %d\n", paramCount);
+
+			sprintf(&s, "%d", paramCount);
+
+			//printf("String paramCount %c\n", s);
+
+
+			// pridat counter pro params!!!
+			instr1.value.s = "$_param2";
+
+			insert_item(ilist, &instr_type, &instr1, &instr2, &instr3);
+			instr_type = INSTRUCT_MOVE;
+			instr1.type = TF;
+			instr1.value.s = "$_param2";
+
+
+			if (token == LEX_NUMBER){
+				instr2.type = I; //integer
+				instr2.value.i = atoi(gToken.data.str);
+				insert_item(ilist, &instr_type, &instr1, &instr2, &instr3);
+
+			}
+			else if (token == LEX_REAL_NUMBER){
+				instr2.type = F; //float
+				instr2.value.f = atof(gToken.data.str);
+				insert_item(ilist, &instr_type, &instr1, &instr2, &instr3);
+			}
+			else if (token == LEX_STRING){
+				instr2.type = S; //string
+				instr2.value.s = gToken.data.str;
+				insert_item(ilist, &instr_type, &instr1, &instr2, &instr3);
+			}
+			else if (token == LEX_ID){
+				if ((local_map_get_pointer_to_key(localMap, gToken.data.str)) == NULL){
+					fprintf(stderr, "Semanticka chyba, promenna %s neni definovana, radek %d\n", gToken.data.str, gToken.row);
+				}
+				else {
+					instr2.type = GF; //string
+					instr2.value.s = gToken.data.str;
+					insert_item(ilist, &instr_type, &instr1, &instr2, &instr3);
+				}
+			}
+
+			
 			token = getToken();
 			if(!error_lex()){
 				return ERROR_LEX;
@@ -150,7 +199,6 @@ int term_list2(void){
 
 	switch(token){
 		//<PM-LIST2> -> , id/lex_number/lex_real_number/lex_string <PM-LIST2>
-		// UDELAT STAV PRO ID/LEX_NUMBER/LEX_REAL_NUMBER/LEX_STRING ????
 		case LEX_COMMA:
 			token = getToken();
 			if(!error_lex()){
@@ -216,19 +264,39 @@ int term_list(void){
 			// pridat counter pro params!!!
 			instr1.value.s = "$_param1";
 
+			insert_item(ilist, &instr_type, &instr1, &instr2, &instr3);
+			instr_type = INSTRUCT_MOVE;
+			instr1.type = TF;
+			instr1.value.s = "$_param1";
+
 
 			if (token == LEX_NUMBER){
-				insert_item(ilist, &instr_type, &instr1, &instr2, &instr3);
-				instr_type = INSTRUCT_MOVE;
-				instr1.type = TF;
-				instr1.value.s = "$_param1";
-
 				instr2.type = I; //integer
 				instr2.value.i = atoi(gToken.data.str);
-
 				insert_item(ilist, &instr_type, &instr1, &instr2, &instr3);
 
 			}
+			else if (token == LEX_REAL_NUMBER){
+				instr2.type = F; //float
+				instr2.value.f = atof(gToken.data.str);
+				insert_item(ilist, &instr_type, &instr1, &instr2, &instr3);
+			}
+			else if (token == LEX_STRING){
+				instr2.type = S; //string
+				instr2.value.s = gToken.data.str;
+				insert_item(ilist, &instr_type, &instr1, &instr2, &instr3);
+			}
+			else if (token == LEX_ID){
+				if ((local_map_get_pointer_to_key(localMap, gToken.data.str)) == NULL){
+					fprintf(stderr, "Semanticka chyba, promenna %s neni definovana, radek %d\n", gToken.data.str, gToken.row);
+				}
+				else {
+					instr2.type = GF; //string
+					instr2.value.s = gToken.data.str;
+					insert_item(ilist, &instr_type, &instr1, &instr2, &instr3);
+				}
+			}
+
 
 			//nacteni a volani term_list2()
 			token = getToken();
@@ -396,6 +464,13 @@ int sth(LocalMap* localMap){
 						instr1.value.s = DLLastImportant(&tlist);
 
 						insert_item(ilist, &instr_type, &instr1, &instr2, &instr3);
+
+						token = getToken();
+						if(!error_lex()){
+							return ERROR_LEX;
+						} else if (!error_int()){
+							return INT_ERR;
+						}
 				}			
 
 		break;
@@ -511,14 +586,6 @@ int stat(){
 			if(result != SUCCESS){
 				return result;
 			}
-
-			token = getToken();
-			if(!error_lex()){
-				return ERROR_LEX;
-			} else if (!error_int()){
-				return INT_ERR;
-			}
-			
 
 			return SUCCESS;
 		break;
@@ -758,6 +825,11 @@ int stat(){
 			}
 
 			token = getToken();
+			if(!error_lex()){
+				return ERROR_LEX;
+			} else if (!error_int()){
+				return INT_ERR;
+			}
 
 			return result;
 		break;
@@ -799,6 +871,12 @@ int st_list(){
 			}
 			else{
 				token = getToken();
+			
+				if(!error_lex()){
+					return ERROR_LEX;
+				} else if (!error_int()){
+					return INT_ERR;
+				}
 				return st_list();
 			}
 
@@ -1205,7 +1283,6 @@ int prog(){
 
 			//token nacten z main_p() = EOF
 			if(!checkTokenType(LEX_EOL) && !checkTokenType(LEX_EOF)) {
-				returnToken();
 				fprintf(stderr, "Ocekavano 'eof' 'eol' na radku %d \n", gToken.row);
 				resetToken();
 				return SYN_ERR;
