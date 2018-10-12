@@ -126,6 +126,20 @@ tItem* stack_pop(tStack *stack){
     printf("Popping empty stack\n");
     return NULL;
 }
+/**
+ * Funckia, ktora sa vyuziva pri popovani poloziek ktore su nam pri redukcii uz nepotrebne napriklad  $<i   polozka < nepotrebne tak stack_pop_free, i je potrebne takze dame stack_pop
+ * @param stack
+ */
+void  stack_pop_free(tStack *stack){
+    // ak zasobnik nie je prazdny
+    if(!(stack_empty(stack))){
+        free(&(stack->arrayOfItems[stack->top]));
+        stack->arrayOfNumbers[stack->top] = 15;
+        stack->top--;
+        stack->finderOfParenthesis--;
+        }
+    return;
+}
 
 /**
  * Funkcia, ktora nam vrati hodnotu celeho stacku
@@ -164,7 +178,7 @@ void stack_print_prece(tStack *stack){
 void stack_print(tStack *stack){
    printf("[------------> STACK BEGIN <-------------]\n");
    for(int i = 0; i < stack_get_size(stack); i++){
-       printf("Current stack item type %d, value %d\n", stack->arrayOfItems[i].type, stack->arrayOfItems[i].value.i);
+       printf("Current stack item type %d, value %d and uniqueNonTerminal -> %s\n", stack->arrayOfItems[i].type, stack->arrayOfItems[i].value.i, stack->arrayOfItems->nameOfTheNonTerminal);
    }
    printf("[-------------> STACK END <--------------]\n");
 }
