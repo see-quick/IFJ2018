@@ -390,7 +390,7 @@ expr_return parse_expr(LocalMap* lMap, tList* list){
                             dataIDF = tempItemForPositionOne->token_data;  // do struktury nahrame adresu token->data
                             stack_push(stack, E, dataIDF);                 // nakoniec pushneme E + datovu strukturu
                             if (DEBUG) stack_print_prece(stack);
-                            break;
+                        break;
 
                             // PRAVIDLO E -> E - E
                         case eMINUS:
@@ -441,7 +441,7 @@ expr_return parse_expr(LocalMap* lMap, tList* list){
                             stack_push(stack, E, dataIDF);                 // nakoniec pushneme E + datovu strukturu
                             if (DEBUG)
                                 stack_print(stack);
-                            break;
+                        break;
                             // PRAVIDLO E -> E * E
                         case eMUL:
                             if (&stack->arrayOfItems[stack->finderOfParenthesis + 3] != NULL) {
@@ -493,7 +493,7 @@ expr_return parse_expr(LocalMap* lMap, tList* list){
                             stack_push(stack, E, dataIDF);                 // nakoniec pushneme E + datovu strukturu
                             if (DEBUG)
                                 stack_print(stack);
-                            break;
+                        break;
                             // PRAVIDLO E -> E / E
                         case eDIV:
                             if (&stack->arrayOfItems[stack->finderOfParenthesis + 3] != NULL) {
@@ -540,7 +540,7 @@ expr_return parse_expr(LocalMap* lMap, tList* list){
                             stack_push(stack, E, dataIDF);                 // nakoniec pushneme E + datovu strukturu
                             if (DEBUG)
                                 stack_print(stack);
-                            break;
+                        break;
                             // PRAVIDLO E -> E < E
                         case eLESS:
                             if (&stack->arrayOfItems[stack->finderOfParenthesis + 3] != NULL) {
@@ -601,7 +601,7 @@ expr_return parse_expr(LocalMap* lMap, tList* list){
                             stack_push(stack, E, dataIDF);                 // nakoniec pushneme E + datovu strukturu
                             if (DEBUG)
                                 stack_print(stack);
-                            break;
+                        break;
                             // PRAVIDLO E -> E > E
                         case eGREAT:
 
@@ -663,7 +663,7 @@ expr_return parse_expr(LocalMap* lMap, tList* list){
                             stack_push(stack, E, dataIDF);                 // nakoniec pushneme E + datovu strukturu
                             if (DEBUG)
                                 stack_print(stack);
-                            break;
+                        break;
                             RULE_OF_OPERATORS;
                             // PRAVIDLO E -> E <= E
                         case eLEQUAL: // <=
@@ -719,7 +719,7 @@ expr_return parse_expr(LocalMap* lMap, tList* list){
                             stack_push(stack, E, dataIDF);                 // nakoniec pushneme E + datovu strukturu
                             if (DEBUG)
                                 stack_print(stack);
-                            break;
+                        break;
                             // PRAVIDLO E -> E >= E
                         case eGEQUAL: // >=
                             // generovanie DEFVAR %s@%s
@@ -774,7 +774,7 @@ expr_return parse_expr(LocalMap* lMap, tList* list){
                             stack_push(stack, E, dataIDF);                 // nakoniec pushneme E + datovu strukturu
                             if (DEBUG)
                                 stack_print(stack);
-                            break;
+                        break;
                             // PRAVIDLO E -> E == E
                         case eEQUAL: // ==
                             // generovanie DEFVAR %s@%s
@@ -834,7 +834,7 @@ expr_return parse_expr(LocalMap* lMap, tList* list){
                             stack_push(stack, E, dataIDF);                 // nakoniec pushneme E + datovu strukturu
                             if (DEBUG)
                                 stack_print(stack);
-                            break;
+                        break;
                             // PRAVIDLO E -> E != E
                         case eNEQUAL: // !=
                             // generovanie DEFVAR %s@%s
@@ -905,9 +905,10 @@ expr_return parse_expr(LocalMap* lMap, tList* list){
                             stack_push(stack, E, dataIDF);                 // nakoniec pushneme E + datovu strukturu
                             if (DEBUG)
                                 stack_print(stack);
-                            break;
+                        break;
                     }
                 }
+            break;
                 // TODO: dokoncit pravidlo, a urobit funciu stack_print_preceeNonTermn
             case Err:
                 if(actTokenIndexToPreceTable == eDOLAR){
