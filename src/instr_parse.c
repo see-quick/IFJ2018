@@ -15,6 +15,12 @@
 #include "instr_parse.h"
 #include "list.h"
 
+
+
+int while_count = 0;
+int if_count = 0;
+
+
 /**
  * Ulahcenie vypisu podla typu instrukcie
  * @param instruction instrukcia
@@ -145,6 +151,8 @@ void parse_instructions(tList *instr_list)  {
           printf("MOVE GF@$$var_double floal@0.0\n");
           printf("DEFVAR GF@$$var_string\n");
           printf("MOVE GF@$$var_string string@\n");
+          printf("DEFVAR GF@EXPR\n");
+          printf("MOVE GF@EXPR int@0\n");
       break;
 
       case INSTRUCT_CREATEFREAME:
@@ -441,6 +449,36 @@ void parse_instructions(tList *instr_list)  {
           printf("LABEL substr\n");
           // todo
       break;
+
+
+      case INSTRUCT_WHILE_START:
+          printf("LABEL while_label%d\n",++while_count);
+      break;
+      case INSTRUCT_WHILE_STATS:
+          printf("JUMPIFEQ while_label%d_end GF@$$EXPR bool@false\n", while_count);
+      break;
+
+      case INSTRUCT_LOOP:
+          printf("JUMP while_label%d\n", while_count);
+          printf("LABEL while_label%d_end\n",while_count);
+      break;
+
+      case INSTRUCT_IF:
+          printf("LABEL if_label%d\n", ++if_count);
+      break;
+
+      case INSTRUCT_IF_THEN:
+          printf("JUMPIFEQ if_label%d GF@$$EXPR bool@false\n", if_count);
+      break;
+
+      case INSTRUCT_JUMP_ENDIF:
+          printf("JUMP if_label%d_end\n", if_count);
+      break;
+
+      case INSTRUCT_ENDIF:
+          printf("LABEL if_label%d_end\n", if_count);
+      break;
+
 
     }
   }

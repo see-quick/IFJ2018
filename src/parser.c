@@ -367,13 +367,17 @@ int sth(){
 						return SEM_ERR;
 					}
 					else{
-						//
+						// je to promenna prirazenu typu a = b
 
 						res = parse_expr(localMap, ilist);
 						result = res.result;
 
 
 						if (result == SUCCESS){
+
+							lData.type = res.data_type; 
+							local_map_put(localMap, DLFirstImportant(&tlist), lData);
+
 							// instrukce MOVE
 
 							// MOVE GF@promenna / LF@promenna  TF@%retval
@@ -589,6 +593,11 @@ int sth(){
 			}
 
 			else if (result == SUCCESS){
+
+				// ukladani vysledku do local_map
+				lData.type = res.data_type;  
+				local_map_put(localMap, DLFirstImportant(&tlist), lData);
+		
 				// instrukce MOVE
 
 					// MOVE GF@promenna / LF@promenna  TF@%retval
@@ -597,6 +606,7 @@ int sth(){
 					else{
 						instr1.type = GF;
 					}
+
 					instr1.value.s = DLFirstImportant(&tlist);
 					instr2.type = TF;
 					instr2.value.s = res.uniqueID->str;
@@ -859,6 +869,9 @@ int stat(){
 		//<STAT> -> while <EXPR> do eol <ST-LIST> end
 		case KW_WHILE:
 
+			instr_type = INSTRUCT_WHILE_START;
+			insert_item(ilist, &instr_type, &instr1, &instr2, &instr3);
+
 			//vyrazova SA, pro precedencni analyzu
 			token = getToken();
 			if(!error_lex()){
@@ -893,7 +906,7 @@ int stat(){
 
 
 			if(!checkTokenType(LEX_EOL)){
-				fprintf(stderr, "4 Ocekavano 'eol' na radku %d\n", gToken.row);
+				fprintf(stderr, "Ocekavano 'eol' na radku %d\n", gToken.row);
 				resetToken();
 				return SYN_ERR;
 			}
@@ -1442,9 +1455,6 @@ int parse(GlobalMap* globalMap, tList *list) {
 
 		result = prog();
 	}
-
-
-	//print_elements_of_list(tlist);
 
 	DLDisposeList(&tlist);
 
