@@ -1,0 +1,13 @@
+# function substr
+
+def foo (a,b,c)
+	header = "Ou"
+	str = header + substr(a,b,c)
+
+end
+
+var = "Hello"
+start = 1
+len = 2
+
+mynewstr = foo(var,start,len)

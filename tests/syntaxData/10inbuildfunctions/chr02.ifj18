@@ -1,0 +1,4 @@
+# chr(i) complex prece
+
+var = "Hello"
+str = var + chr(80)
