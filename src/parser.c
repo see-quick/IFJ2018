@@ -757,6 +757,7 @@ int stat(){
 		//<STAT> -> if <EXPR> then eol <ST-LIST> else eol <ST-LIST> end if
 		case KW_IF:
 
+
 			//nacteni a predani do vyrazove SA
 			token = getToken();
 			if(!error_lex()){
@@ -773,15 +774,15 @@ int stat(){
 				return result;
 			}
 
-			// token nacteny z parse_expr ma byt THEN nebo
-
-
 			//token je jiz nacteny, musi = KW_THEN
 			if(!checkTokenType(KW_THEN)){
 				fprintf(stderr, "Ocekavano 'then' na radku %d\n", gToken.row);
 				resetToken();
 				return SYN_ERR;
 			}
+
+			instr_type =  INSTRUCT_IF_THEN;
+			insert_item(ilist, &instr_type, &instr1, &instr2, &instr3);
 
 			//dalsi = LEX_EOL
 			token = getToken();
@@ -811,6 +812,9 @@ int stat(){
 				return result;
 			}
 
+			instr_type = INSTRUCT_JUMP_ENDIF;
+			insert_item(ilist, &instr_type, &instr1, &instr2, &instr3);
+
 
 			//token nacteny z st_list() = KW_ELSE
 			if(!checkTokenType(KW_ELSE)){
@@ -818,6 +822,11 @@ int stat(){
 				resetToken();
 				return SYN_ERR;
 			}
+
+			instr_type = INSTRUCT_IF_ELSE;
+			insert_item(ilist, &instr_type, &instr1, &instr2, &instr3);
+
+
 
 			//dalsi = LEX_EOL
 			token = getToken();
@@ -847,6 +856,9 @@ int stat(){
 				return result;
 			}
 
+			instr_type = INSTRUCT_JUMP_ENDIF;
+			insert_item(ilist, &instr_type, &instr1, &instr2, &instr3);
+
 
 			//token nacten z fce st_list() = KW_END
 			if(!checkTokenType(KW_END)){
@@ -854,6 +866,9 @@ int stat(){
 				resetToken();
 				return SYN_ERR;
 			}
+
+			instr_type = INSTRUCT_ENDIF;
+			insert_item(ilist, &instr_type, &instr1, &instr2, &instr3);
 
 			token = getToken();
 			if(!error_lex()){

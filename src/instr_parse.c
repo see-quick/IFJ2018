@@ -464,12 +464,14 @@ void parse_instructions(tList *instr_list)  {
           printf("LABEL while_label%d_end\n",while_count);
       break;
 
-      case INSTRUCT_IF:
-          printf("LABEL if_label%d\n", ++if_count);
+      case INSTRUCT_IF_THEN:
+          printf("JUMPIFEQ if_label_then%d GF@$$EXPR bool@true\n", ++if_count);
+          printf("JUMP if_label_else%d\n", if_count);
+          printf("LABEL if_label_then%d\n", if_count);
       break;
 
-      case INSTRUCT_IF_THEN:
-          printf("JUMPIFEQ if_label%d GF@$$EXPR bool@false\n", if_count);
+      case INSTRUCT_IF_ELSE:
+          printf("LABEL if_label_else %d\n", if_count);
       break;
 
       case INSTRUCT_JUMP_ENDIF:
