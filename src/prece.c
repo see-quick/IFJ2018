@@ -101,7 +101,7 @@ int indexerOfPreceTable (int indexer, LocalMap* lMap)
         case LEX_ID:
             if(global_map_contain(gMap, gToken.data.str)){
                 type = eFCE;            // nachadza sa to v gMap je to funckia
-                //printf("==================================================================Je to FCE\n");
+                printf("==================================================================Je to FCE\n");
             }
             else if(local_map_contain(lMap, gToken.data.str)){
                 //printf("=========================================================Je to LEX_ID\n");
@@ -234,6 +234,7 @@ expr_return parse_expr(LocalMap* lMap, tList* list){
             if(global_map_contain(gMap, gToken.data.str)){
                 dataIDF.type = FUNCTION;
                 dataIDF.value.string.str = gToken.data.str;
+                resultOfPrece.data_type = FUNCTION;
                 resultOfPrece.uniqueID = &gToken.data;
                 return resultOfPrece;       // predavam riadenie parseru
                 // je to funckia

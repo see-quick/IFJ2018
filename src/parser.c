@@ -500,10 +500,10 @@ int sth(){
 
 			if (res.data_type == FUNCTION){
 				// volani funkce 
-				tmp = global_map_get_pointer_to_value(gMap, gToken.data.str);
+						tmp = global_map_get_pointer_to_value(gMap, gToken.data.str);
 
 
-				is_LF = true;
+						is_LF = true;
 
         	    		token = getToken();
 						if(!error_lex()){
@@ -577,7 +577,6 @@ int sth(){
 							return INT_ERR;
 						}
 
-
 						if (token == LEX_ADDITION || token == LEX_SUBSTRACTION || token == LEX_MULTIPLICATION || token == LEX_DIVISION){
 
 							token = getToken();
@@ -618,6 +617,7 @@ int sth(){
 
 			// cokoliv jineho syntakticka chyba
 			if (token != LEX_EOL){
+				printf("i m here\n");
 				fprintf(stderr, "Syntakticka chyba, ocekavano 'eol' na radku %d\n", gToken.row);
 				return SYN_ERR;
 			}
