@@ -338,7 +338,7 @@ int term_list(void){
 }
 
 
-int sth(LocalMap* localMap){
+int sth(){
 	int result = SUCCESS;
 	expr_return res;
 
@@ -371,6 +371,7 @@ int sth(LocalMap* localMap){
 
 						res = parse_expr(localMap, ilist);
 						result = res.result;
+
 
 						if (result == SUCCESS){
 							// instrukce MOVE
@@ -493,8 +494,101 @@ int sth(LocalMap* localMap){
 			res = parse_expr(localMap, ilist);
 			result = res.result;
 
+			if (result == FCE){
+				// volani funkce 
+				tmp = global_map_get_pointer_to_value(gMap, gToken.data.str);
 
-			if (result == SUCCESS){
+
+				is_LF = true;
+
+        	    		token = getToken();
+						if(!error_lex()){
+							return ERROR_LEX;
+						} else if (!error_int()){
+							return INT_ERR;
+						}
+
+
+						if(!checkTokenType(LEX_L_BRACKET)){
+							fprintf(stderr, "Ocekavano '(' na radku %d\n", gToken.row);
+							resetToken();
+							return SYN_ERR;
+						}
+
+
+						token = getToken();
+						if(!error_lex()){
+							return ERROR_LEX;
+						} else if (!error_int()){
+							return INT_ERR;
+						}
+
+
+						//volane term_list()
+						result = term_list();
+						if(result != SUCCESS){
+							resetToken();
+							return result;
+						}
+
+						//dalsi token je nacten, musi = ')'
+
+						if(!checkTokenType(LEX_R_BRACKET)){
+							fprintf(stderr, "Ocekavana ')' na radku %d \n", gToken.row);
+							resetToken();
+							return SYN_ERR;
+						}
+
+
+						if ( tmp->paramCount != argCount ){
+							fprintf(stderr, "Semanticka chyba, pocet parametru funkce %s nesouvisi s poctem argumentu na radku %d\n",gToken.data.str , gToken.row);
+						}
+
+						// pro dalsi volani funkce
+						argCount = 0;
+
+
+						instr_type = INSTRUCT_PUSHFRAME;
+						instr1.type = EMPTY;
+						insert_item(ilist, &instr_type, &instr1, &instr2, &instr3);
+
+						// instrukce pro volani funkce
+
+						instr_type = INSTRUCT_CALL;
+						instr1.type = FCE;
+						instr1.value.s = DLLastImportant(&tlist);
+
+						insert_item(ilist, &instr_type, &instr1, &instr2, &instr3);
+
+						// POPFRAME
+
+						instr_type = INSTRUCT_POPFRAME;
+						insert_item(ilist, &instr_type, &instr1, &instr2, &instr3);
+
+
+						token = getToken();
+						if(!error_lex()){
+							return ERROR_LEX;
+						} else if (!error_int()){
+							return INT_ERR;
+						}
+
+						if (token == LEX_ADDITION || token == LEX_SUBSTRACTION || token == LEX_MULTIPLICATION || token == LEX_DIVISION){
+
+							token = getToken();
+							if(!error_lex()){
+								return ERROR_LEX;
+							} else if (!error_int()){
+								return INT_ERR;
+							}
+
+
+							return sth();
+						}
+
+			}
+
+			else if (result == SUCCESS){
 				// instrukce MOVE
 
 					// MOVE GF@promenna / LF@promenna  TF@%retval

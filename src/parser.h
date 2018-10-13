@@ -43,7 +43,7 @@ int prog(void);
 int main_p(void);
 int st_list();
 int stat();
-int sth(LocalMap*);
+int sth();
 int pm_list();
 int pm_list2();
 int term_list(void);

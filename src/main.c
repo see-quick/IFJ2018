@@ -41,6 +41,8 @@ int main(int argc, char** argv) {
       reverse(&(list->first));
       set_active(list);
       parse_instructions(list);
+  }else{
+    printf("%d\n", result);
   }
 
   global_map_free(globalMap);
