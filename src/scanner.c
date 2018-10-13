@@ -434,8 +434,8 @@ int getToken(){
                 else{
                   ungetc(c, stdin);
                   if ( (temp = isKeyword(&(gToken.data))) != SUCCESS)
-                    return temp;
-                  else expr = true; DLInsertFirst(&tlist, gToken.data.str); return LEX_ID;
+                     { DLInsertFirst(&tlist, gToken.data.str); return temp; }
+                  else { expr = true; DLInsertFirst(&tlist, gToken.data.str); return LEX_ID; }
                 }
                 break;
                 

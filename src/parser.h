@@ -21,6 +21,8 @@
 #include "symtable.h"
 #include "list.h"
 
+GlobalMap* gMap;		     // globalni tabulka symbolu
+
 
 int error_lex(void);
 int error_int(void);
@@ -47,9 +49,8 @@ int pm_list2();
 int term_list(void);
 int term_list2(void);
 int func();
-int one_term(void);
-
 int parse_expression(void);
+void insert_build_in_functions();
 
 #endif
 
