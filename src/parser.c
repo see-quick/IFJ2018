@@ -498,7 +498,7 @@ int sth(){
 			res = parse_expr(localMap, ilist);
 			result = res.result;
 
-			if (result == FCE){
+			if (res.data_type == FUNCTION){
 				// volani funkce 
 				tmp = global_map_get_pointer_to_value(gMap, gToken.data.str);
 
@@ -576,6 +576,7 @@ int sth(){
 						} else if (!error_int()){
 							return INT_ERR;
 						}
+
 
 						if (token == LEX_ADDITION || token == LEX_SUBSTRACTION || token == LEX_MULTIPLICATION || token == LEX_DIVISION){
 
@@ -1446,17 +1447,17 @@ int parse(GlobalMap* globalMap, tList *list) {
 		insert_item(ilist, &instr_type, &instr1, &instr2, &instr3);
 
 
-		instr_type = INSTRUCT_LENGTH;
-		insert_item(ilist, &instr_type, &instr1, &instr2, &instr3);
+		// instr_type = INSTRUCT_LENGTH;
+		// insert_item(ilist, &instr_type, &instr1, &instr2, &instr3);
 
-		instr_type = INSTRUCT_CHR;
-		insert_item(ilist, &instr_type, &instr1, &instr2, &instr3);
+		// instr_type = INSTRUCT_CHR;
+		// insert_item(ilist, &instr_type, &instr1, &instr2, &instr3);
 
-		instr_type = INSTRUCT_ORD;
-		insert_item(ilist, &instr_type, &instr1, &instr2, &instr3);
+		// instr_type = INSTRUCT_ORD;
+		// insert_item(ilist, &instr_type, &instr1, &instr2, &instr3);
 
-		instr_type = INSTRUCT_SUBSTR;
-		insert_item(ilist, &instr_type, &instr1, &instr2, &instr3);
+		// instr_type = INSTRUCT_SUBSTR;
+		// insert_item(ilist, &instr_type, &instr1, &instr2, &instr3);
 
 
 		result = prog();
