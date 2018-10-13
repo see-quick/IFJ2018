@@ -388,8 +388,7 @@ expr_return parse_expr(LocalMap* lMap, tList* list){
                             stack_pop(stack);                               // popnutie znamienka +
                             tempItemForPositionThree = stack_pop(stack);    // ulozenie si druheho E
                             stack_pop(stack);                               // popnutie znamienak <
-//                             tempItemForPositionOne->token_data.value.i += tempItemForPositionThree->token_data.value.i; //  E + E // TOTO JE IBA PRE KONTROLU
-                            dataIDF = tempItemForPositionOne->token_data;  // do struktury nahrame adresu token->data
+//                            dataIDF = tempItemForPositionOne->token_data;  // do struktury nahrame adresu token->data
                             stack_push(stack, E, dataIDF);                 // nakoniec pushneme E + datovu strukturu
                             if (DEBUG) stack_print_prece(stack);
                         break;
@@ -490,8 +489,7 @@ expr_return parse_expr(LocalMap* lMap, tList* list){
                             stack_pop(stack);                               // popnutie znamienka -
                             tempItemForPositionThree = stack_pop(stack);    // ulozenie si druheho E
                             stack_pop(stack);                               // popnutie znamienak <
-                            tempItemForPositionOne->token_data.value.i *= tempItemForPositionThree->token_data.value.i; //  E 8 E // TOTO JE IBA PRE KONTROLU
-                            dataIDF = tempItemForPositionOne->token_data;  // do struktury nahrame adresu token->data
+//                            dataIDF = tempItemForPositionOne->token_data;  // do struktury nahrame adresu token->data
                             stack_push(stack, E, dataIDF);                 // nakoniec pushneme E + datovu strukturu
                             if (DEBUG)
                                 stack_print(stack);
@@ -666,7 +664,6 @@ expr_return parse_expr(LocalMap* lMap, tList* list){
                             if (DEBUG)
                                 stack_print(stack);
                         break;
-                            RULE_OF_OPERATORS;
                             // PRAVIDLO E -> E <= E
                         case eLEQUAL: // <=
                             if (&stack->arrayOfItems[stack->finderOfParenthesis + 3] != NULL) {
