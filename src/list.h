@@ -89,7 +89,15 @@ typedef enum
             INSTRUCT_HEAD = 657,
             INSTRUCT_POPFRAME = 658,
             INSTRUCT_IDIV = 659,
-            INSTRUCT_IDIVS = 660
+            INSTRUCT_IDIVS = 660,
+            INSTRUCT_LENGTH = 661,
+            INSTRUCT_SUBSTR = 662,
+            INSTRUCT_PRINT = 663,
+            INSTRUCT_CHR = 664,
+            INSTRUCT_ORD = 665,
+            INSTRUCT_INPUT_S = 666,
+            INSTRUCT_INPUT_I = 667,
+            INSTRUCT_INPUT_F = 668
 
 } tInstructionTypes;
 

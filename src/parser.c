@@ -26,6 +26,9 @@
 int token;        	         // aktualni token
 
 
+bool is_LF = false;
+
+
 
 /*********************************************************************/
 /*LOKALNI TABULKA SYMBOLU*/
@@ -60,6 +63,28 @@ tInstructionData instr3;
 /*********************************************************************/
 
 
+
+void insert_build_in_functions(){
+	gData.paramCount = 1;
+    global_map_put(gMap, "length", gData);
+
+    gData.paramCount = 3;
+    global_map_put(gMap, "substr", gData);
+
+    gData.paramCount = 2;
+    global_map_put(gMap, "ord", gData);
+
+    gData.paramCount = 1;
+    global_map_put(gMap, "chr", gData);
+
+    gData.paramCount = 0;
+    global_map_put(gMap, "inputs", gData);
+    global_map_put(gMap, "inputi", gData);
+    global_map_put(gMap, "inputf", gData);
+}
+
+
+
 /*Funkce pro vypsani lexikalni chyby na standardni chybovy vystup*/
 int error_lex(void){
 	if(token == ERROR_LEX){
@@ -91,16 +116,65 @@ int checkTokenType(int tokenType){ //funkce na kotnrolu typu tokenu
 int term(void){
 	int result = SUCCESS;
 
+	char s;
+
 	switch(token){
 		case LEX_ID:
 		case LEX_NUMBER:
 		case LEX_REAL_NUMBER:
 		case LEX_STRING:
-			//  semanticka kontrola dalsich parametru
-			// kontrola, zda je dana promenna deklarovana
-			// jinak vytvor vnitrni promennou s hodnotou
+			// semanticka akce
+			// if LEX_ID -> zkontrolovat zda je promenna definovana
+			// pokud je to LEX_ID, LEX_NUMBER, LEX_REAL, LEX_STRING , podle typu vytvorit vnitrni promennou s hodnotou argumentu
 
-			// semanticka chyba nesouhlas pocet parametru funkce
+
+			instr_type = INSTRUCT_DEFVAR;
+			instr1.type = TF;
+
+			//printf("Paramcount %d\n", paramCount);
+
+			sprintf(&s, "%d", paramCount);
+
+			//printf("String paramCount %c\n", s);
+
+
+			// pridat counter pro params!!!
+			instr1.value.s = "$_param2";
+
+			insert_item(ilist, &instr_type, &instr1, &instr2, &instr3);
+			instr_type = INSTRUCT_MOVE;
+			instr1.type = TF;
+			instr1.value.s = "$_param2";
+
+
+			if (token == LEX_NUMBER){
+				instr2.type = I; //integer
+				instr2.value.i = atoi(gToken.data.str);
+				insert_item(ilist, &instr_type, &instr1, &instr2, &instr3);
+
+			}
+			else if (token == LEX_REAL_NUMBER){
+				instr2.type = F; //float
+				instr2.value.f = atof(gToken.data.str);
+				insert_item(ilist, &instr_type, &instr1, &instr2, &instr3);
+			}
+			else if (token == LEX_STRING){
+				instr2.type = S; //string
+				instr2.value.s = gToken.data.str;
+				insert_item(ilist, &instr_type, &instr1, &instr2, &instr3);
+			}
+			else if (token == LEX_ID){
+				if ((local_map_get_pointer_to_key(localMap, gToken.data.str)) == NULL){
+					fprintf(stderr, "Semanticka chyba, promenna %s neni definovana, radek %d\n", gToken.data.str, gToken.row);
+				}
+				else {
+					instr2.type = GF; //string
+					instr2.value.s = gToken.data.str;
+					insert_item(ilist, &instr_type, &instr1, &instr2, &instr3);
+				}
+			}
+
+			
 			token = getToken();
 			if(!error_lex()){
 				return ERROR_LEX;
@@ -125,7 +199,6 @@ int term_list2(void){
 
 	switch(token){
 		//<PM-LIST2> -> , id/lex_number/lex_real_number/lex_string <PM-LIST2>
-		// UDELAT STAV PRO ID/LEX_NUMBER/LEX_REAL_NUMBER/LEX_STRING ????
 		case LEX_COMMA:
 			token = getToken();
 			if(!error_lex()){
@@ -179,7 +252,7 @@ int term_list(void){
 
 
 			instr_type = INSTRUCT_DEFVAR;
-			instr1.type = 702;
+			instr1.type = TF;
 
 			//printf("Paramcount %d\n", paramCount);
 
@@ -191,19 +264,39 @@ int term_list(void){
 			// pridat counter pro params!!!
 			instr1.value.s = "$_param1";
 
+			insert_item(ilist, &instr_type, &instr1, &instr2, &instr3);
+			instr_type = INSTRUCT_MOVE;
+			instr1.type = TF;
+			instr1.value.s = "$_param1";
+
 
 			if (token == LEX_NUMBER){
-				insert_item(ilist, &instr_type, &instr1, &instr2, &instr3);
-				instr_type = INSTRUCT_MOVE;
-				instr1.type = 702;
-				instr1.value.s = "$_param1";
-
-				instr2.type = 703; //integer
+				instr2.type = I; //integer
 				instr2.value.i = atoi(gToken.data.str);
-
 				insert_item(ilist, &instr_type, &instr1, &instr2, &instr3);
 
 			}
+			else if (token == LEX_REAL_NUMBER){
+				instr2.type = F; //float
+				instr2.value.f = atof(gToken.data.str);
+				insert_item(ilist, &instr_type, &instr1, &instr2, &instr3);
+			}
+			else if (token == LEX_STRING){
+				instr2.type = S; //string
+				instr2.value.s = gToken.data.str;
+				insert_item(ilist, &instr_type, &instr1, &instr2, &instr3);
+			}
+			else if (token == LEX_ID){
+				if ((local_map_get_pointer_to_key(localMap, gToken.data.str)) == NULL){
+					fprintf(stderr, "Semanticka chyba, promenna %s neni definovana, radek %d\n", gToken.data.str, gToken.row);
+				}
+				else {
+					instr2.type = GF; //string
+					instr2.value.s = gToken.data.str;
+					insert_item(ilist, &instr_type, &instr1, &instr2, &instr3);
+				}
+			}
+
 
 			//nacteni a volani term_list2()
 			token = getToken();
@@ -248,6 +341,7 @@ int term_list(void){
 int sth(LocalMap* localMap){
 	int result = SUCCESS;
 	expr_return res;
+
 	tDataFunction *tmp;
 
 
@@ -255,78 +349,141 @@ int sth(LocalMap* localMap){
 		// case LEX_ID_F:
 		case LEX_ID_F:
 		case LEX_ID:
+		case KW_LENGTH:
+		case KW_SUBSTR:
+		case KW_ORD:
+		case KW_CHR:
+		case KW_INPUT_S:
+		case KW_INPUT_I:
+		case KW_INPUT_F:
 
 				DLIsImportant(&tlist);
 
 				//SEMANTICKA AKCE, KONTROLA DEFINICE FUNKCE
 				tmp = global_map_get_pointer_to_value(gMap, gToken.data.str);
 				if (tmp == NULL){
-					fprintf(stderr, "Semanticka chyba, funkce %s neni definovana, radek %d\n", gToken.data.str, gToken.row);
-					return SEM_ERR;
+					if ( (local_map_get_pointer_to_value(localMap, gToken.data.str)) == NULL){
+						fprintf(stderr, "Semanticka chyba, funkce nebo promenna %s neni definovana, radek %d\n", gToken.data.str, gToken.row);
+						return SEM_ERR;
+					}
+					else{
+						//
+
+						res = parse_expr(localMap, ilist);
+						result = res.result;
+
+						if (result == SUCCESS){
+							// instrukce MOVE
+
+							// MOVE GF@promenna / LF@promenna  TF@%retval
+							instr_type = INSTRUCT_MOVE;
+							if (is_LF) {instr1.type = LF;}
+							else{
+								instr1.type = GF;
+							}
+							instr1.value.s = DLFirstImportant(&tlist);
+							instr2.type = TF;
+							instr2.value.s = res.uniqueID->str;
+
+							insert_item(ilist, &instr_type, &instr1, &instr2, &instr3);
+
+						}
+
+						// cokoliv jineho syntakticka chyba
+						if (token != LEX_EOL){
+							fprintf(stderr, "Syntakticka chyba, ocekavano 'eol' na radku %d\n", gToken.row);
+							return SYN_ERR;
+						}
+
+						DLNotImportant(&tlist);
+
+
+						return result;
+					}
+						
 				}
+				else{
 
-				// vytvoreni docasneho ramce pro funkce
-				instr_type =  INSTRUCT_CREATEFREAME;
-				insert_item(ilist, &instr_type, &instr1, &instr2, &instr3);
+						is_LF = true;
 
-        	    token = getToken();
-				if(!error_lex()){
-					return ERROR_LEX;
-				} else if (!error_int()){
-					return INT_ERR;
-				}
-
-
-				if(!checkTokenType(LEX_L_BRACKET)){
-					fprintf(stderr, "Ocekavano '(' na radku %d\n", gToken.row);
-					resetToken();
-					return SYN_ERR;
-				}
+        	    		token = getToken();
+						if(!error_lex()){
+							return ERROR_LEX;
+						} else if (!error_int()){
+							return INT_ERR;
+						}
 
 
-				token = getToken();
-				if(!error_lex()){
-					return ERROR_LEX;
-				} else if (!error_int()){
-					return INT_ERR;
-				}
+						if(!checkTokenType(LEX_L_BRACKET)){
+							fprintf(stderr, "Ocekavano '(' na radku %d\n", gToken.row);
+							resetToken();
+							return SYN_ERR;
+						}
 
 
-				//volane term_list()
-				result = term_list();
-				if(result != SUCCESS){
-					resetToken();
-					return result;
-				}
-
-				//dalsi token je nacten, musi = ')'
-
-				if(!checkTokenType(LEX_R_BRACKET)){
-					fprintf(stderr, "Ocekavana ')' na radku %d \n", gToken.row);
-					resetToken();
-					return SYN_ERR;
-				}
+						token = getToken();
+						if(!error_lex()){
+							return ERROR_LEX;
+						} else if (!error_int()){
+							return INT_ERR;
+						}
 
 
-				if ( tmp->paramCount != argCount ){
-					fprintf(stderr, "Semanticka chyba, pocet parametru funkce %s nesouvisi s poctem argumentu na radku %d\n",gToken.data.str , gToken.row);
-				}
+						//volane term_list()
+						result = term_list();
+						if(result != SUCCESS){
+							resetToken();
+							return result;
+						}
 
-				// pro dalsi volani funkce
-				argCount = 0;
+						//dalsi token je nacten, musi = ')'
 
-				// instrukce pro volani funkce
+						if(!checkTokenType(LEX_R_BRACKET)){
+							fprintf(stderr, "Ocekavana ')' na radku %d \n", gToken.row);
+							resetToken();
+							return SYN_ERR;
+						}
 
-				instr_type = INSTRUCT_CALL;
-				instr1.type = 706;
-				instr1.value.s = DLLastImportant(&tlist);
 
-				insert_item(ilist, &instr_type, &instr1, &instr2, &instr3);
+						if ( tmp->paramCount != argCount ){
+							fprintf(stderr, "Semanticka chyba, pocet parametru funkce %s nesouvisi s poctem argumentu na radku %d\n",gToken.data.str , gToken.row);
+						}
+
+						// pro dalsi volani funkce
+						argCount = 0;
+
+
+						instr_type = INSTRUCT_PUSHFRAME;
+						instr1.type = EMPTY;
+						insert_item(ilist, &instr_type, &instr1, &instr2, &instr3);
+
+						// instrukce pro volani funkce
+
+						instr_type = INSTRUCT_CALL;
+						instr1.type = FCE;
+						instr1.value.s = DLLastImportant(&tlist);
+
+						insert_item(ilist, &instr_type, &instr1, &instr2, &instr3);
+
+						// POPFRAME
+
+						instr_type = INSTRUCT_POPFRAME;
+						insert_item(ilist, &instr_type, &instr1, &instr2, &instr3);
+
+
+						token = getToken();
+						if(!error_lex()){
+							return ERROR_LEX;
+						} else if (!error_int()){
+							return INT_ERR;
+						}
+				}			
 
 		break;
 
 		// semanticka chyba prirazeni
 		case LEX_EOL:
+		case LEX_EOF:
 			fprintf(stderr, "Ocekavan vyraz v prirazeni na radku %d \n", gToken.row);
 			return SEM_ERR;
 		break;
@@ -337,29 +494,34 @@ int sth(LocalMap* localMap){
 			result = res.result;
 
 
+			if (result == SUCCESS){
+				// instrukce MOVE
 
-			// tady mam provest kontrolu x = 
+					// MOVE GF@promenna / LF@promenna  TF@%retval
+					instr_type = INSTRUCT_MOVE;
+					if (is_LF) {instr1.type = LF;}
+					else{
+						instr1.type = GF;
+					}
+					instr1.value.s = DLFirstImportant(&tlist);
+					instr2.type = TF;
+					instr2.value.s = res.uniqueID->str;
 
-			// char * imp = DlFirstImportant();
-			// tDataIDF tmp = local_map_get_value(localMap, imp);
-			// if (res.type == NIL && tmp.type == INTEGER){
-			//		tmp.type = INTEGER;                       -- 701 asi ?
-			//      local_map_put(localMap, imp, tmp);
-			//
-			//}
-			// else if (res.type == INTEGER && tmp.type == INTEGER){
-				// nic se nemeni
-			//}
+					insert_item(ilist, &instr_type, &instr1, &instr2, &instr3);
+
+			}
+
+			// cokoliv jineho syntakticka chyba
+			if (token != LEX_EOL){
+				fprintf(stderr, "Syntakticka chyba, ocekavano 'eol' na radku %d\n", gToken.row);
+				return SYN_ERR;
+			}
 
 
-			// atd
-
-			// TOHLE JE ZPRACOVANI PRECEDENCNI ANALYZY
+			DLNotImportant(&tlist);
 
 			return result;
 	}
-
-
 
 	return result;
 }
@@ -367,13 +529,13 @@ int sth(LocalMap* localMap){
 int stat(){
 	int result = SUCCESS;
 	expr_return res;
+	tDataIDF * tmp;
 
 	switch(token){
 		//<STAT> -> id = <STH>
 		case LEX_ID:
 
 			DLIsImportant(&tlist);
-
 
 			//dalsi musi byt '='
 			token = getToken();
@@ -389,24 +551,31 @@ int stat(){
 				return SYN_ERR;
 			}
 
+			if ((tmp = local_map_get_pointer_to_value(localMap, DLCopyFirst(&tlist))) == NULL){
+				// ulozeni promenne do lokalni mapy, hodnota nil, typ nil
+				lData.defined = 1;
+				lData.value.nil = true;
+				lData.type = 500; // typ nil - NONE
 
-			// ulozeni promenne do lokalni mapy, hodnota nil, typ nil
-			lData.defined = 1;
-			lData.value.nil = true;
-			lData.type = 500; // typ nil - NONE
 
-	
-
-			// nazev promenne ziskame z list pro tokeny pomoci funkce DLCOPYFISRT
-			local_map_put(localMap, DLCopyFirst(&tlist), lData);
+				// nazev promenne ziskame z list pro tokeny pomoci funkce DLCOPYFISRT
+				local_map_put(localMap, DLCopyFirst(&tlist), lData);
 		
 
-			// generovani instrukce pro definice promenne s typem nil a hodnotou nil
-			instr_type = INSTRUCT_DEFVAR;
-			instr1.type = 700; // GF
-			instr1.value.s = DLCopyFirst(&tlist); // nazev promenne
-			insert_item(ilist, &instr_type, &instr1, &instr2, &instr3);
+				// generovani instrukce pro definice promenne s typem nil a hodnotou nil
+				instr_type = INSTRUCT_DEFVAR;
+				if (is_LF) {instr1.type = LF;}
+				else{
+					instr1.type = GF;
+				}
 
+				instr1.value.s = DLCopyFirst(&tlist); // nazev promenne
+				insert_item(ilist, &instr_type, &instr1, &instr2, &instr3);
+				
+			}
+			// else promenna uz existuje, nedefinovat
+
+			
 			// nacteni dalsiho tokenu , musi byt identifikator nebo vyraz
 			token = getToken();
 			if(!error_lex()){
@@ -415,6 +584,7 @@ int stat(){
 				return INT_ERR;
 			}
 
+			//print_elements_of_list(tlist);
 
 			// volani pravidla sth()
 			result = sth(localMap);
@@ -423,33 +593,61 @@ int stat(){
 				return result;
 			}
 
-			// tady mi ma prijit vysledek prirazeni
+			return SUCCESS;
+		break;
 
-			// SEMANTICKA AKCE
+		case KW_PRINT:
 
+			token = getToken();
+			if(!error_lex()){
+				return ERROR_LEX;
+			} else if (!error_int()){
+				return INT_ERR;
+			}
 
-			// jen pro testovani
-			lData.defined = 1;
-			lData.value.i = 3;
-			lData.type = 501; // typ int - INTEGER
+			if(!checkTokenType(LEX_L_BRACKET)){
+				fprintf(stderr, "Ocekavano '(' na radku %d\n", gToken.row);
+				resetToken();
+				return SYN_ERR;
+			}
 
-			char * imp = DLFirstImportant(&tlist);
+			token = getToken();
+			if(!error_lex()){
+				return ERROR_LEX;
+			} else if (!error_int()){
+				return INT_ERR;
+			}
 
+			//volane term_list()
+			result = term_list();
+			if(result != SUCCESS){
+				resetToken();
+				return result;
+			}
 
-			local_map_put(localMap, imp, lData);
+			//dalsi token je nacten, musi = ')'
 
+			if(!checkTokenType(LEX_R_BRACKET)){
+				fprintf(stderr, "Ocekavana ')' na radku %d \n", gToken.row);
+				resetToken();
+				return SYN_ERR;
+			}
 
-			// MOVE GF@tmp TF@%retval
-			instr_type = INSTRUCT_MOVE;
-			instr1.type = 700;
-			instr1.value.s = imp;
-			instr2.type = 702;
-			instr2.value.s = "%retval";
-
+			instr_type = INSTRUCT_PRINT;
 			insert_item(ilist, &instr_type, &instr1, &instr2, &instr3);
 
-			return result;
+			token = getToken();
+			if(!error_lex()){
+				return ERROR_LEX;
+			} else if (!error_int()){
+				return INT_ERR;
+			}
+
+
 		break;
+
+
+
 
 		//<STAT> -> if <EXPR> then eol <ST-LIST> else eol <ST-LIST> end if
 		case KW_IF:
@@ -553,6 +751,11 @@ int stat(){
 			}
 
 			token = getToken();
+			if(!error_lex()){
+				return ERROR_LEX;
+			} else if (!error_int()){
+				return INT_ERR;
+			}
 
 
 			return SUCCESS;
@@ -625,6 +828,11 @@ int stat(){
 			}
 
 			token = getToken();
+			if(!error_lex()){
+				return ERROR_LEX;
+			} else if (!error_int()){
+				return INT_ERR;
+			}
 
 			return result;
 		break;
@@ -649,6 +857,7 @@ int st_list(){
 		case KW_IF:
 		case KW_WHILE:
 		case LEX_ID:
+		case KW_PRINT:
 
 			//podle pravidla zavolame stat()
 			result = stat();
@@ -665,11 +874,15 @@ int st_list(){
 			}
 			else{
 				token = getToken();
+			
+				if(!error_lex()){
+					return ERROR_LEX;
+				} else if (!error_int()){
+					return INT_ERR;
+				}
 				return st_list();
 			}
 
-
-		// case KW_PRINT
 
 		//<ST-LIST> -> nic
       case KW_ELSE:
@@ -677,49 +890,9 @@ int st_list(){
       		return SUCCESS;
       	break;
 
-      case KW_PRINT:
-
-      		token = getToken();
-			if(!error_lex()){
-				return ERROR_LEX;
-			} else if (!error_int()){
-				return INT_ERR;
-			}
-
-			if(!checkTokenType(LEX_L_BRACKET)){
-				fprintf(stderr, "Ocekavana '(' na radku %d\n", gToken.row);
-				resetToken();
-				return SYN_ERR;
-			}
-
-			token = getToken();
-			if(!error_lex()){
-				return ERROR_LEX;
-			} else if (!error_int()){
-				return INT_ERR;
-			}
-
-			result = term_list();
-
-			if(result != SUCCESS){
-				resetToken();
-				return result;
-			}
-
-			// dalsi token pro st_list
-			token = getToken();
-			if(!error_lex()){
-				return ERROR_LEX;
-			} else if (!error_int()){
-				return INT_ERR;
-			}
-
-			return st_list();
-
-      break;
-
-
       case KW_DEF:
+
+      		is_LF = true;
 
 			result = func();
 			if(result != SUCCESS){
@@ -753,8 +926,12 @@ int st_list(){
 }
 
 int pm_list2(){
+
+	tDataIDF * tmp;
+
 	switch(token){
 		case LEX_COMMA:
+
 			token = getToken();
 
 			if(!error_lex()){
@@ -770,8 +947,15 @@ int pm_list2(){
 				return ERROR_LEX;
 			}
 
-			// SEMANTICKE AKCE pridani parametru do LTS funkce
+			// KONTROLA JESTLI JE PROMENNA DEFINOVANA
 
+			if ((tmp = local_map_get_pointer_to_value(localMap, gToken.data.str)) == NULL){
+				fprintf(stderr, "Promenna %s neni definovana, radek %d\n", gToken.data.str, gToken.row);
+				free(tmp);
+				return SEM_ERR;
+			}
+
+			// SEMANTICKE AKCE pridani parametru do LTS funkce
 
 			// + jeden parametr
 			paramCount++;
@@ -806,10 +990,16 @@ int pm_list2(){
 
 int pm_list(){
 	int result = SUCCESS;
+	tDataIDF *tmp;
 
 	if (token == LEX_ID){
-		token = getToken();
+		if ((tmp = local_map_get_pointer_to_value(localMap, gToken.data.str)) == NULL){
+			fprintf(stderr, "Promenna %s neni definovana, radek %d\n", gToken.data.str, gToken.row);
+			free(tmp);
+			return SEM_ERR;
+		}
 
+		token = getToken();
 
 		if(!error_lex()){
 			return ERROR_LEX;
@@ -855,28 +1045,24 @@ int func(){
 
 
 	instr_type = INSTRUCT_LABEL;
-	instr1.type = 706;
+	instr1.type = FCE;
 	instr1.value.s = DLCopyFirst(&tlist);
 
 	insert_item(ilist, &instr_type, &instr1, &instr2, &instr3);
 
-	// KONTROLA TF PRAZDNY - dopsat
 
-	instr_type = INSTRUCT_PUSHFRAME;
-	instr1.type = 707;
-	insert_item(ilist, &instr_type, &instr1, &instr2, &instr3);
+	
 
 	// navratova hodnota
-
 	instr_type = INSTRUCT_DEFVAR;
-	instr1.type = 701;
+	instr1.type = LF;
 	instr1.value.s = "%retval";
 	insert_item(ilist, &instr_type, &instr1, &instr2, &instr3);
 
 	instr_type = INSTRUCT_MOVE;
-	instr1.type = 701;
+	instr1.type = LF;
 	instr1.value.s = "%retval";
-	instr2.type = 704;
+	instr2.type = F;
 	instr2.value.f = 0.0;
 
 	insert_item(ilist, &instr_type, &instr1, &instr2, &instr3);
@@ -936,13 +1122,10 @@ int func(){
 	// ukladam do GTS definice funkce
     // pokud tam ID neni tak vepsat
 
-    char * function_name = DLFirstImportant(&tlist);
 
-
-
-    if (!global_map_contain(gMap, function_name)){
+    if (!global_map_contain(gMap, DLFirstImportant(&tlist))){
     	gData.defined = 1;
-    	global_map_put(gMap, function_name, gData);
+    	global_map_put(gMap, DLFirstImportant(&tlist), gData);
     }else {
         //uz byla definovana
         fprintf(stderr, "Radek %d: Semanticka chyba, funkce '%s' jiz byla definovana.\n", gToken.row, gToken.data.str);
@@ -950,10 +1133,12 @@ int func(){
     }
 
 	
-	global_map_put(gMap, function_name, gData);
+	global_map_put(gMap, DLFirstImportant(&tlist), gData);
 
 	// pro dalsi funkce
 	paramCount = 0;
+
+	DLNotImportant(&tlist);
 
 
 
@@ -1002,18 +1187,11 @@ int func(){
 	// konec funkce
 
 	instr_type = INSTRUCT_LABEL;
-	instr1.type = 707;
+	instr1.type = EMPTY;
 
 	// vymyslet nejakou promennou pro ukonceni funkce, treba $foo$end
-	// zatim to bude jen $end, ale muzeme narazit na funkci se stejnym nazvem
 	instr1.value.s = "$end";
 	insert_item(ilist, &instr_type, &instr1, &instr2, &instr3);
-
-	// POPFRAME
-
-	instr_type = INSTRUCT_POPFRAME;
-	insert_item(ilist, &instr_type, &instr1, &instr2, &instr3);
-
 
 	// return retval of function
 	instr_type = INSTRUCT_RETURN;
@@ -1048,10 +1226,6 @@ int main_p(void){
 		//case KW_INPUTS:
 		// case KW_INPUTI:
 		//case KW_INPUTF:
-		case KW_LENGTH:
-		//case KW_CHR:
-		//case KW_ORD:
-		//case KW_SUBSTR:
 
 			//volani st_list()
 			result = st_list();
@@ -1131,6 +1305,9 @@ int parse(GlobalMap* globalMap, tList *list) {
 	localMap = local_map_init(MAX_SIZE_OF_HASH_TABLE);
 
 
+	insert_build_in_functions();
+
+
 	if(initToken() == INT_ERR){
 		fprintf(stderr, "Nepodařilo se inicializovat strukturu pro token \n");
 		result = INT_ERR;
@@ -1151,6 +1328,24 @@ int parse(GlobalMap* globalMap, tList *list) {
 	if(result == SUCCESS){
 		instr_type = INSTRUCT_HEAD;
 		insert_item(ilist, &instr_type, &instr1, &instr2, &instr3);
+		// vytvoreni docasneho ramce pro funkce
+		instr_type =  INSTRUCT_CREATEFREAME;
+		insert_item(ilist, &instr_type, &instr1, &instr2, &instr3);
+
+
+		instr_type = INSTRUCT_LENGTH;
+		insert_item(ilist, &instr_type, &instr1, &instr2, &instr3);
+
+		instr_type = INSTRUCT_CHR;
+		insert_item(ilist, &instr_type, &instr1, &instr2, &instr3);
+
+		instr_type = INSTRUCT_ORD;
+		insert_item(ilist, &instr_type, &instr1, &instr2, &instr3);
+
+		instr_type = INSTRUCT_SUBSTR;
+		insert_item(ilist, &instr_type, &instr1, &instr2, &instr3);
+
+
 		result = prog();
 	}
 
