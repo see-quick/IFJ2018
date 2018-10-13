@@ -458,7 +458,7 @@ void parse_instructions(tList *instr_list)  {
           printf("JUMPIFEQ while_label%d_end GF@$$EXPR bool@false\n", while_count);
       break;
 
-      case INSTRUCT_LOOP:
+      case INSTRUCT_WHILE_END:
           printf("JUMP while_label%d\n", while_count);
           printf("LABEL while_label%d_end\n",while_count);
       break;

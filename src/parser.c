@@ -883,6 +883,9 @@ int stat(){
 			res = parse_expr(localMap, ilist);
 			result = res.result;
 
+			instr_type = INSTRUCT_WHILE_STATS;
+			insert_item(ilist, &instr_type, &instr1, &instr2, &instr3);
+
 
 			if(result != SUCCESS){
 				resetToken();
@@ -933,6 +936,9 @@ int stat(){
 				resetToken();
 				return SYN_ERR;
 			}
+
+			instr_type = INSTRUCT_WHILE_END;
+			insert_item(ilist, &instr_type, &instr1, &instr2, &instr3);
 
 			token = getToken();
 			if(!error_lex()){

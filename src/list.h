@@ -100,7 +100,7 @@ typedef enum
             INSTRUCT_INPUT_F = 668,
             INSTRUCT_WHILE_START = 669,
             INSTRUCT_WHILE_STATS = 670,
-            INSTRUCT_LOOP = 671,
+            INSTRUCT_WHILE_END = 671,
             INSTRUCT_IF = 672,
             INSTRUCT_IF_THEN = 673,
             INSTRUCT_JUMP_ENDIF = 674,

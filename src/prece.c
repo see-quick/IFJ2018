@@ -101,14 +101,14 @@ int indexerOfPreceTable (int indexer, LocalMap* lMap)
         case LEX_ID:
             if(global_map_contain(gMap, gToken.data.str)){
                 type = eFCE;            // nachadza sa to v gMap je to funckia
-                printf("==================================================================Je to FCE\n");
+                //printf("==================================================================Je to FCE\n");
             }
             else if(local_map_contain(lMap, gToken.data.str)){
-                printf("=========================================================Je to LEX_ID\n");
+                //printf("=========================================================Je to LEX_ID\n");
                 type = eIDENT;         // nachadza sa to v lMap je to premenna
             }
             else{
-                printf("================================================================LUL");
+                //printf("================================================================LUL");
                 // nie je to ani fce ani identificator
                 return eSYNTERROR;
             }
