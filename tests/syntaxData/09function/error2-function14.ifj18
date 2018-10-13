@@ -1,4 +1,5 @@
 #definicia jednoduchej funkcie
 
-def foo (a)
-	a = 5 end
+def foo (a,b))
+	a = 5
+end

@@ -1,0 +1,11 @@
+#work in progress
+a = 0
+
+def foo(a)
+	a = a + 1
+end
+
+while a < 5
+	a = foo(a)
+	print(" a = ", a, "\n")
+end
