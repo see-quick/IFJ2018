@@ -406,11 +406,6 @@ int sth(LocalMap* localMap){
 
 						is_LF = true;
 
-
-						// vytvoreni docasneho ramce pro funkce
-						instr_type =  INSTRUCT_CREATEFREAME;
-						insert_item(ilist, &instr_type, &instr1, &instr2, &instr3);
-
         	    		token = getToken();
 						if(!error_lex()){
 							return ERROR_LEX;
@@ -457,6 +452,11 @@ int sth(LocalMap* localMap){
 						// pro dalsi volani funkce
 						argCount = 0;
 
+
+						instr_type = INSTRUCT_PUSHFRAME;
+						instr1.type = EMPTY;
+						insert_item(ilist, &instr_type, &instr1, &instr2, &instr3);
+
 						// instrukce pro volani funkce
 
 						instr_type = INSTRUCT_CALL;
@@ -464,6 +464,12 @@ int sth(LocalMap* localMap){
 						instr1.value.s = DLLastImportant(&tlist);
 
 						insert_item(ilist, &instr_type, &instr1, &instr2, &instr3);
+
+						// POPFRAME
+
+						instr_type = INSTRUCT_POPFRAME;
+						insert_item(ilist, &instr_type, &instr1, &instr2, &instr3);
+
 
 						token = getToken();
 						if(!error_lex()){
@@ -627,10 +633,7 @@ int stat(){
 				return SYN_ERR;
 			}
 
-			instr_type = INSTRUCT_CALL;
-			instr1.type = FCE;
-			instr1.value.s = "print";
-
+			instr_type = INSTRUCT_PRINT;
 			insert_item(ilist, &instr_type, &instr1, &instr2, &instr3);
 
 			token = getToken();
@@ -1047,11 +1050,8 @@ int func(){
 
 	insert_item(ilist, &instr_type, &instr1, &instr2, &instr3);
 
-	// KONTROLA TF PRAZDNY - dopsat
 
-	instr_type = INSTRUCT_PUSHFRAME;
-	instr1.type = EMPTY;
-	insert_item(ilist, &instr_type, &instr1, &instr2, &instr3);
+	
 
 	// navratova hodnota
 	instr_type = INSTRUCT_DEFVAR;
@@ -1190,15 +1190,8 @@ int func(){
 	instr1.type = EMPTY;
 
 	// vymyslet nejakou promennou pro ukonceni funkce, treba $foo$end
-	// zatim to bude jen $end, ale muzeme narazit na funkci se stejnym nazvem
 	instr1.value.s = "$end";
 	insert_item(ilist, &instr_type, &instr1, &instr2, &instr3);
-
-	// POPFRAME
-
-	instr_type = INSTRUCT_POPFRAME;
-	insert_item(ilist, &instr_type, &instr1, &instr2, &instr3);
-
 
 	// return retval of function
 	instr_type = INSTRUCT_RETURN;
@@ -1335,6 +1328,24 @@ int parse(GlobalMap* globalMap, tList *list) {
 	if(result == SUCCESS){
 		instr_type = INSTRUCT_HEAD;
 		insert_item(ilist, &instr_type, &instr1, &instr2, &instr3);
+		// vytvoreni docasneho ramce pro funkce
+		instr_type =  INSTRUCT_CREATEFREAME;
+		insert_item(ilist, &instr_type, &instr1, &instr2, &instr3);
+
+
+		instr_type = INSTRUCT_LENGTH;
+		insert_item(ilist, &instr_type, &instr1, &instr2, &instr3);
+
+		instr_type = INSTRUCT_CHR;
+		insert_item(ilist, &instr_type, &instr1, &instr2, &instr3);
+
+		instr_type = INSTRUCT_ORD;
+		insert_item(ilist, &instr_type, &instr1, &instr2, &instr3);
+
+		instr_type = INSTRUCT_SUBSTR;
+		insert_item(ilist, &instr_type, &instr1, &instr2, &instr3);
+
+
 		result = prog();
 	}
 

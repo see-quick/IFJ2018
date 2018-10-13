@@ -137,8 +137,14 @@ void parse_instructions(tList *instr_list)  {
     switch (act_instr->data.type) {
       case INSTRUCT_HEAD:
           printf(".IFJcode18\n");
-          printf("LABEL $$main\n");
           printf("JUMP $$main\n");
+          printf("LABEL $$main\n");
+          printf("DEFVAR GF@$$var_integer\n");
+          printf("MOVE GF@$$var_integer int@0\n");
+          printf("DEFVAR GF@$$var_double\n");
+          printf("MOVE GF@$$var_double floal@0.0\n");
+          printf("DEFVAR GF@$$var_string\n");
+          printf("MOVE GF@$$var_string string@\n");
       break;
 
       case INSTRUCT_CREATEFREAME:
@@ -389,19 +395,51 @@ void parse_instructions(tList *instr_list)  {
 
       case INSTRUCT_LENGTH:
           printf("LABEL length\n");
-          printf("DEFVAR GF@$$var_integer\n");
-          printf("STRLEN GF$$var_integer LF@param1\n");
+          printf("STRLEN GF$$var_integer LF@_param1\n");
           printf("RETURN\n");
       break;
 
-      case INSTRUCT_SUBSTR:
-      case INSTRUCT_CHR:
-      case INSTRUCT_ORD:
-      case INSTRUCT_PRINT:
+
       case INSTRUCT_INPUT_S:
       case INSTRUCT_INPUT_I:
       case INSTRUCT_INPUT_F:
         printf("TODO\n");
+      break;
+
+      case INSTRUCT_CHR:
+          printf("LABEL chr\n");
+          printf("INT2CHAR GF@$$var_string LF@_param1\n");
+          printf("RETURN\n");
+      break;
+
+      case INSTRUCT_ORD:
+          printf("LABEL ord\n");
+          printf("STRLEN $$var_integer LF@_param1\n");
+          printf("LT GF@$$var_double GF@$$var_integer LF@_param2\n");
+          printf("JUMPIFEQ label_ord bool@true GF@$$var_double\n");
+
+          printf("SUB LF@_param2 LF@_param2 int@1\n");
+          printf("GETCHAR GF@$$var_string LF@_param1 LF@_param2\n");
+          printf("STRI2INT GF@$$var_integer GF@$$var_string int@0\n");
+
+          printf("JUMP label_end_ord\n");
+          printf("LABEL label_ord\n");
+
+          printf("MOVE GF@$$var_integer int@0\n");
+          printf("LABEL label_end_ord\n");
+          printf("MOVE GF@$$var_double float@0.0\n");
+          printf("RETURN\n");
+
+      break;
+
+      case INSTRUCT_PRINT:
+          // while pocet parametru ... zatim vypisu jen jeden parametr
+          printf("WRITE TF@_param1\n");
+      break;
+
+      case INSTRUCT_SUBSTR:
+          printf("LABEL substr\n");
+          // todo
       break;
 
     }
