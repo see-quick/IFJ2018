@@ -86,6 +86,18 @@ elif [[ ! -z "$1" && ! -z "$2" ]]; then
           echo "${red}[TEST FAILED]${reset} : $currentdir/$testfile"
           echo "  expected return value = 3. Returned value = $retval"
         fi
+      ##### Semantic tests of type compability  #####
+    elif [ "$testtype" == "error4" ]; then #testy oznacene error4 --> sémantická/běhová chyba typové kompatibility v aritmetických, řetězcových a relačních výrazech.
+      $prog < $testpath/$currentdir/$testfile > /dev/null 2>&1
+      retval=$(echo $?)
+      if [ "$retval" -eq "4" ]; then
+        ((testsucc++))
+        echo "${green}[TEST PASSED]${reset}"
+      else
+        ((testfail++))
+        echo "${red}[TEST FAILED]${reset} : $currentdir/$testfile"
+        echo "  expected return value = 4. Returned value = $retval"
+      fi
       elif [ "$testtype" == "error5" ]; then #error5 -> sémantická chyba v programu – špatný počet parametrů u volání funkce.
         $prog < $testpath/$currentdir/$testfile > /dev/null 2>&1
         retval=$(echo $?)
@@ -108,6 +120,30 @@ elif [[ ! -z "$1" && ! -z "$2" ]]; then
           echo "${red}[TEST FAILED]${reset} : $currentdir/$testfile"
           echo "  expected return value = 6. Returned value = $retval"
         fi
+      ##### Zero division #####
+      elif [ "$testtype" == "error9" ]; then #error9 -> běhová chyba dělení nulou.
+        $prog < $testpath/$currentdir/$testfile > /dev/null 2>&1
+        retval=$(echo $?)
+        if [ "$retval" -eq "9" ]; then
+          ((testsucc++))
+          echo "${green}[TEST PASSED]${reset}"
+        else
+          ((testfail++))
+          echo "${red}[TEST FAILED]${reset} : $currentdir/$testfile"
+          echo "  expected return value = 9. Returned value = $retval"
+        fi
+      ##### internal error  #####
+    elif [ "$testtype" == "error99" ]; then #error99 -> interní chyba překladače tj. neovlivněná vstupním programem (např. chyba alokace paměti, atd.).
+      $prog < $testpath/$currentdir/$testfile > /dev/null 2>&1
+      retval=$(echo $?)
+      if [ "$retval" -eq "99" ]; then
+        ((testsucc++))
+        echo "${green}[TEST PASSED]${reset}"
+      else
+        ((testfail++))
+        echo "${red}[TEST FAILED]${reset} : $currentdir/$testfile"
+        echo "  expected return value = 99. Returned value = $retval"
+      fi
       ##### Success #####
       else
         $prog < $testpath/$currentdir/$testfile > /dev/null 2>&1
