@@ -139,7 +139,7 @@ int token;
 // SEZNAM TOKENU 
 tDLList tlist;
 
-#define SIZE            8
+#define SIZE            16
 #define KEYWORD_COUNT   16
 #define SHIFT           10
 
