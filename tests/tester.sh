@@ -65,7 +65,11 @@ elif [[ ! -z "$1" && ! -z "$2" ]]; then
       ##### Syntax tests  #####
       elif [ "$testtype" == "error2" ]; then #testy oznacene error2 --> chyba v programu v rámci syntaktické analýzy (chybná syntaxe programu).
         $prog < $testpath/$currentdir/$testfile > /dev/null 2>&1
-        retval=$(echo $?)
+        ##retval=$(echo $?)
+
+        retval=`echo $?`
+        #echo "RETURNED : $?"
+        #echo "RETURNED: $?"
         if [ "$retval" -eq "2" ]; then
           ((testsucc++))
           echo "${green}[TEST PASSED]${reset}"
