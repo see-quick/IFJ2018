@@ -1,3 +1,4 @@
+ahoj = "joha"
 print (ahoj)
 print "ahoj"
 print ("ahoj")
