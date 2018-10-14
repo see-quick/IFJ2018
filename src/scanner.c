@@ -158,7 +158,7 @@ int getToken(){
                 else if(islower(c) || c == '_'){ pushToken(c); state = S_ID; }               // Identifikator (a-z, '_')
                 else{
                     pushToken(c);                                              //Chybny znak
-                    return ERROR_LEX;
+                    return LEX_UNKNOWN;
                 }
 
 

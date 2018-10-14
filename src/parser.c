@@ -250,15 +250,13 @@ int term_list(void){
 			// if LEX_ID -> zkontrolovat zda je promenna definovana
 			// pokud je to LEX_ID, LEX_NUMBER, LEX_REAL, LEX_STRING , podle typu vytvorit vnitrni promennou s hodnotou argumentu
 
+			//printf("TEST %s\n", DLLastImportant(&tlist));
 
 			instr_type = INSTRUCT_DEFVAR;
 			instr1.type = TF;
 
-			//printf("Paramcount %d\n", paramCount);
-
+			
 			sprintf(&s, "%d", paramCount);
-
-			//printf("String paramCount %c\n", s);
 
 
 			// pridat counter pro params!!!
@@ -289,6 +287,7 @@ int term_list(void){
 			else if (token == LEX_ID){
 				if ((local_map_get_pointer_to_key(localMap, gToken.data.str)) == NULL){
 					fprintf(stderr, "Semanticka chyba, promenna %s neni definovana, radek %d\n", gToken.data.str, gToken.row);
+					return SEM_ERR;
 				}
 				else {
 					instr2.type = GF; //string
@@ -296,6 +295,18 @@ int term_list(void){
 					insert_item(ilist, &instr_type, &instr1, &instr2, &instr3);
 				}
 			}
+
+			// zvetsit pocet argumentu
+			argCount++;
+
+
+			// SEMANTIKA KONTROLA KOMPATIBILITY TYPU
+
+			// tDataFunction tmp;
+
+			// tmp = global_map_get_value(gMap, gToken.data.str);
+			// printf("Test %d\n", tmp.params[argCount]);
+
 
 
 			//nacteni a volani term_list2()
@@ -306,9 +317,7 @@ int term_list(void){
 				return INT_ERR;
 			}
 
-			// zvetsit pocet argumentu
-			argCount++;
-
+		
 
 			return term_list2();
 		break;
@@ -730,6 +739,8 @@ int stat(){
 				return result;
 			}
 
+			returnToken();
+
 			//dalsi token je nacten, musi = ')'
 
 			if(!checkTokenType(LEX_R_BRACKET)){
@@ -1056,7 +1067,7 @@ int st_list(){
 
 int pm_list2(){
 
-	tDataIDF * tmp;
+	//tDataIDF * tmp;
 
 	switch(token){
 		case LEX_COMMA:
@@ -1076,19 +1087,28 @@ int pm_list2(){
 				return ERROR_LEX;
 			}
 
+
+			// definovat tuto promennou s typem nil a hodnotou nil
+			lData.defined = 1;
+			lData.value.nil = true;
+			lData.type = 500; // typ nil - NONE
+
+			local_map_put(localMap, gToken.data.str, lData);
+
+
 			// KONTROLA JESTLI JE PROMENNA DEFINOVANA
 
-			if ((tmp = local_map_get_pointer_to_value(localMap, gToken.data.str)) == NULL){
-				fprintf(stderr, "Promenna %s neni definovana, radek %d\n", gToken.data.str, gToken.row);
-				free(tmp);
-				return SEM_ERR;
-			}
-
-			// SEMANTICKE AKCE pridani parametru do LTS funkce
+			// if ((tmp = local_map_get_pointer_to_value(localMap, gToken.data.str)) == NULL){
+			// 	fprintf(stderr, "Promenna %s neni definovana, radek %d\n", gToken.data.str, gToken.row);
+			// 	free(tmp);
+			// 	return SEM_ERR;
+			// }
 
 			// + jeden parametr
 			paramCount++;
 
+			// gData.params[paramCount] = tmp->type;
+			// global_map_put(gMap, DLFirstImportant(&tlist), gData);
 
 			token = getToken();
 
@@ -1119,14 +1139,28 @@ int pm_list2(){
 
 int pm_list(){
 	int result = SUCCESS;
-	tDataIDF *tmp;
+	//tDataIDF *tmp;
 
 	if (token == LEX_ID){
-		if ((tmp = local_map_get_pointer_to_value(localMap, gToken.data.str)) == NULL){
-			fprintf(stderr, "Promenna %s neni definovana, radek %d\n", gToken.data.str, gToken.row);
-			free(tmp);
-			return SEM_ERR;
-		}
+		// if ((tmp = local_map_get_pointer_to_value(localMap, gToken.data.str)) == NULL){
+		// 	fprintf(stderr, "Promenna %s neni definovana, radek %d\n", gToken.data.str, gToken.row);
+		// 	free(tmp);
+		// 	return SEM_ERR;
+		// }
+
+
+		// definovat tuto promennou s typem nil a hodnotou nil
+		lData.defined = 1;
+		lData.value.nil = true;
+		lData.type = 500; // typ nil - NONE
+
+		local_map_put(localMap, gToken.data.str, lData);
+
+
+		paramCount++;
+
+		// gData.params[paramCount] = tmp->type;
+		// global_map_put(gMap, DLFirstImportant(&tlist), gData);
 
 		token = getToken();
 
@@ -1135,14 +1169,7 @@ int pm_list(){
 		} else if (!error_int()){
 			return INT_ERR;
 		}
-
-		// SEMANTICKE AKCE
-		// ulozeni do vnitrni LTS funkce parametr, nesmi byt jako nazev funkce, ani jako nazev jine funkce
-
-		// dalsi semanticke akce -> pridat....
-
-		// pocet parametru funkce ulozit
-		paramCount++;
+		
 
 		return pm_list2();
 	}
@@ -1171,6 +1198,19 @@ int func(){
 		resetToken();
 		return SYN_ERR;
 	}
+
+	// ukladam do GTS definice funkce
+    // pokud tam ID neni tak vepsat
+
+
+    if (!global_map_contain(gMap, gToken.data.str)){
+    	gData.defined = 1;
+    	global_map_put(gMap, gToken.data.str, gData);
+    }else {
+        //uz byla definovana
+        fprintf(stderr, "Radek %d: Semanticka chyba, funkce '%s' jiz byla definovana.\n", gToken.row, gToken.data.str);
+        return SEM_ERR;
+    }
 
 
 	instr_type = INSTRUCT_LABEL;
@@ -1246,21 +1286,6 @@ int func(){
 
 	// ulozeni poctu formalnich parametru funkce
 	gData.paramCount = paramCount;
-
-
-	// ukladam do GTS definice funkce
-    // pokud tam ID neni tak vepsat
-
-
-    if (!global_map_contain(gMap, DLFirstImportant(&tlist))){
-    	gData.defined = 1;
-    	global_map_put(gMap, DLFirstImportant(&tlist), gData);
-    }else {
-        //uz byla definovana
-        fprintf(stderr, "Radek %d: Semanticka chyba, funkce '%s' jiz byla definovana.\n", gToken.row, gToken.data.str);
-        return SEM_ERR;
-    }
-
 	
 	global_map_put(gMap, DLFirstImportant(&tlist), gData);
 
@@ -1433,6 +1458,8 @@ int parse(GlobalMap* globalMap, tList *list) {
 
 	localMap = local_map_init(MAX_SIZE_OF_HASH_TABLE);
 
+	gData.params = (int *)malloc(sizeof(int));
+
 
 	insert_build_in_functions();
 
@@ -1483,6 +1510,8 @@ int parse(GlobalMap* globalMap, tList *list) {
 	strFree(&(gToken.data));
 	//local_map_print(localMap);
 	local_map_free(localMap);
+
+	free(gData.params);
 
 	return result;
 

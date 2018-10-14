@@ -89,6 +89,7 @@
 
 /* Chybove tokeny */
 #define    LEX_ERROR             54
+#define    LEX_UNKNOWN          87
 
 
 
@@ -126,6 +127,7 @@
 #define    S_COMMENT_BLOCK_IN_N 84
 #define    S_COMMENT_BLOCK_N_NEWLINE   85
 #define    S_NEG_NUMBER         86
+
 
 
 
