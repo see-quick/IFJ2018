@@ -403,6 +403,10 @@ int sth(){
 
 						}
 
+						else{
+							return result;
+						}
+
 						// cokoliv jineho syntakticka chyba
 						if (token != LEX_EOL){
 							fprintf(stderr, "Syntakticka chyba, ocekavano 'eol' na radku %d\n", gToken.row);
@@ -461,6 +465,7 @@ int sth(){
 
 						if ( tmp->paramCount != argCount ){
 							fprintf(stderr, "Semanticka chyba, pocet parametru funkce %s nesouvisi s poctem argumentu na radku %d\n",gToken.data.str , gToken.row);
+							return SEM_ERR;
 						}
 
 						// pro dalsi volani funkce
@@ -622,6 +627,9 @@ int sth(){
 
 					insert_item(ilist, &instr_type, &instr1, &instr2, &instr3);
 
+			}
+			else {
+				return result;
 			}
 
 			// cokoliv jineho syntakticka chyba
@@ -1084,7 +1092,7 @@ int pm_list2(){
 			if(!checkTokenType(LEX_ID)){
 				fprintf(stderr, "Ocekavno 'id' na radku %d\n", gToken.row);
 				resetToken();
-				return ERROR_LEX;
+				return SYN_ERR;
 			}
 
 
@@ -1118,12 +1126,17 @@ int pm_list2(){
 				return INT_ERR;
 			}
 
+
 			return pm_list2();
 		break;
 
 		case LEX_R_BRACKET:
 			return SUCCESS;
 		break;
+
+		default:
+			fprintf(stderr, "Syntakticka chyba, ocekavano ',', ')' na radku %d\n", gToken.row);
+			return SYN_ERR;
 	}
 
 	token = getToken();
@@ -1169,7 +1182,6 @@ int pm_list(){
 		} else if (!error_int()){
 			return INT_ERR;
 		}
-		
 
 		return pm_list2();
 	}
@@ -1333,7 +1345,8 @@ int func(){
 	}
 
 	if(!(checkTokenType(KW_END))){
-		fprintf(stderr,"Ocekavan 'end' na radku %d", gToken.row);
+		returnToken();
+		fprintf(stderr,"Ocekavan 'end' na radku %d\n", gToken.row);
 		resetToken();
 		return SYN_ERR;
 	}

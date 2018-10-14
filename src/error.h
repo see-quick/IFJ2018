@@ -29,6 +29,8 @@
 #define  ERR_INCOMPATIBLE_TYPE     4
 #define  ERR_SEMANTIC              6   // ostatní sémantické chyby 
 
+#define  ERR_DIVISION              9
+
 #define  INT_ERR                   99  // interní chyba překladače
 
 
