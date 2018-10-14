@@ -87,9 +87,8 @@ void insert_build_in_functions(){
 
 /*Funkce pro vypsani lexikalni chyby na standardni chybovy vystup*/
 int error_lex(void){
-	if(token == ERROR_LEX){
+	if(token == ERROR_LEX || token == LEX_UNKNOWN){
 		fprintf(stderr, "Lexikalni chyba na radku %d\n", gToken.row);
-		resetToken();
 		return 0;
 	}
 
@@ -101,7 +100,6 @@ int error_lex(void){
 int error_int(void){
 	if(token == INT_ERR){
 		fprintf(stderr, "Interni chyba\n");
-		resetToken();
 		return 0;
 	}
 	return 1;
@@ -187,7 +185,6 @@ int term(void){
 		default:
 			//jiny token = chyba!
 			fprintf(stderr, "Ocekavano 'identifikator' 'konstanta' na radku %d \n", gToken.row);
-			resetToken();
 			return SYN_ERR;
 	}
 
@@ -210,7 +207,6 @@ int term_list2(void){
 			result = term();
 
 			if(result != SUCCESS){
-				resetToken();
 				return result;
 			}
 
@@ -230,7 +226,6 @@ int term_list2(void){
 		default:
 			//cokoliv jineho = chyba
 			fprintf(stderr, "Ocekavano ',' 'identifikator' 'konstanta' ')' na radku %d \n", gToken.row);
-			resetToken();
 			return SYN_ERR;
 	}
 }
@@ -330,7 +325,6 @@ int term_list(void){
 
 		default:
 			fprintf(stderr, "Ocekavano 'identifikator' 'konstanta' ')' na radku %d\n", gToken.row);
-			resetToken();
 			return SYN_ERR;
 	}
 
@@ -434,7 +428,6 @@ int sth(){
 
 						if(!checkTokenType(LEX_L_BRACKET)){
 							fprintf(stderr, "Ocekavano '(' na radku %d\n", gToken.row);
-							resetToken();
 							return SYN_ERR;
 						}
 
@@ -450,7 +443,6 @@ int sth(){
 						//volane term_list()
 						result = term_list();
 						if(result != SUCCESS){
-							resetToken();
 							return result;
 						}
 
@@ -458,7 +450,6 @@ int sth(){
 
 						if(!checkTokenType(LEX_R_BRACKET)){
 							fprintf(stderr, "Ocekavana ')' na radku %d \n", gToken.row);
-							resetToken();
 							return SYN_ERR;
 						}
 
@@ -529,7 +520,6 @@ int sth(){
 
 						if(!checkTokenType(LEX_L_BRACKET)){
 							fprintf(stderr, "Ocekavano '(' na radku %d\n", gToken.row);
-							resetToken();
 							return SYN_ERR;
 						}
 
@@ -545,7 +535,6 @@ int sth(){
 						//volane term_list()
 						result = term_list();
 						if(result != SUCCESS){
-							resetToken();
 							return result;
 						}
 
@@ -553,7 +542,6 @@ int sth(){
 
 						if(!checkTokenType(LEX_R_BRACKET)){
 							fprintf(stderr, "Ocekavana ')' na radku %d \n", gToken.row);
-							resetToken();
 							return SYN_ERR;
 						}
 
@@ -669,7 +657,6 @@ int stat(){
 
 			if(!checkTokenType(LEX_EQUAL)){
 				fprintf(stderr, "Ocekavano '=' na radku %d\n", gToken.row);
-				resetToken();
 				return SYN_ERR;
 			}
 
@@ -729,7 +716,6 @@ int stat(){
 
 			if(!checkTokenType(LEX_L_BRACKET)){
 				fprintf(stderr, "Ocekavano '(' na radku %d\n", gToken.row);
-				resetToken();
 				return SYN_ERR;
 			}
 
@@ -743,7 +729,6 @@ int stat(){
 			//volane term_list()
 			result = term_list();
 			if(result != SUCCESS){
-				resetToken();
 				return result;
 			}
 
@@ -753,7 +738,6 @@ int stat(){
 
 			if(!checkTokenType(LEX_R_BRACKET)){
 				fprintf(stderr, "Ocekavana ')' na radku %d \n", gToken.row);
-				resetToken();
 				return SYN_ERR;
 			}
 
@@ -789,14 +773,12 @@ int stat(){
 			result = res.result;
 
 			if(result != SUCCESS){
-				resetToken();
 				return result;
 			}
 
 			//token je jiz nacteny, musi = KW_THEN
 			if(!checkTokenType(KW_THEN)){
 				fprintf(stderr, "Ocekavano 'then' na radku %d\n", gToken.row);
-				resetToken();
 				return SYN_ERR;
 			}
 
@@ -813,7 +795,6 @@ int stat(){
 
 			if(!checkTokenType(LEX_EOL)){
 				fprintf(stderr, "Ocekavano 'eol' na radku %d \n", gToken.row);
-				resetToken();
 				return SYN_ERR;
 			}
 
@@ -827,7 +808,6 @@ int stat(){
 
 			result = st_list();
 			if(result != SUCCESS){
-				resetToken();
 				return result;
 			}
 
@@ -838,7 +818,6 @@ int stat(){
 			//token nacteny z st_list() = KW_ELSE
 			if(!checkTokenType(KW_ELSE)){
 				fprintf(stderr, "Ocekavano 'else' na radku %d \n", gToken.row);
-				resetToken();
 				return SYN_ERR;
 			}
 
@@ -857,7 +836,6 @@ int stat(){
 
 			if(!checkTokenType(LEX_EOL)){
 				fprintf(stderr, "3 Ocekavano 'eol' na radku %d\n", gToken.row);
-				resetToken();
 				return SYN_ERR;
 			}
 
@@ -871,7 +849,6 @@ int stat(){
 
 			result = st_list();
 			if(result != SUCCESS){
-				resetToken();
 				return result;
 			}
 
@@ -882,7 +859,6 @@ int stat(){
 			//token nacten z fce st_list() = KW_END
 			if(!checkTokenType(KW_END)){
 				fprintf(stderr, "Ocekano 'end' na radku %d \n", gToken.row);
-				resetToken();
 				return SYN_ERR;
 			}
 
@@ -923,7 +899,6 @@ int stat(){
 
 
 			if(result != SUCCESS){
-				resetToken();
 				return result;
 			}
 
@@ -931,7 +906,6 @@ int stat(){
 
 			if(!checkTokenType(KW_DO)){
 				fprintf(stderr, "Ocekavano 'do' na radku %d\n", gToken.row);
-				resetToken();
 				return SYN_ERR;
 			}
 
@@ -945,7 +919,6 @@ int stat(){
 
 			if(!checkTokenType(LEX_EOL)){
 				fprintf(stderr, "Ocekavano 'eol' na radku %d\n", gToken.row);
-				resetToken();
 				return SYN_ERR;
 			}
 
@@ -961,14 +934,12 @@ int stat(){
 
 
 			if(result != SUCCESS){
-				resetToken();
 				return result;
 			}
 
 			//dalsi token je zase nacten z fce, musi byt END
 			if(!checkTokenType(KW_END)){
 				fprintf(stderr, "Ocekavan 'end' na radku %d\n", gToken.row);
-				resetToken();
 				return SYN_ERR;
 			}
 
@@ -988,7 +959,6 @@ int stat(){
 
 		default:
 			fprintf(stderr, "Ocekavano 'while' 'id' 'if' na radku %d \n", gToken.row); // dopsat
-			resetToken();
 			return SYN_ERR;
 	}
 
@@ -1010,7 +980,6 @@ int st_list(){
 			//podle pravidla zavolame stat()
 			result = stat();
 			if(result != SUCCESS){
-				resetToken();
 				return result;
 			}
 
@@ -1044,13 +1013,11 @@ int st_list(){
 
 			result = func();
 			if(result != SUCCESS){
-				resetToken();
 				return result;
 			}
 			// dalsi token je nacteny z func()
 			if(!checkTokenType(LEX_EOL)){
 				fprintf(stderr, "Ocekavan 'eol' na radku %d\n", gToken.row);
-				resetToken();
 				return SYN_ERR;
 			}
 
@@ -1091,7 +1058,6 @@ int pm_list2(){
 
 			if(!checkTokenType(LEX_ID)){
 				fprintf(stderr, "Ocekavno 'id' na radku %d\n", gToken.row);
-				resetToken();
 				return SYN_ERR;
 			}
 
@@ -1207,7 +1173,6 @@ int func(){
 
 	if(!checkTokenType(LEX_ID) && !checkTokenType(LEX_ID_F)){
 		fprintf(stderr, "Ocekavan identifikator na radku %d \n", gToken.row);
-		resetToken();
 		return SYN_ERR;
 	}
 
@@ -1263,7 +1228,6 @@ int func(){
 
 	if(!checkTokenType(LEX_L_BRACKET)){
 		fprintf(stderr, "Ocekavana '(' na radku %d\n", gToken.row);
-		resetToken();
 		return SYN_ERR;
 	}
 
@@ -1278,7 +1242,6 @@ int func(){
 
 	result = pm_list();
 	if(result != SUCCESS){
-		resetToken();
 		return result;
 	}
 
@@ -1292,7 +1255,6 @@ int func(){
 
 	if(!checkTokenType(LEX_R_BRACKET)){
 		fprintf(stderr, "Ocekavana ')' na radku %d\n", gToken.row);
-		resetToken();
 		return SYN_ERR;
 	}
 
@@ -1317,7 +1279,6 @@ int func(){
 
 	if(!checkTokenType(LEX_EOL)){
 		fprintf(stderr, "Ocekavan 'eol' na radku %d \n", gToken.row);
-		resetToken();
 		return SYN_ERR;
 	}
 
@@ -1332,7 +1293,6 @@ int func(){
 
 	result = st_list();
 	if(result != SUCCESS){
-		resetToken();
 		return result;
 	}
 
@@ -1347,7 +1307,6 @@ int func(){
 	if(!(checkTokenType(KW_END))){
 		returnToken();
 		fprintf(stderr,"Ocekavan 'end' na radku %d\n", gToken.row);
-		resetToken();
 		return SYN_ERR;
 	}
 
@@ -1397,7 +1356,6 @@ int main_p(void){
 			//volani st_list()
 			result = st_list();
 			if(result != SUCCESS){
-				resetToken();
 				return result;
 			}
 
@@ -1416,8 +1374,12 @@ int main_p(void){
 
 
 		default:
+			if(!error_lex()){
+				return ERROR_LEX;
+			} else if (!error_int()){
+				return INT_ERR;
+			}
 			fprintf(stderr, "Ocekavano zacatek programu na radku %d\n", gToken.row);
-			resetToken();
 			return SYN_ERR;
 	}
 
@@ -1444,18 +1406,24 @@ int prog(){
 			//token nacten z main_p() = EOF
 			if(!checkTokenType(LEX_EOL) && !checkTokenType(LEX_EOF)) {
 				fprintf(stderr, "Ocekavano 'eof' 'eol' na radku %d \n", gToken.row);
-				resetToken();
 				return SYN_ERR;
 			}
 
     		return SUCCESS;
     	break;
-	}
 
-	//neco jineho = chyba!
-	fprintf(stderr, "Ocekavano 'zacatek programu' na radku %d\n", gToken.row);
-	resetToken();
-	return SYN_ERR;
+    	default:
+    		if(!error_lex()){
+				return ERROR_LEX;
+			} else if (!error_int()){
+				return INT_ERR;
+			}
+			else{
+				fprintf(stderr, "Prazdny program \n");
+				return SYN_ERR;
+			}
+    		
+	}
 }
 
 
@@ -1487,8 +1455,8 @@ int parse(GlobalMap* globalMap, tList *list) {
 
 	do {
 		if((token = getToken()) == ERROR_LEX) {
-			fprintf(stderr, "Nepodařilo se načíst token\n");
-			result = INT_ERR;
+			fprintf(stderr, "Lexikalni chyba programu\n");
+			result = ERROR_LEX;
 		} else if (token == INT_ERR) {
 			fprintf(stderr, "Interni chyba\n");
 		}
