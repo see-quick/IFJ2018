@@ -28,6 +28,8 @@ int token;        	         // aktualni token
 
 bool is_LF = false;
 
+bool zavorka = false;
+
 
 
 /*********************************************************************/
@@ -191,7 +193,7 @@ int term(void){
 	return result;
 }
 
-int term_list2(void){
+int term_list2(bool zavorka){
 	int result;
 
 	switch(token){
@@ -215,12 +217,19 @@ int term_list2(void){
 			argCount++;
 
 			//nacteno z param()
-			return term_list2();
+			return term_list2(zavorka);
 		break;
 
 		case LEX_R_BRACKET:
-			// SEMANTICKA KONTROLA souhlas pocet parametru funkce
-			return SUCCESS;
+			if (zavorka){return SUCCESS;}
+			else { fprintf(stderr, "Syntakticka chyba, neocekavana ')' na radku %d\n", gToken.row); return SYN_ERR;}
+			
+		break;
+
+		case LEX_EOL:
+		case LEX_EOF:
+			if (!zavorka){return SUCCESS;}
+			else{ fprintf(stderr, "Syntakticka chyba, ocekavana ')' na radku %d\n", gToken.row); return SYN_ERR; }
 		break;
 
 		default:
@@ -230,7 +239,7 @@ int term_list2(void){
 	}
 }
 
-int term_list(void){
+int term_list(bool zavorka){
 	int result = SUCCESS;
 
 	char s;
@@ -311,17 +320,23 @@ int term_list(void){
 			} else if (!error_int()){
 				return INT_ERR;
 			}
-
 		
 
-			return term_list2();
+			return term_list2(zavorka);
 		break;
 
 		case LEX_R_BRACKET:
-			// semanticka akce, nesouhlasi pocet paramtru funkci
-
-			return SUCCESS;
+			if (zavorka){return SUCCESS;}
+			else { fprintf(stderr, "Syntakticka chyba, neocekavana ')' na radku %d\n", gToken.row); return SYN_ERR;}
+			
 		break;
+
+		case LEX_EOL:
+		case LEX_EOF:
+			if (!zavorka){return SUCCESS;}
+			else{ fprintf(stderr, "Syntakticka chyba, ocekavana ')' na radlu %d\n", gToken.row); return SYN_ERR; }
+		break;
+
 
 		default:
 			fprintf(stderr, "Ocekavano 'identifikator' 'konstanta' ')' na radku %d\n", gToken.row);
@@ -365,6 +380,7 @@ int sth(){
 				//SEMANTICKA AKCE, KONTROLA DEFINICE FUNKCE
 				tmp = global_map_get_pointer_to_value(gMap, gToken.data.str);
 				if (tmp == NULL){
+					// neni funkce
 					if ( (local_map_get_pointer_to_value(localMap, gToken.data.str)) == NULL){
 						fprintf(stderr, "Semanticka chyba, funkce nebo promenna %s neni definovana, radek %d\n", gToken.data.str, gToken.row);
 						return SEM_ERR;
@@ -415,7 +431,7 @@ int sth(){
 						
 				}
 				else{
-
+					// je funkce
 						is_LF = true;
 
         	    		token = getToken();
@@ -425,42 +441,71 @@ int sth(){
 							return INT_ERR;
 						}
 
+						if ( (token == LEX_EOL || token == LEX_EOF) && tmp->paramCount == 0 ){}
+						else {
 
-						if(!checkTokenType(LEX_L_BRACKET)){
-							fprintf(stderr, "Ocekavano '(' na radku %d\n", gToken.row);
-							return SYN_ERR;
+							switch(token){
+								case LEX_L_BRACKET:
+									token = getToken();
+									if(!error_lex()){
+										return ERROR_LEX;
+									} else if (!error_int()){
+										return INT_ERR;
+									}
+
+									//volane term_list()
+									zavorka = true;
+									result = term_list(zavorka);
+									if(result != SUCCESS){
+										return result;
+									}
+
+									//dalsi token je nacten, musi = ')'
+
+									if(!checkTokenType(LEX_R_BRACKET)){
+										fprintf(stderr, "Ocekavana ')' na radku %d \n", gToken.row);
+										return SYN_ERR;
+									}
+
+									if ( tmp->paramCount != argCount ){
+										fprintf(stderr, "Semanticka chyba, pocet parametru funkce nesouvisi s poctem argumentu na radku %d\n",gToken.row);
+										return ERR_PARAMS_COUNT;
+									}
+
+									// pro dalsi volani funkce
+									argCount = 0;
+
+									return SUCCESS;
+								break;
+								case LEX_ID:
+								case LEX_NUMBER:
+								case LEX_REAL_NUMBER:
+								case LEX_STRING:
+
+									//volane term_list()
+									zavorka = false;
+									result = term_list(zavorka);
+									if(result != SUCCESS){
+										return result;
+									}
+
+									if ( tmp->paramCount != argCount ){
+										fprintf(stderr, "Semanticka chyba, pocet parametru funkce nesouvisi s poctem argumentu na radku %d\n",gToken.row);
+										return ERR_PARAMS_COUNT;
+									}
+
+									// pro dalsi volani funkce
+									argCount = 0;
+
+
+									return SUCCESS;
+								break;
+								default:
+									fprintf(stderr, "Syntakticka chyba, ocekavano '(', terminal na radku %d\n", gToken.row);
+									return SYN_ERR;
+							}
 						}
 
-
-						token = getToken();
-						if(!error_lex()){
-							return ERROR_LEX;
-						} else if (!error_int()){
-							return INT_ERR;
-						}
-
-
-						//volane term_list()
-						result = term_list();
-						if(result != SUCCESS){
-							return result;
-						}
-
-						//dalsi token je nacten, musi = ')'
-
-						if(!checkTokenType(LEX_R_BRACKET)){
-							fprintf(stderr, "Ocekavana ')' na radku %d \n", gToken.row);
-							return SYN_ERR;
-						}
-
-
-						if ( tmp->paramCount != argCount ){
-							fprintf(stderr, "Semanticka chyba, pocet parametru funkce %s nesouvisi s poctem argumentu na radku %d\n",gToken.data.str , gToken.row);
-							return SEM_ERR;
-						}
-
-						// pro dalsi volani funkce
-						argCount = 0;
 
 
 						instr_type = INSTRUCT_PUSHFRAME;
@@ -505,9 +550,9 @@ int sth(){
 
 			if (res.data_type == FUNCTION){
 				// volani funkce 
+						printf("bkpoint\n");
+
 						tmp = global_map_get_pointer_to_value(gMap, gToken.data.str);
-
-
 						is_LF = true;
 
         	    		token = getToken();
@@ -517,37 +562,60 @@ int sth(){
 							return INT_ERR;
 						}
 
+						returnToken();
 
-						if(!checkTokenType(LEX_L_BRACKET)){
-							fprintf(stderr, "Ocekavano '(' na radku %d\n", gToken.row);
-							return SYN_ERR;
+						if ( (token == LEX_EOL || token == LEX_EOF) && tmp->paramCount == 0 ){}
+						else {
+
+							switch(token){
+								case LEX_L_BRACKET:
+									token = getToken();
+									if(!error_lex()){
+										return ERROR_LEX;
+									} else if (!error_int()){
+										return INT_ERR;
+									}
+
+									//volane term_list()
+									zavorka = true;
+									result = term_list(zavorka);
+									if(result != SUCCESS){
+										return result;
+									}
+
+									//dalsi token je nacten, musi = ')'
+
+									if(!checkTokenType(LEX_R_BRACKET)){
+										fprintf(stderr, "Ocekavana ')' na radku %d \n", gToken.row);
+										return SYN_ERR;
+									}
+
+									return SUCCESS;
+								break;
+								case LEX_ID:
+								case LEX_NUMBER:
+								case LEX_REAL_NUMBER:
+								case LEX_STRING:
+
+									//volane term_list()
+									zavorka = false;
+									result = term_list(zavorka);
+									if(result != SUCCESS){
+										return result;
+									}
+
+									return SUCCESS;
+								break;
+								default:
+									fprintf(stderr, "Syntakticka chyba, ocekavano '(', terminal na radku %d\n", gToken.row);
+									return SYN_ERR;
+							}
+
 						}
-
-
-						token = getToken();
-						if(!error_lex()){
-							return ERROR_LEX;
-						} else if (!error_int()){
-							return INT_ERR;
-						}
-
-
-						//volane term_list()
-						result = term_list();
-						if(result != SUCCESS){
-							return result;
-						}
-
-						//dalsi token je nacten, musi = ')'
-
-						if(!checkTokenType(LEX_R_BRACKET)){
-							fprintf(stderr, "Ocekavana ')' na radku %d \n", gToken.row);
-							return SYN_ERR;
-						}
-
 
 						if ( tmp->paramCount != argCount ){
 							fprintf(stderr, "Semanticka chyba, pocet parametru funkce %s nesouvisi s poctem argumentu na radku %d\n",gToken.data.str , gToken.row);
+							return ERR_PARAMS_COUNT;
 						}
 
 						// pro dalsi volani funkce
@@ -588,7 +656,6 @@ int sth(){
 								return INT_ERR;
 							}
 
-
 							return sth();
 						}
 
@@ -622,7 +689,6 @@ int sth(){
 
 			// cokoliv jineho syntakticka chyba
 			if (token != LEX_EOL){
-				printf("i m here\n");
 				fprintf(stderr, "Syntakticka chyba, ocekavano 'eol' na radku %d\n", gToken.row);
 				return SYN_ERR;
 			}
@@ -633,6 +699,7 @@ int sth(){
 			return result;
 	}
 
+	local_map_print(localMap);
 	return result;
 }
 
@@ -708,38 +775,66 @@ int stat(){
 		case KW_PRINT:
 
 			token = getToken();
+			
 			if(!error_lex()){
 				return ERROR_LEX;
 			} else if (!error_int()){
 				return INT_ERR;
 			}
 
-			if(!checkTokenType(LEX_L_BRACKET)){
-				fprintf(stderr, "Ocekavano '(' na radku %d\n", gToken.row);
-				return SYN_ERR;
+			switch(token){
+				case LEX_L_BRACKET:
+
+					token = getToken();
+					if(!error_lex()){
+						return ERROR_LEX;
+					} else if (!error_int()){
+						return INT_ERR;
+					}
+
+					//volane term_list()
+					zavorka = true;
+
+					result = term_list(zavorka);
+					if(result != SUCCESS){
+						return result;
+					}
+
+					token = getToken();
+					if(!error_lex()){
+						return ERROR_LEX;
+					} else if (!error_int()){
+						return INT_ERR;
+					}
+
+				break;
+
+				case LEX_ID:
+				case LEX_NUMBER:
+				case LEX_STRING:
+				case LEX_REAL_NUMBER:
+
+					//volane term_list()
+					zavorka = false;
+					result = term_list(zavorka);
+					if(result != SUCCESS){
+						return result;
+					}
+
+					token = getToken();
+					if(!error_lex()){
+						return ERROR_LEX;
+					} else if (!error_int()){
+						return INT_ERR;
+					}
+
+				break;
+
+				default:
+					fprintf(stderr, "Syntakticka chyba, ocekavano '(',terminal na radku %d\n", gToken.row );
+					return SYN_ERR;
 			}
-
-			token = getToken();
-			if(!error_lex()){
-				return ERROR_LEX;
-			} else if (!error_int()){
-				return INT_ERR;
-			}
-
-			//volane term_list()
-			result = term_list();
-			if(result != SUCCESS){
-				return result;
-			}
-
-			returnToken();
-
-			//dalsi token je nacten, musi = ')'
-
-			if(!checkTokenType(LEX_R_BRACKET)){
-				fprintf(stderr, "Ocekavana ')' na radku %d \n", gToken.row);
-				return SYN_ERR;
-			}
+			
 
 			instr_type = INSTRUCT_PRINT;
 			insert_item(ilist, &instr_type, &instr1, &instr2, &instr3);
