@@ -1,5 +1,5 @@
 ahoj = "joha"
-print (ahoj)
+#print (ahoj) semanticka chyba nedefinovana premenna
 print "ahoj"
 print ("ahoj")
-print ("ahoj",ahoj)
+#print ("ahoj",ahoj) tiez chyba semanticka chyba nedefinovana premenna

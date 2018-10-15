@@ -1,4 +1,4 @@
-# chr(i) complex prece
+# chr(i) complex prece + concat
 
 var = "Hello"
 str = var + chr(80)

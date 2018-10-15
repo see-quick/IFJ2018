@@ -1,3 +1,0 @@
-# Complex ord(s,i) calling
-
-myvar = ord("Hello", length("Hello") - 2)

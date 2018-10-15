@@ -1,0 +1,4 @@
+# chr(i) complex prece + concat without brackets
+
+var = "Hello"
+str = var + chr 80 
