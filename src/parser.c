@@ -32,6 +32,7 @@ bool zavorka = false;
 
 
 
+
 /*********************************************************************/
 /*LOKALNI TABULKA SYMBOLU*/
 LocalMap* localMap;
@@ -86,6 +87,18 @@ void insert_build_in_functions(){
 }
 
 
+char * generate_param(char *string, int d){
+	char c;
+	sprintf(&c, "%d", d+1);
+	size_t length = strlen(string);
+	char *generate = malloc(length + 1 + 1);
+	strcpy(generate, string);
+	generate[length] = c;
+	generate[length + 1] = '\0';
+	return generate;
+	free(generate);
+}
+
 
 /*Funkce pro vypsani lexikalni chyby na standardni chybovy vystup*/
 int error_lex(void){
@@ -116,8 +129,6 @@ int checkTokenType(int tokenType){ //funkce na kotnrolu typu tokenu
 int term(void){
 	int result = SUCCESS;
 
-	char s;
-
 	switch(token){
 		case LEX_ID:
 		case LEX_NUMBER:
@@ -130,21 +141,12 @@ int term(void){
 
 			instr_type = INSTRUCT_DEFVAR;
 			instr1.type = TF;
-
-			//printf("Paramcount %d\n", paramCount);
-
-			sprintf(&s, "%d", paramCount);
-
-			//printf("String paramCount %c\n", s);
-
-
-			// pridat counter pro params!!!
-			instr1.value.s = "$_param2";
+			instr1.value.s = generate_param("$_param", argCount);
 
 			insert_item(ilist, &instr_type, &instr1, &instr2, &instr3);
 			instr_type = INSTRUCT_MOVE;
 			instr1.type = TF;
-			instr1.value.s = "$_param2";
+			instr1.value.s = generate_param("$_param", argCount);
 
 
 			if (token == LEX_NUMBER){
@@ -242,8 +244,6 @@ int term_list2(bool zavorka){
 int term_list(bool zavorka){
 	int result = SUCCESS;
 
-	char s;
-
 	switch(token){
 		case LEX_ID:
 		case LEX_NUMBER:
@@ -258,18 +258,14 @@ int term_list(bool zavorka){
 
 			instr_type = INSTRUCT_DEFVAR;
 			instr1.type = TF;
+			instr1.value.s = generate_param("$_param", argCount);
 
-			
-			sprintf(&s, "%d", paramCount);
-
-
-			// pridat counter pro params!!!
-			instr1.value.s = "$_param1";
+	
 
 			insert_item(ilist, &instr_type, &instr1, &instr2, &instr3);
 			instr_type = INSTRUCT_MOVE;
 			instr1.type = TF;
-			instr1.value.s = "$_param1";
+			instr1.value.s = generate_param("$_param", argCount);
 
 
 			if (token == LEX_NUMBER){
@@ -399,14 +395,14 @@ int sth(){
 
 							// instrukce MOVE
 
-							// MOVE GF@promenna / LF@promenna  TF@%retval
+							// MOVE GF@promenna / LF@promenna  TF@%$result
 							instr_type = INSTRUCT_MOVE;
 							if (is_LF) {instr1.type = LF;}
 							else{
 								instr1.type = GF;
 							}
 							instr1.value.s = DLFirstImportant(&tlist);
-							instr2.type = TF;
+							instr2.type = LF;
 							instr2.value.s = res.uniqueID->str;
 
 							insert_item(ilist, &instr_type, &instr1, &instr2, &instr3);
@@ -677,7 +673,7 @@ int sth(){
 					}
 
 					instr1.value.s = DLFirstImportant(&tlist);
-					instr2.type = TF;
+					instr2.type = LF;
 					instr2.value.s = res.uniqueID->str;
 
 					insert_item(ilist, &instr_type, &instr1, &instr2, &instr3);
@@ -699,7 +695,6 @@ int sth(){
 			return result;
 	}
 
-	local_map_print(localMap);
 	return result;
 }
 
@@ -773,6 +768,8 @@ int stat(){
 		break;
 
 		case KW_PRINT:
+
+			printf("in print\n");
 
 			token = getToken();
 			
@@ -1584,7 +1581,6 @@ int parse(GlobalMap* globalMap, tList *list) {
 	DLDisposeList(&tlist);
 
 	strFree(&(gToken.data));
-	//local_map_print(localMap);
 	local_map_free(localMap);
 
 	free(gData.params);

@@ -495,7 +495,7 @@ int getToken(){
                 if( c == EOF )
                   return LEX_EOF;
                 else if( c == '\n'){
-                    resetToken(); // ignoruje komentare
+                    resetToken();
                     gToken.row++;
                     state = S_EOL;
                 }
