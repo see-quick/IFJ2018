@@ -701,8 +701,6 @@ int sth(){
 int stat(){
 	int result = SUCCESS;
 	expr_return res;
-	tDataIDF * tmp;
-
 	switch(token){
 		//<STAT> -> id = <STH>
 		case LEX_ID:
@@ -722,7 +720,12 @@ int stat(){
 				return SYN_ERR;
 			}
 
-			if ((tmp = local_map_get_pointer_to_value(localMap, DLCopyFirst(&tlist))) == NULL){
+			if (global_map_contain(gMap, DLCopyFirst(&tlist))){
+				fprintf(stderr, "Semanticka chyba na radku %d, existuje promenna se stejnym jmenem \n", gToken.row);
+				return SEM_ERR;
+			}
+
+			if ( !local_map_contain(localMap, DLCopyFirst(&tlist)) ){
 				// ulozeni promenne do lokalni mapy, hodnota nil, typ nil
 				lData.defined = 1;
 				lData.value.nil = true;
@@ -744,18 +747,15 @@ int stat(){
 				insert_item(ilist, &instr_type, &instr1, &instr2, &instr3);
 				
 			}
-			// else promenna uz existuje, nedefinovat
 
 			
-			// nacteni dalsiho tokenu , musi byt identifikator nebo vyraz
+			// nacteni dalsiho tokenu , musi byt  bud' identifikator nebo vyraz nebo funkce
 			token = getToken();
 			if(!error_lex()){
 				return ERROR_LEX;
 			} else if (!error_int()){
 				return INT_ERR;
 			}
-
-			//print_elements_of_list(tlist);
 
 			// volani pravidla sth()
 			result = sth(localMap);
@@ -1133,9 +1133,6 @@ int st_list(){
 }
 
 int pm_list2(){
-
-	//tDataIDF * tmp;
-
 	switch(token){
 		case LEX_COMMA:
 
@@ -1154,27 +1151,16 @@ int pm_list2(){
 			}
 
 
-			// definovat tuto promennou s typem nil a hodnotou nil
-			lData.defined = 1;
-			lData.value.nil = true;
-			lData.type = 500; // typ nil - NONE
-
-			local_map_put(localMap, gToken.data.str, lData);
-
-
-			// KONTROLA JESTLI JE PROMENNA DEFINOVANA
-
-			// if ((tmp = local_map_get_pointer_to_value(localMap, gToken.data.str)) == NULL){
-			// 	fprintf(stderr, "Promenna %s neni definovana, radek %d\n", gToken.data.str, gToken.row);
-			// 	free(tmp);
-			// 	return SEM_ERR;
-			// }
+			if (!local_map_contain(localMap, gToken.data.str)){
+				// definovat tuto promennou s typem nil a hodnotou nil
+				lData.defined = 1;
+				lData.value.nil = true;
+				lData.type = 500; // typ nil - NONE
+				local_map_put(localMap, gToken.data.str, lData);
+			}
 
 			// + jeden parametr
 			paramCount++;
-
-			// gData.params[paramCount] = tmp->type;
-			// global_map_put(gMap, DLFirstImportant(&tlist), gData);
 
 			token = getToken();
 
@@ -1210,28 +1196,18 @@ int pm_list2(){
 
 int pm_list(){
 	int result = SUCCESS;
-	//tDataIDF *tmp;
 
 	if (token == LEX_ID){
-		// if ((tmp = local_map_get_pointer_to_value(localMap, gToken.data.str)) == NULL){
-		// 	fprintf(stderr, "Promenna %s neni definovana, radek %d\n", gToken.data.str, gToken.row);
-		// 	free(tmp);
-		// 	return SEM_ERR;
-		// }
 
-
-		// definovat tuto promennou s typem nil a hodnotou nil
-		lData.defined = 1;
-		lData.value.nil = true;
-		lData.type = 500; // typ nil - NONE
-
-		local_map_put(localMap, gToken.data.str, lData);
-
+		if (!local_map_contain(localMap, gToken.data.str)){
+			// definovat tuto promennou s typem nil a hodnotou nil
+			lData.defined = 1;
+			lData.value.nil = true;
+			lData.type = 500; // typ nil - NONE
+			local_map_put(localMap, gToken.data.str, lData);
+		}
 
 		paramCount++;
-
-		// gData.params[paramCount] = tmp->type;
-		// global_map_put(gMap, DLFirstImportant(&tlist), gData);
 
 		token = getToken();
 
@@ -1533,13 +1509,13 @@ int parse(GlobalMap* globalMap, tList *list) {
 	int result = SUCCESS;
 
 	gMap = globalMap;
+
+	//gDataptr->lmap = local_map_init(MAX_SIZE_OF_HASH_TABLE);
+
 	gDataptr = &gData;
 	ilist = list;
 
 	localMap = local_map_init(MAX_SIZE_OF_HASH_TABLE);
-
-	gData.params = (int *)malloc(sizeof(int));
-
 
 	insert_build_in_functions();
 
@@ -1588,9 +1564,8 @@ int parse(GlobalMap* globalMap, tList *list) {
 	DLDisposeList(&tlist);
 
 	strFree(&(gToken.data));
+	//local_map_free(gDataptr->lmap);
 	local_map_free(localMap);
-
-	free(gData.params);
 
 	return result;
 

@@ -42,7 +42,7 @@ int hashcode ( String key ) {
 LocalMap* local_map_init (unsigned int size) {
     LocalMap *ptrMap = (LocalMap*)malloc(sizeof(LocalMap));
     ptrMap->size = size;
-    ptrMap->list = malloc(sizeof(GlobalMapItem*)*size);
+    ptrMap->list = malloc(sizeof(LocalMapItem*)*size);
     int i;
     for(i=0;i<size;i++)
         ptrMap->list[i] = NULL;

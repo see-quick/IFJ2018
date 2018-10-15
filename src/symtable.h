@@ -74,7 +74,7 @@ typedef struct DataFunction {
     Types returnType;               // navratova hodnota
     bool defined;                   // zda bola funckcia definovana
     int paramCount;                 // pocet parametrov vo funckii
-    int *params;
+    LocalMap *lmap;
 } tDataFunction;
 
 /*Datová položka TRP s explicitně řetězenými synonymy pre Globalnu mapu*/
