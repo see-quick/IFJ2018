@@ -1273,9 +1273,16 @@ int func(){
 
 
     if (!global_map_contain(gMap, gToken.data.str)){
-    	gData.defined = 1;
-    	global_map_put(gMap, gToken.data.str, gData);
-    }else {
+    	if (local_map_contain(localMap, gToken.data.str)){
+    		fprintf(stderr, "Semanticka chyba na radku %d, existuje promenna se stejnym jmenem\n", gToken.row);
+    		return SEM_ERR;
+    	}
+    	else{
+    		gData.defined = 1;
+    		global_map_put(gMap, gToken.data.str, gData);
+    	}
+    }
+    else {
         //uz byla definovana
         fprintf(stderr, "Radek %d: Semanticka chyba, funkce '%s' jiz byla definovana.\n", gToken.row, gToken.data.str);
         return SEM_ERR;
