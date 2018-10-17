@@ -28,6 +28,9 @@ int token;        	         // aktualni token
 
 bool is_LF = false;
 
+bool zavorka = false;
+
+
 
 
 /*********************************************************************/
@@ -84,12 +87,23 @@ void insert_build_in_functions(){
 }
 
 
+char * generate_param(char *string, int d){
+	char c;
+	sprintf(&c, "%d", d+1);
+	size_t length = strlen(string);
+	char *generate = malloc(length + 1 + 1);
+	strcpy(generate, string);
+	generate[length] = c;
+	generate[length + 1] = '\0';
+	return generate;
+	free(generate);
+}
+
 
 /*Funkce pro vypsani lexikalni chyby na standardni chybovy vystup*/
 int error_lex(void){
-	if(token == ERROR_LEX){
+	if(token == ERROR_LEX || token == LEX_UNKNOWN){
 		fprintf(stderr, "Lexikalni chyba na radku %d\n", gToken.row);
-		resetToken();
 		return 0;
 	}
 
@@ -101,7 +115,6 @@ int error_lex(void){
 int error_int(void){
 	if(token == INT_ERR){
 		fprintf(stderr, "Interni chyba\n");
-		resetToken();
 		return 0;
 	}
 	return 1;
@@ -116,8 +129,6 @@ int checkTokenType(int tokenType){ //funkce na kotnrolu typu tokenu
 int term(void){
 	int result = SUCCESS;
 
-	char s;
-
 	switch(token){
 		case LEX_ID:
 		case LEX_NUMBER:
@@ -130,21 +141,12 @@ int term(void){
 
 			instr_type = INSTRUCT_DEFVAR;
 			instr1.type = TF;
-
-			//printf("Paramcount %d\n", paramCount);
-
-			sprintf(&s, "%d", paramCount);
-
-			//printf("String paramCount %c\n", s);
-
-
-			// pridat counter pro params!!!
-			instr1.value.s = "$_param2";
+			instr1.value.s = generate_param("$_param", argCount);
 
 			insert_item(ilist, &instr_type, &instr1, &instr2, &instr3);
 			instr_type = INSTRUCT_MOVE;
 			instr1.type = TF;
-			instr1.value.s = "$_param2";
+			instr1.value.s = generate_param("$_param", argCount);
 
 
 			if (token == LEX_NUMBER){
@@ -187,14 +189,13 @@ int term(void){
 		default:
 			//jiny token = chyba!
 			fprintf(stderr, "Ocekavano 'identifikator' 'konstanta' na radku %d \n", gToken.row);
-			resetToken();
 			return SYN_ERR;
 	}
 
 	return result;
 }
 
-int term_list2(void){
+int term_list2(bool zavorka){
 	int result;
 
 	switch(token){
@@ -210,7 +211,6 @@ int term_list2(void){
 			result = term();
 
 			if(result != SUCCESS){
-				resetToken();
 				return result;
 			}
 
@@ -219,26 +219,30 @@ int term_list2(void){
 			argCount++;
 
 			//nacteno z param()
-			return term_list2();
+			return term_list2(zavorka);
 		break;
 
 		case LEX_R_BRACKET:
-			// SEMANTICKA KONTROLA souhlas pocet parametru funkce
-			return SUCCESS;
+			if (zavorka){return SUCCESS;}
+			else { fprintf(stderr, "Syntakticka chyba, neocekavana ')' na radku %d\n", gToken.row); return SYN_ERR;}
+			
+		break;
+
+		case LEX_EOL:
+		case LEX_EOF:
+			if (!zavorka){return SUCCESS;}
+			else{ fprintf(stderr, "Syntakticka chyba, ocekavana ')' na radku %d\n", gToken.row); return SYN_ERR; }
 		break;
 
 		default:
 			//cokoliv jineho = chyba
 			fprintf(stderr, "Ocekavano ',' 'identifikator' 'konstanta' ')' na radku %d \n", gToken.row);
-			resetToken();
 			return SYN_ERR;
 	}
 }
 
-int term_list(void){
+int term_list(bool zavorka){
 	int result = SUCCESS;
-
-	char s;
 
 	switch(token){
 		case LEX_ID:
@@ -250,24 +254,18 @@ int term_list(void){
 			// if LEX_ID -> zkontrolovat zda je promenna definovana
 			// pokud je to LEX_ID, LEX_NUMBER, LEX_REAL, LEX_STRING , podle typu vytvorit vnitrni promennou s hodnotou argumentu
 
+			//printf("TEST %s\n", DLLastImportant(&tlist));
 
 			instr_type = INSTRUCT_DEFVAR;
 			instr1.type = TF;
+			instr1.value.s = generate_param("$_param", argCount);
 
-			//printf("Paramcount %d\n", paramCount);
-
-			sprintf(&s, "%d", paramCount);
-
-			//printf("String paramCount %c\n", s);
-
-
-			// pridat counter pro params!!!
-			instr1.value.s = "$_param1";
+	
 
 			insert_item(ilist, &instr_type, &instr1, &instr2, &instr3);
 			instr_type = INSTRUCT_MOVE;
 			instr1.type = TF;
-			instr1.value.s = "$_param1";
+			instr1.value.s = generate_param("$_param", argCount);
 
 
 			if (token == LEX_NUMBER){
@@ -289,6 +287,7 @@ int term_list(void){
 			else if (token == LEX_ID){
 				if ((local_map_get_pointer_to_key(localMap, gToken.data.str)) == NULL){
 					fprintf(stderr, "Semanticka chyba, promenna %s neni definovana, radek %d\n", gToken.data.str, gToken.row);
+					return SEM_ERR;
 				}
 				else {
 					instr2.type = GF; //string
@@ -296,6 +295,18 @@ int term_list(void){
 					insert_item(ilist, &instr_type, &instr1, &instr2, &instr3);
 				}
 			}
+
+			// zvetsit pocet argumentu
+			argCount++;
+
+
+			// SEMANTIKA KONTROLA KOMPATIBILITY TYPU
+
+			// tDataFunction tmp;
+
+			// tmp = global_map_get_value(gMap, gToken.data.str);
+			// printf("Test %d\n", tmp.params[argCount]);
+
 
 
 			//nacteni a volani term_list2()
@@ -305,23 +316,26 @@ int term_list(void){
 			} else if (!error_int()){
 				return INT_ERR;
 			}
+		
 
-			// zvetsit pocet argumentu
-			argCount++;
-
-
-			return term_list2();
+			return term_list2(zavorka);
 		break;
 
 		case LEX_R_BRACKET:
-			// semanticka akce, nesouhlasi pocet paramtru funkci
-
-			return SUCCESS;
+			if (zavorka){return SUCCESS;}
+			else { fprintf(stderr, "Syntakticka chyba, neocekavana ')' na radku %d\n", gToken.row); return SYN_ERR;}
+			
 		break;
+
+		case LEX_EOL:
+		case LEX_EOF:
+			if (!zavorka){return SUCCESS;}
+			else{ fprintf(stderr, "Syntakticka chyba, ocekavana ')' na radlu %d\n", gToken.row); return SYN_ERR; }
+		break;
+
 
 		default:
 			fprintf(stderr, "Ocekavano 'identifikator' 'konstanta' ')' na radku %d\n", gToken.row);
-			resetToken();
 			return SYN_ERR;
 	}
 
@@ -338,7 +352,7 @@ int term_list(void){
 }
 
 
-int sth(LocalMap* localMap){
+int sth(){
 	int result = SUCCESS;
 	expr_return res;
 
@@ -362,31 +376,40 @@ int sth(LocalMap* localMap){
 				//SEMANTICKA AKCE, KONTROLA DEFINICE FUNKCE
 				tmp = global_map_get_pointer_to_value(gMap, gToken.data.str);
 				if (tmp == NULL){
+					// neni funkce
 					if ( (local_map_get_pointer_to_value(localMap, gToken.data.str)) == NULL){
 						fprintf(stderr, "Semanticka chyba, funkce nebo promenna %s neni definovana, radek %d\n", gToken.data.str, gToken.row);
 						return SEM_ERR;
 					}
 					else{
-						//
-
+						// je to promenna prirazenu typu a = b
 						res = parse_expr(localMap, ilist);
 						result = res.result;
 
 						if (result == SUCCESS){
+
+							lData.type = res.data_type; 
+							local_map_put(localMap, DLFirstImportant(&tlist), lData);
+
 							// instrukce MOVE
 
-							// MOVE GF@promenna / LF@promenna  TF@%retval
+							// MOVE GF@promenna / LF@promenna  TF@%$result
 							instr_type = INSTRUCT_MOVE;
 							if (is_LF) {instr1.type = LF;}
 							else{
 								instr1.type = GF;
 							}
+
 							instr1.value.s = DLFirstImportant(&tlist);
-							instr2.type = TF;
+							instr2.type = GF;
 							instr2.value.s = res.uniqueID->str;
 
 							insert_item(ilist, &instr_type, &instr1, &instr2, &instr3);
 
+						}
+
+						else{
+							return result;
 						}
 
 						// cokoliv jineho syntakticka chyba
@@ -403,7 +426,7 @@ int sth(LocalMap* localMap){
 						
 				}
 				else{
-
+						// je funkce					
 						is_LF = true;
 
         	    		token = getToken();
@@ -413,40 +436,238 @@ int sth(LocalMap* localMap){
 							return INT_ERR;
 						}
 
+						if ( (token == LEX_EOL || token == LEX_EOF) && tmp->paramCount == 0 ){
+							// pro dalsi volani funkce
+							argCount = 0;
 
-						if(!checkTokenType(LEX_L_BRACKET)){
-							fprintf(stderr, "Ocekavano '(' na radku %d\n", gToken.row);
-							resetToken();
-							return SYN_ERR;
+							instr_type = INSTRUCT_PUSHFRAME;
+							instr1.type = EMPTY;
+							insert_item(ilist, &instr_type, &instr1, &instr2, &instr3);
+
+							// instrukce pro volani funkce
+
+							instr_type = INSTRUCT_CALL;
+							instr1.type = FCE;
+							instr1.value.s = DLLastImportant(&tlist);
+
+							insert_item(ilist, &instr_type, &instr1, &instr2, &instr3);
+
+							// POPFRAME
+
+							instr_type = INSTRUCT_POPFRAME;
+							insert_item(ilist, &instr_type, &instr1, &instr2, &instr3);
+							token = getToken();
+							if(!error_lex()){
+								return ERROR_LEX;
+							} else if (!error_int()){
+								return INT_ERR;
+							}
+
+							is_LF = false; // refresh promenne
 						}
+						else {
+							switch(token){
+								case LEX_L_BRACKET:
+									token = getToken();
+									if(!error_lex()){
+										return ERROR_LEX;
+									} else if (!error_int()){
+										return INT_ERR;
+									}
+
+									//volane term_list()
+									zavorka = true;
+									result = term_list(zavorka);
+									if(result != SUCCESS){
+										return result;
+									}
+
+									//dalsi token je nacten, musi = ')'
+
+									if(!checkTokenType(LEX_R_BRACKET)){
+										fprintf(stderr, "Ocekavana ')' na radku %d \n", gToken.row);
+										return SYN_ERR;
+									}
+
+									if ( tmp->paramCount != argCount ){
+										fprintf(stderr, "Semanticka chyba, pocet parametru funkce nesouvisi s poctem argumentu na radku %d\n",gToken.row);
+										return ERR_PARAMS_COUNT;
+									}
+
+									// pro dalsi volani funkce
+									argCount = 0;
+
+									instr_type = INSTRUCT_PUSHFRAME;
+									instr1.type = EMPTY;
+									insert_item(ilist, &instr_type, &instr1, &instr2, &instr3);
+
+									// instrukce pro volani funkce
+
+									instr_type = INSTRUCT_CALL;
+									instr1.type = FCE;
+									instr1.value.s = DLLastImportant(&tlist);
+
+									insert_item(ilist, &instr_type, &instr1, &instr2, &instr3);
+
+									// POPFRAME
+
+									instr_type = INSTRUCT_POPFRAME;
+									insert_item(ilist, &instr_type, &instr1, &instr2, &instr3);
 
 
-						token = getToken();
+									token = getToken();
+									if(!error_lex()){
+										return ERROR_LEX;
+									} else if (!error_int()){
+										return INT_ERR;
+									}
+
+									is_LF = false; // refresh promenne
+
+									return SUCCESS;
+
+
+								break;
+								case LEX_ID:
+								case LEX_NUMBER:
+								case LEX_REAL_NUMBER:
+								case LEX_STRING:
+
+									//volane term_list()
+									zavorka = false;
+									result = term_list(zavorka);
+									if(result != SUCCESS){
+										return result;
+									}
+
+									if ( tmp->paramCount != argCount ){
+										fprintf(stderr, "Semanticka chyba, pocet parametru funkce nesouvisi s poctem argumentu na radku %d\n",gToken.row);
+										return ERR_PARAMS_COUNT;
+									}
+
+									// pro dalsi volani funkce
+									argCount = 0;
+
+
+									instr_type = INSTRUCT_PUSHFRAME;
+									instr1.type = EMPTY;
+									insert_item(ilist, &instr_type, &instr1, &instr2, &instr3);
+
+									// instrukce pro volani funkce
+
+									instr_type = INSTRUCT_CALL;
+									instr1.type = FCE;
+									instr1.value.s = DLLastImportant(&tlist);
+
+									insert_item(ilist, &instr_type, &instr1, &instr2, &instr3);
+
+									// POPFRAME
+
+									instr_type = INSTRUCT_POPFRAME;
+									insert_item(ilist, &instr_type, &instr1, &instr2, &instr3);
+
+
+									token = getToken();
+									if(!error_lex()){
+										return ERROR_LEX;
+									} else if (!error_int()){
+										return INT_ERR;
+									}
+
+									is_LF = false; // refresh promenne
+
+									return SUCCESS;
+
+
+									return SUCCESS;
+								break;
+								default:
+									fprintf(stderr, "Syntakticka chyba, ocekavano '(', terminal na radku %d\n", gToken.row);
+									return SYN_ERR;
+							} // end switch pro kontrolu zavorek
+	
+					}
+				}			
+
+		break;
+
+		// semanticka chyba prirazeni
+		case LEX_EOL:
+		case LEX_EOF:
+			fprintf(stderr, "Ocekavan vyraz v prirazeni na radku %d \n", gToken.row);
+			return SEM_ERR;
+		break;
+
+		//pokud neni token LEX_ID_F, prozenem to precedencni SA
+		default:
+			res = parse_expr(localMap, ilist);
+			result = res.result;
+
+
+			if (res.data_type == FUNCTION){
+				// volani funkce 
+						tmp = global_map_get_pointer_to_value(gMap, gToken.data.str);
+						is_LF = true;
+
+        	    		token = getToken();
 						if(!error_lex()){
 							return ERROR_LEX;
 						} else if (!error_int()){
 							return INT_ERR;
 						}
 
+						if ( (token == LEX_EOL || token == LEX_EOF) && tmp->paramCount == 0 ){}
+						else {
 
-						//volane term_list()
-						result = term_list();
-						if(result != SUCCESS){
-							resetToken();
-							return result;
+							switch(token){
+								case LEX_L_BRACKET:
+									token = getToken();
+									if(!error_lex()){
+										return ERROR_LEX;
+									} else if (!error_int()){
+										return INT_ERR;
+									}
+
+									//volane term_list()
+									zavorka = true;
+									result = term_list(zavorka);
+									if(result != SUCCESS){
+										return result;
+									}
+
+									//dalsi token je nacten, musi = ')'
+
+									if(!checkTokenType(LEX_R_BRACKET)){
+										fprintf(stderr, "Ocekavana ')' na radku %d \n", gToken.row);
+										return SYN_ERR;
+									}
+
+									return SUCCESS;
+								break;
+								case LEX_ID:
+								case LEX_NUMBER:
+								case LEX_REAL_NUMBER:
+								case LEX_STRING:
+
+									//volane term_list()
+									zavorka = false;
+									result = term_list(zavorka);
+									if(result != SUCCESS){
+										return result;
+									}
+
+									return SUCCESS;
+								break;
+								default:
+									fprintf(stderr, "Syntakticka chyba, ocekavano '(', terminal na radku %d\n", gToken.row);
+									return SYN_ERR;
+							}
+
 						}
-
-						//dalsi token je nacten, musi = ')'
-
-						if(!checkTokenType(LEX_R_BRACKET)){
-							fprintf(stderr, "Ocekavana ')' na radku %d \n", gToken.row);
-							resetToken();
-							return SYN_ERR;
-						}
-
 
 						if ( tmp->paramCount != argCount ){
 							fprintf(stderr, "Semanticka chyba, pocet parametru funkce %s nesouvisi s poctem argumentu na radku %d\n",gToken.data.str , gToken.row);
+							return ERR_PARAMS_COUNT;
 						}
 
 						// pro dalsi volani funkce
@@ -477,38 +698,48 @@ int sth(LocalMap* localMap){
 						} else if (!error_int()){
 							return INT_ERR;
 						}
-				}			
 
-		break;
+						if (token == LEX_ADDITION || token == LEX_SUBSTRACTION || token == LEX_MULTIPLICATION || token == LEX_DIVISION){
 
-		// semanticka chyba prirazeni
-		case LEX_EOL:
-		case LEX_EOF:
-			fprintf(stderr, "Ocekavan vyraz v prirazeni na radku %d \n", gToken.row);
-			return SEM_ERR;
-		break;
+							token = getToken();
+							if(!error_lex()){
+								return ERROR_LEX;
+							} else if (!error_int()){
+								return INT_ERR;
+							}
 
-		//pokud neni token LEX_ID_F, prozenem to precedencni SA
-		default:
-			res = parse_expr(localMap, ilist);
-			result = res.result;
+							return sth();
+						}
+
+						is_LF = false; // refresh promenne
+
+			}
+
+			else if (result == SUCCESS){
 
 
-			if (result == SUCCESS){
-				// instrukce MOVE
+				// SEGMENTATION FAULT
 
-					// MOVE GF@promenna / LF@promenna  TF@%retval
-					instr_type = INSTRUCT_MOVE;
-					if (is_LF) {instr1.type = LF;}
-					else{
-						instr1.type = GF;
-					}
-					instr1.value.s = DLFirstImportant(&tlist);
-					instr2.type = TF;
-					instr2.value.s = res.uniqueID->str;
+				// ukladani vysledku do local_map
+				lData.type = res.data_type;  
+				local_map_put(localMap, DLFirstImportant(&tlist), lData);
+		
+				// MOVE GF@promenna / LF@promenna  TF@%retval
+				instr_type = INSTRUCT_MOVE;
+				if (is_LF) {instr1.type = LF;}
+				else{
+					instr1.type = GF;
+				}
 
-					insert_item(ilist, &instr_type, &instr1, &instr2, &instr3);
+				instr1.value.s = DLFirstImportant(&tlist);
+				instr2.type = GF;
+				instr2.value.s = "$result";
 
+				insert_item(ilist, &instr_type, &instr1, &instr2, &instr3);
+
+			}
+			else {
+				return result;
 			}
 
 			// cokoliv jineho syntakticka chyba
@@ -521,7 +752,7 @@ int sth(LocalMap* localMap){
 			DLNotImportant(&tlist);
 
 			return result;
-	}
+	} // end switch 
 
 	return result;
 }
@@ -529,8 +760,6 @@ int sth(LocalMap* localMap){
 int stat(){
 	int result = SUCCESS;
 	expr_return res;
-	tDataIDF * tmp;
-
 	switch(token){
 		//<STAT> -> id = <STH>
 		case LEX_ID:
@@ -547,11 +776,15 @@ int stat(){
 
 			if(!checkTokenType(LEX_EQUAL)){
 				fprintf(stderr, "Ocekavano '=' na radku %d\n", gToken.row);
-				resetToken();
 				return SYN_ERR;
 			}
 
-			if ((tmp = local_map_get_pointer_to_value(localMap, DLCopyFirst(&tlist))) == NULL){
+			if (global_map_contain(gMap, DLCopyFirst(&tlist))){
+				fprintf(stderr, "Semanticka chyba na radku %d, existuje promenna se stejnym jmenem \n", gToken.row);
+				return SEM_ERR;
+			}
+
+			if ( !local_map_contain(localMap, DLCopyFirst(&tlist)) ){
 				// ulozeni promenne do lokalni mapy, hodnota nil, typ nil
 				lData.defined = 1;
 				lData.value.nil = true;
@@ -573,18 +806,15 @@ int stat(){
 				insert_item(ilist, &instr_type, &instr1, &instr2, &instr3);
 				
 			}
-			// else promenna uz existuje, nedefinovat
 
 			
-			// nacteni dalsiho tokenu , musi byt identifikator nebo vyraz
+			// nacteni dalsiho tokenu , musi byt  bud' identifikator nebo vyraz nebo funkce
 			token = getToken();
 			if(!error_lex()){
 				return ERROR_LEX;
 			} else if (!error_int()){
 				return INT_ERR;
 			}
-
-			//print_elements_of_list(tlist);
 
 			// volani pravidla sth()
 			result = sth(localMap);
@@ -599,39 +829,66 @@ int stat(){
 		case KW_PRINT:
 
 			token = getToken();
+			
 			if(!error_lex()){
 				return ERROR_LEX;
 			} else if (!error_int()){
 				return INT_ERR;
 			}
 
-			if(!checkTokenType(LEX_L_BRACKET)){
-				fprintf(stderr, "Ocekavano '(' na radku %d\n", gToken.row);
-				resetToken();
-				return SYN_ERR;
-			}
+			switch(token){
+				case LEX_L_BRACKET:
 
-			token = getToken();
-			if(!error_lex()){
-				return ERROR_LEX;
-			} else if (!error_int()){
-				return INT_ERR;
-			}
+					token = getToken();
+					if(!error_lex()){
+						return ERROR_LEX;
+					} else if (!error_int()){
+						return INT_ERR;
+					}
 
-			//volane term_list()
-			result = term_list();
-			if(result != SUCCESS){
-				resetToken();
-				return result;
-			}
+					//volane term_list()
+					zavorka = true;
 
-			//dalsi token je nacten, musi = ')'
+					result = term_list(zavorka);
+					if(result != SUCCESS){
+						return result;
+					}
 
-			if(!checkTokenType(LEX_R_BRACKET)){
-				fprintf(stderr, "Ocekavana ')' na radku %d \n", gToken.row);
-				resetToken();
-				return SYN_ERR;
+					token = getToken();
+					if(!error_lex()){
+						return ERROR_LEX;
+					} else if (!error_int()){
+						return INT_ERR;
+					}
+
+				break;
+
+				case LEX_ID:
+				case LEX_NUMBER:
+				case LEX_STRING:
+				case LEX_REAL_NUMBER:
+
+					//volane term_list()
+					zavorka = false;
+					result = term_list(zavorka);
+					if(result != SUCCESS){
+						return result;
+					}
+
+					token = getToken();
+					if(!error_lex()){
+						return ERROR_LEX;
+					} else if (!error_int()){
+						return INT_ERR;
+					}
+
+				break;
+
+				default:
+					fprintf(stderr, "Syntakticka chyba, ocekavano '(',terminal na radku %d\n", gToken.row );
+					return SYN_ERR;
 			}
+			
 
 			instr_type = INSTRUCT_PRINT;
 			insert_item(ilist, &instr_type, &instr1, &instr2, &instr3);
@@ -652,6 +909,7 @@ int stat(){
 		//<STAT> -> if <EXPR> then eol <ST-LIST> else eol <ST-LIST> end if
 		case KW_IF:
 
+
 			//nacteni a predani do vyrazove SA
 			token = getToken();
 			if(!error_lex()){
@@ -664,19 +922,17 @@ int stat(){
 			result = res.result;
 
 			if(result != SUCCESS){
-				resetToken();
 				return result;
 			}
-
-			// token nacteny z parse_expr ma byt THEN nebo
-
 
 			//token je jiz nacteny, musi = KW_THEN
 			if(!checkTokenType(KW_THEN)){
 				fprintf(stderr, "Ocekavano 'then' na radku %d\n", gToken.row);
-				resetToken();
 				return SYN_ERR;
 			}
+
+			instr_type =  INSTRUCT_IF_THEN;
+			insert_item(ilist, &instr_type, &instr1, &instr2, &instr3);
 
 			//dalsi = LEX_EOL
 			token = getToken();
@@ -688,7 +944,6 @@ int stat(){
 
 			if(!checkTokenType(LEX_EOL)){
 				fprintf(stderr, "Ocekavano 'eol' na radku %d \n", gToken.row);
-				resetToken();
 				return SYN_ERR;
 			}
 
@@ -702,17 +957,23 @@ int stat(){
 
 			result = st_list();
 			if(result != SUCCESS){
-				resetToken();
 				return result;
 			}
+
+			instr_type = INSTRUCT_JUMP_ENDIF;
+			insert_item(ilist, &instr_type, &instr1, &instr2, &instr3);
 
 
 			//token nacteny z st_list() = KW_ELSE
 			if(!checkTokenType(KW_ELSE)){
 				fprintf(stderr, "Ocekavano 'else' na radku %d \n", gToken.row);
-				resetToken();
 				return SYN_ERR;
 			}
+
+			instr_type = INSTRUCT_IF_ELSE;
+			insert_item(ilist, &instr_type, &instr1, &instr2, &instr3);
+
+
 
 			//dalsi = LEX_EOL
 			token = getToken();
@@ -724,7 +985,6 @@ int stat(){
 
 			if(!checkTokenType(LEX_EOL)){
 				fprintf(stderr, "3 Ocekavano 'eol' na radku %d\n", gToken.row);
-				resetToken();
 				return SYN_ERR;
 			}
 
@@ -738,17 +998,21 @@ int stat(){
 
 			result = st_list();
 			if(result != SUCCESS){
-				resetToken();
 				return result;
 			}
+
+			instr_type = INSTRUCT_JUMP_ENDIF;
+			insert_item(ilist, &instr_type, &instr1, &instr2, &instr3);
 
 
 			//token nacten z fce st_list() = KW_END
 			if(!checkTokenType(KW_END)){
 				fprintf(stderr, "Ocekano 'end' na radku %d \n", gToken.row);
-				resetToken();
 				return SYN_ERR;
 			}
+
+			instr_type = INSTRUCT_ENDIF;
+			insert_item(ilist, &instr_type, &instr1, &instr2, &instr3);
 
 			token = getToken();
 			if(!error_lex()){
@@ -765,6 +1029,9 @@ int stat(){
 		//<STAT> -> while <EXPR> do eol <ST-LIST> end
 		case KW_WHILE:
 
+			instr_type = INSTRUCT_WHILE_START;
+			insert_item(ilist, &instr_type, &instr1, &instr2, &instr3);
+
 			//vyrazova SA, pro precedencni analyzu
 			token = getToken();
 			if(!error_lex()){
@@ -776,9 +1043,11 @@ int stat(){
 			res = parse_expr(localMap, ilist);
 			result = res.result;
 
+			instr_type = INSTRUCT_WHILE_STATS;
+			insert_item(ilist, &instr_type, &instr1, &instr2, &instr3);
+
 
 			if(result != SUCCESS){
-				resetToken();
 				return result;
 			}
 
@@ -786,7 +1055,6 @@ int stat(){
 
 			if(!checkTokenType(KW_DO)){
 				fprintf(stderr, "Ocekavano 'do' na radku %d\n", gToken.row);
-				resetToken();
 				return SYN_ERR;
 			}
 
@@ -799,8 +1067,7 @@ int stat(){
 
 
 			if(!checkTokenType(LEX_EOL)){
-				fprintf(stderr, "4 Ocekavano 'eol' na radku %d\n", gToken.row);
-				resetToken();
+				fprintf(stderr, "Ocekavano 'eol' na radku %d\n", gToken.row);
 				return SYN_ERR;
 			}
 
@@ -816,16 +1083,17 @@ int stat(){
 
 
 			if(result != SUCCESS){
-				resetToken();
 				return result;
 			}
 
 			//dalsi token je zase nacten z fce, musi byt END
 			if(!checkTokenType(KW_END)){
 				fprintf(stderr, "Ocekavan 'end' na radku %d\n", gToken.row);
-				resetToken();
 				return SYN_ERR;
 			}
+
+			instr_type = INSTRUCT_WHILE_END;
+			insert_item(ilist, &instr_type, &instr1, &instr2, &instr3);
 
 			token = getToken();
 			if(!error_lex()){
@@ -840,7 +1108,6 @@ int stat(){
 
 		default:
 			fprintf(stderr, "Ocekavano 'while' 'id' 'if' na radku %d \n", gToken.row); // dopsat
-			resetToken();
 			return SYN_ERR;
 	}
 
@@ -862,7 +1129,6 @@ int st_list(){
 			//podle pravidla zavolame stat()
 			result = stat();
 			if(result != SUCCESS){
-				resetToken();
 				return result;
 			}
 
@@ -896,13 +1162,11 @@ int st_list(){
 
 			result = func();
 			if(result != SUCCESS){
-				resetToken();
 				return result;
 			}
 			// dalsi token je nacteny z func()
 			if(!checkTokenType(LEX_EOL)){
 				fprintf(stderr, "Ocekavan 'eol' na radku %d\n", gToken.row);
-				resetToken();
 				return SYN_ERR;
 			}
 
@@ -926,9 +1190,6 @@ int st_list(){
 }
 
 int pm_list2(){
-
-	tDataIDF * tmp;
-
 	switch(token){
 		case LEX_COMMA:
 
@@ -943,23 +1204,20 @@ int pm_list2(){
 
 			if(!checkTokenType(LEX_ID)){
 				fprintf(stderr, "Ocekavno 'id' na radku %d\n", gToken.row);
-				resetToken();
-				return ERROR_LEX;
+				return SYN_ERR;
 			}
 
-			// KONTROLA JESTLI JE PROMENNA DEFINOVANA
 
-			if ((tmp = local_map_get_pointer_to_value(localMap, gToken.data.str)) == NULL){
-				fprintf(stderr, "Promenna %s neni definovana, radek %d\n", gToken.data.str, gToken.row);
-				free(tmp);
-				return SEM_ERR;
+			if (!local_map_contain(localMap, gToken.data.str)){
+				// definovat tuto promennou s typem nil a hodnotou nil
+				lData.defined = 1;
+				lData.value.nil = true;
+				lData.type = 500; // typ nil - NONE
+				local_map_put(localMap, gToken.data.str, lData);
 			}
-
-			// SEMANTICKE AKCE pridani parametru do LTS funkce
 
 			// + jeden parametr
 			paramCount++;
-
 
 			token = getToken();
 
@@ -969,12 +1227,17 @@ int pm_list2(){
 				return INT_ERR;
 			}
 
+
 			return pm_list2();
 		break;
 
 		case LEX_R_BRACKET:
 			return SUCCESS;
 		break;
+
+		default:
+			fprintf(stderr, "Syntakticka chyba, ocekavano ',', ')' na radku %d\n", gToken.row);
+			return SYN_ERR;
 	}
 
 	token = getToken();
@@ -990,14 +1253,18 @@ int pm_list2(){
 
 int pm_list(){
 	int result = SUCCESS;
-	tDataIDF *tmp;
 
 	if (token == LEX_ID){
-		if ((tmp = local_map_get_pointer_to_value(localMap, gToken.data.str)) == NULL){
-			fprintf(stderr, "Promenna %s neni definovana, radek %d\n", gToken.data.str, gToken.row);
-			free(tmp);
-			return SEM_ERR;
+
+		if (!local_map_contain(localMap, gToken.data.str)){
+			// definovat tuto promennou s typem nil a hodnotou nil
+			lData.defined = 1;
+			lData.value.nil = true;
+			lData.type = 500; // typ nil - NONE
+			local_map_put(localMap, gToken.data.str, lData);
 		}
+
+		paramCount++;
 
 		token = getToken();
 
@@ -1006,14 +1273,6 @@ int pm_list(){
 		} else if (!error_int()){
 			return INT_ERR;
 		}
-
-		// SEMANTICKE AKCE
-		// ulozeni do vnitrni LTS funkce parametr, nesmi byt jako nazev funkce, ani jako nazev jine funkce
-
-		// dalsi semanticke akce -> pridat....
-
-		// pocet parametru funkce ulozit
-		paramCount++;
 
 		return pm_list2();
 	}
@@ -1039,9 +1298,28 @@ int func(){
 
 	if(!checkTokenType(LEX_ID) && !checkTokenType(LEX_ID_F)){
 		fprintf(stderr, "Ocekavan identifikator na radku %d \n", gToken.row);
-		resetToken();
 		return SYN_ERR;
 	}
+
+	// ukladam do GTS definice funkce
+    // pokud tam ID neni tak vepsat
+
+
+    if (!global_map_contain(gMap, gToken.data.str)){
+    	if (local_map_contain(localMap, gToken.data.str)){
+    		fprintf(stderr, "Semanticka chyba na radku %d, existuje promenna se stejnym jmenem\n", gToken.row);
+    		return SEM_ERR;
+    	}
+    	else{
+    		gData.defined = 1;
+    		global_map_put(gMap, gToken.data.str, gData);
+    	}
+    }
+    else {
+        //uz byla definovana
+        fprintf(stderr, "Radek %d: Semanticka chyba, funkce '%s' jiz byla definovana.\n", gToken.row, gToken.data.str);
+        return SEM_ERR;
+    }
 
 
 	instr_type = INSTRUCT_LABEL;
@@ -1082,7 +1360,6 @@ int func(){
 
 	if(!checkTokenType(LEX_L_BRACKET)){
 		fprintf(stderr, "Ocekavana '(' na radku %d\n", gToken.row);
-		resetToken();
 		return SYN_ERR;
 	}
 
@@ -1097,7 +1374,6 @@ int func(){
 
 	result = pm_list();
 	if(result != SUCCESS){
-		resetToken();
 		return result;
 	}
 
@@ -1111,27 +1387,11 @@ int func(){
 
 	if(!checkTokenType(LEX_R_BRACKET)){
 		fprintf(stderr, "Ocekavana ')' na radku %d\n", gToken.row);
-		resetToken();
 		return SYN_ERR;
 	}
 
 	// ulozeni poctu formalnich parametru funkce
 	gData.paramCount = paramCount;
-
-
-	// ukladam do GTS definice funkce
-    // pokud tam ID neni tak vepsat
-
-
-    if (!global_map_contain(gMap, DLFirstImportant(&tlist))){
-    	gData.defined = 1;
-    	global_map_put(gMap, DLFirstImportant(&tlist), gData);
-    }else {
-        //uz byla definovana
-        fprintf(stderr, "Radek %d: Semanticka chyba, funkce '%s' jiz byla definovana.\n", gToken.row, gToken.data.str);
-        return SEM_ERR;
-    }
-
 	
 	global_map_put(gMap, DLFirstImportant(&tlist), gData);
 
@@ -1151,7 +1411,6 @@ int func(){
 
 	if(!checkTokenType(LEX_EOL)){
 		fprintf(stderr, "Ocekavan 'eol' na radku %d \n", gToken.row);
-		resetToken();
 		return SYN_ERR;
 	}
 
@@ -1166,7 +1425,6 @@ int func(){
 
 	result = st_list();
 	if(result != SUCCESS){
-		resetToken();
 		return result;
 	}
 
@@ -1179,8 +1437,8 @@ int func(){
 	}
 
 	if(!(checkTokenType(KW_END))){
-		fprintf(stderr,"Ocekavan 'end' na radku %d", gToken.row);
-		resetToken();
+		returnToken();
+		fprintf(stderr,"Ocekavan 'end' na radku %d\n", gToken.row);
 		return SYN_ERR;
 	}
 
@@ -1230,7 +1488,6 @@ int main_p(void){
 			//volani st_list()
 			result = st_list();
 			if(result != SUCCESS){
-				resetToken();
 				return result;
 			}
 
@@ -1249,8 +1506,12 @@ int main_p(void){
 
 
 		default:
+			if(!error_lex()){
+				return ERROR_LEX;
+			} else if (!error_int()){
+				return INT_ERR;
+			}
 			fprintf(stderr, "Ocekavano zacatek programu na radku %d\n", gToken.row);
-			resetToken();
 			return SYN_ERR;
 	}
 
@@ -1277,18 +1538,24 @@ int prog(){
 			//token nacten z main_p() = EOF
 			if(!checkTokenType(LEX_EOL) && !checkTokenType(LEX_EOF)) {
 				fprintf(stderr, "Ocekavano 'eof' 'eol' na radku %d \n", gToken.row);
-				resetToken();
 				return SYN_ERR;
 			}
 
     		return SUCCESS;
     	break;
-	}
 
-	//neco jineho = chyba!
-	fprintf(stderr, "Ocekavano 'zacatek programu' na radku %d\n", gToken.row);
-	resetToken();
-	return SYN_ERR;
+    	default:
+    		if(!error_lex()){
+				return ERROR_LEX;
+			} else if (!error_int()){
+				return INT_ERR;
+			}
+			else{
+				// prazdny program a je to spravne
+				return SUCCESS;
+			}
+    		
+	}
 }
 
 
@@ -1297,14 +1564,12 @@ int prog(){
 int parse(GlobalMap* globalMap, tList *list) {
 
 	int result = SUCCESS;
-
 	gMap = globalMap;
+	gDataptr = (tDataFunction* )malloc(sizeof(tDataFunction));
+	gDataptr->lMap = local_map_init(MAX_SIZE_OF_HASH_TABLE);
 	gDataptr = &gData;
 	ilist = list;
-
 	localMap = local_map_init(MAX_SIZE_OF_HASH_TABLE);
-
-
 	insert_build_in_functions();
 
 
@@ -1318,8 +1583,8 @@ int parse(GlobalMap* globalMap, tList *list) {
 
 	do {
 		if((token = getToken()) == ERROR_LEX) {
-			fprintf(stderr, "Nepodařilo se načíst token\n");
-			result = INT_ERR;
+			fprintf(stderr, "Lexikalni chyba programu\n");
+			result = ERROR_LEX;
 		} else if (token == INT_ERR) {
 			fprintf(stderr, "Interni chyba\n");
 		}
@@ -1331,33 +1596,22 @@ int parse(GlobalMap* globalMap, tList *list) {
 		// vytvoreni docasneho ramce pro funkce
 		instr_type =  INSTRUCT_CREATEFREAME;
 		insert_item(ilist, &instr_type, &instr1, &instr2, &instr3);
-
-
 		instr_type = INSTRUCT_LENGTH;
 		insert_item(ilist, &instr_type, &instr1, &instr2, &instr3);
-
 		instr_type = INSTRUCT_CHR;
 		insert_item(ilist, &instr_type, &instr1, &instr2, &instr3);
-
 		instr_type = INSTRUCT_ORD;
 		insert_item(ilist, &instr_type, &instr1, &instr2, &instr3);
-
 		instr_type = INSTRUCT_SUBSTR;
 		insert_item(ilist, &instr_type, &instr1, &instr2, &instr3);
-
 
 		result = prog();
 	}
 
-
-	//print_elements_of_list(tlist);
-
 	DLDisposeList(&tlist);
-
 	strFree(&(gToken.data));
-	//local_map_print(localMap);
 	local_map_free(localMap);
-
+	local_map_free(gDataptr->lMap);
 	return result;
 
 }

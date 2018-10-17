@@ -21,16 +21,19 @@
 //#include "parser.c" // zobratie globalnej mapy
 
 // #define RULE_OF_OPERATORS stack_pops(4, stack);stack_push(stack, E, dataIDF);stack_print_prece(stack);break
-#define RULE_OF_OPERATORS stack_pops(4, stack);stack_push(stack, E, dataIDF);break
 // #define RULE_OF_IDENTIFICATOR stack_pops(2, stack);stack_push(stack, E, *dataIDF);stack_print_prece(stack)
-#define RULE_OF_IDENTIFICATOR stack_pops(2, stack);stack_push(stack, E, *dataIDF);
+#define STACK_POP4 stack_pops(4, stack)
+//#define GLOBAL_OR_LOCAL_FRAME
 
+bool isFirstVariable = false;
+bool isThirdVariable = false;
+bool is_result = false;
 tInstructionTypes instr_type;
 tInstructionData instr1;
 tInstructionData instr2;
 tInstructionData instr3;
 
-
+extern bool is_LF;
 int counterVar = 1;
 int DEBUG = 0;  /* premenna na debugovanie  0 --> pre ziadnej vypis, 1 --> pre vypis */
 
@@ -53,23 +56,6 @@ prece_states prece_table [SIZEOFTABLE][SIZEOFTABLE] = {
 /* , */ { L  , L  , L ,  L ,  L ,  L  ,L  , L  , L  , L  , L ,  L  , EQ , L ,EQ,  L},
 /* f */ {Err, Err, Err, Err, Err, Err,Err,Err, Err , Err , Err, EQ, Err, Err,Err,Err},
 };
-
-tString* generateVariable(tString* variable){
-// generuje jedinecne nazvy identifikatoru
-// nazev se sklada ze znaku $ nasledovanym cislem
-// postupne se tu generuji prirozena cisla a do nazvu promenne se ukladaji
-// v reverzovanem poradi - na funkcnost to nema vliv, ale je jednodussi implementace
-    int i = counterVar;
-    strClear(variable);
-    strAdd(variable, '$');
-    while (i != 0) {
-        strAdd(variable, (char)(i + '0'));
-        i = i / 10;
-    }
-    counterVar++;
-
-    return variable;
-}
 
 void setEmptyDataIDF(tDataIDF dataIDF) {
     dataIDF.type = 500;
@@ -99,16 +85,18 @@ int indexerOfPreceTable (int indexer, LocalMap* lMap)
         case LEX_R_BRACKET: type = eRBAR; break;        // )
         /* IDENTIFIKATOR STAVY */
         case LEX_ID:
+        case LEX_ID_F:
+        case KW_LENGTH:
+        case KW_SUBSTR:
+        case KW_ORD:
+        case KW_CHR:
             if(global_map_contain(gMap, gToken.data.str)){
                 type = eFCE;            // nachadza sa to v gMap je to funckia
-                printf("==================================================================Je to FCE\n");
             }
             else if(local_map_contain(lMap, gToken.data.str)){
-                printf("=========================================================Je to LEX_ID\n");
                 type = eIDENT;         // nachadza sa to v lMap je to premenna
             }
             else{
-                printf("================================================================LUL");
                 // nie je to ani fce ani identificator
                 return eSYNTERROR;
             }
@@ -127,7 +115,6 @@ int indexerOfPreceTable (int indexer, LocalMap* lMap)
         case KW_DEF: type = eFCE; break;            // funkcie
         default:
             /* SYNTAKTICKA CHYBA */
-            printf("indexerOfPreceTable():Syntactic Error\n");
             return eSYNTERROR;
     }
     return type;
@@ -166,12 +153,11 @@ char* convert_to_char(int token){
 // @varName pravidlo id = <sth>
 // @lMap je lokalni Mapa
 expr_return parse_expr(LocalMap* lMap, tList* list){
-
     /* INICIALIZACIA STRUKTUR */
-    tItem* tempItemForPositionOne; /* GLOBALNY ITEM pre stack pri pravidle E -> i */
-    tItem* tempItemForPositionThree; /* GLOBALNY ITEM pre stack pri pravidlach E -> E + E, E -> E - E a podobne. */
+//    tItem* tempItemForPositionOne; /* GLOBALNY ITEM pre stack pri pravidle E -> i */
+//    tItem* tempItemForPositionThree; /* GLOBALNY ITEM pre stack pri pravidlach E -> E + E, E -> E - E a podobne. */
     expr_return resultOfPrece = {.result=SUCCESS, .bool_result=""};
-    tStack* stack = stack_init(12);
+    tStack* stack = stack_init(15);
     int actTokenIndexToPreceTable = 0;
     int stackTopTokenIndexToPreceTable = 0;
 
@@ -199,20 +185,14 @@ expr_return parse_expr(LocalMap* lMap, tList* list){
             resultOfPrece.result = SYN_ERR;
             return resultOfPrece;
         }
-        //printf("This is token -> %s\n", gToken.data.str);
-
         // SEMANTICKA AKCE
         // pushnuti do stackofItems strukturu pro token, ktery prave prisel od PARSERU
         // muze byt LEX_ID, LEX_NUMBER, LEX_REAL_NUMBER, LEX_STRING
-        instr_type = INSTRUCT_MOVE;
 
         if (token == LEX_NUMBER){
             dataIDF.type = INTEGER;
             dataIDF.value.i = atoi(gToken.data.str);
             resultOfPrece.uniqueID = &gToken.data;
-            instr2.type = I;
-            instr2.value.i = dataIDF.value.i;
-            // generovanie kodu MOVE %s@%s int@%s
         }
         else if (token == LEX_REAL_NUMBER){
             dataIDF.type = FLOAT;
@@ -220,8 +200,6 @@ expr_return parse_expr(LocalMap* lMap, tList* list){
             resultOfPrece.uniqueID = &gToken.data;
             instr2.type = F;
             instr2.value.f = dataIDF.value.f;
-            // generovanie kodu "MOVE %s@%s float@%s
-
         }
         else if (token == LEX_STRING){
             dataIDF.type = STRING;
@@ -229,34 +207,27 @@ expr_return parse_expr(LocalMap* lMap, tList* list){
             resultOfPrece.uniqueID = &gToken.data;
             instr2.type = S;
             instr2.value.s = gToken.data.str;
-            // generovanie kodu  MOVE %s@%s string@%s
         }
-        else if(token == LEX_ID){
+        else if(token == LEX_ID || token == LEX_ID_F || token == KW_LENGTH || token == KW_CHR || token == KW_ORD || token == KW_SUBSTR ){
             if(global_map_contain(gMap, gToken.data.str)){
                 dataIDF.type = FUNCTION;
                 dataIDF.value.string.str = gToken.data.str;
+                resultOfPrece.data_type = FUNCTION;
                 resultOfPrece.uniqueID = &gToken.data;
                 return resultOfPrece;       // predavam riadenie parseru
                 // je to funckia
             }
             // ak sa premenna nachadza v lokalnej mape tak
             else if(local_map_contain(lMap, gToken.data.str)){
-                dataIDF = local_map_get_value(lMap, gToken.data.str);
-                resultOfPrece.uniqueID = &gToken.data;
-                switch (dataIDF.type) {
-                    case INTEGER:
-                        instr2.type = I;
-                        insert_item(list, &instr_type, &instr1, &instr2, &instr3);
-                        break;
-                    case FLOAT:
-                        instr2.type = F;
-                        insert_item(list, &instr_type, &instr1, &instr2, &instr3);
-                        break;
-                    case STRING:
-                        instr2.type = S;
-                        insert_item(list, &instr_type, &instr1, &instr2, &instr3);
-                        break;
+                if (isFirstVariable){
+                    isThirdVariable = true;
                 }
+                else{
+                    isFirstVariable = true;
+                };
+                dataIDF = local_map_get_value(lMap, gToken.data.str);
+                dataIDF.nameOfTheVariable = gToken.data.str;
+                dataIDF.value.is_variable = true;
             }
             else{
                 // premenna nebola najdena v localnej mape a tym padom sa jedna o semanticku chybu
@@ -267,8 +238,6 @@ expr_return parse_expr(LocalMap* lMap, tList* list){
             dataIDF.defined = true;
         }
 
-        //stack_print(stack);
-        //stack_print_prece(stack);
         if(DEBUG)printf("This is act token    number -> |%d| and char -> |%s|\n", actTokenIndexToPreceTable, convert_to_char(actTokenIndexToPreceTable));
         if(DEBUG) printf("This is act stackTop number -> |%d| and char -> |%s|\n", stackTopTokenIndexToPreceTable, convert_to_char(stackTopTokenIndexToPreceTable));
 
@@ -283,10 +252,11 @@ expr_return parse_expr(LocalMap* lMap, tList* list){
                 break;
             case L:
                 if (DEBUG)printf("CASE: |<| (shifting)\n");
-                // SEM BUDEME VYHLADAVAT ZA NON - TERMINAL -> pre jednoduchost bez neho...
                 if (stack_top_token_number(stack) == E) {
-                    tempItemForPositionOne = stack_pop(stack);
-                    dataIDF = tempItemForPositionOne->token_data;
+                    dataIDF = stack->arrayOfItems[stack->finderOfParenthesis];
+
+
+                    stack_pop(stack);
                     stack_push(stack, eSOLVING_RULE, dataIDF);
                     stack_push(stack, E, dataIDF);
                     stack_push(stack, actTokenIndexToPreceTable, dataIDF);
@@ -301,18 +271,35 @@ expr_return parse_expr(LocalMap* lMap, tList* list){
             case G:
                 if (DEBUG)printf("CASE: |>| (reduction)\n");
                 stack_search_for_theorem(stack);
-
                 /** PRAVIDLO E -> i **/
                 if ((stack->arrayOfNumbers[stack->finderOfParenthesis + 1]) == eIDENT) {
-                    //TODO: dorobiť generovanie termu na vsetky redukcie
-                    tempItemForPositionOne = stack_pop(stack);
-                    // generovanie non termu
-                    tempItemForPositionOne->token_data.nameOfTheNonTerminal = generateVariable(
-                            resultOfPrece.uniqueID)->str;        // generovanie UNIQUE
+                    dataIDF = stack->arrayOfItems[stack->finderOfParenthesis];
+                    dataIDF.nameOfTheNonTerminal =  "$result\0";      // generovanie UNIQUE
+
+                    instr_type = INSTRUCT_MOVE;
+                    instr1.type = GF;
+                    instr1.value.s = "$result\0";
+
+                    dataIDF = stack->arrayOfItems[stack->finderOfParenthesis + 1];
+                    if (dataIDF.type == STRING){
+                        instr2.type = S;
+                        instr2.value.s = dataIDF.value.string.str;
+                    }else if(dataIDF.type == INTEGER){
+                        instr2.type = I;
+                        instr2.value.i = dataIDF.value.i;
+                    }
+                    else if (dataIDF.type == FLOAT) {
+                        instr2.type = F;
+                        instr2.value.f = dataIDF.value.f;
+                    }
+                    // else IDENTIFIKATOR !!!
+
+
+                    insert_item(list, &instr_type, &instr1, &instr2, &instr3 );
+
                     stack_pop(stack);
-                    dataIDF = tempItemForPositionOne->token_data;
+                    stack_pop(stack);
                     stack_push(stack, E, dataIDF);
-                    if (DEBUG) printf("Toto su data -> %d\n", tempItemForPositionOne->token_data.value.i);
                     if (DEBUG) printf("StackTop NUMBER -> %s\n", convert_to_char(stack_top_token_number(stack)));
                     if (DEBUG) printf("StackTop DATA -> %d\n", stack_top_token_data(stack)->value.i);
                     if (DEBUG)stack_print_prece(stack);
@@ -322,123 +309,236 @@ expr_return parse_expr(LocalMap* lMap, tList* list){
                 else if (((stack->arrayOfNumbers[stack->finderOfParenthesis + 1]) == eLBAR) &&
                          ((stack->arrayOfNumbers[stack->finderOfParenthesis + 2]) == E) &&
                          ((stack->arrayOfNumbers[stack->finderOfParenthesis + 3]) == eRBAR)) {
-                    stack_pop(stack);                               // popnutie zatvorky )
-                    tempItemForPositionOne = stack_pop(stack);           // ulozenie si E
-                    tempItemForPositionOne->token_data.nameOfTheNonTerminal = generateVariable(
-                            resultOfPrece.uniqueID)->str;    // generovanie UNIQUE
-                    stack_pop(stack);                               // popnutie zatvorky (
-                    stack_pop(stack);                               // popnutie znamienka <
-                    dataIDF = tempItemForPositionOne->token_data;                                   // do struktury nahrame adresu token->data
+                    dataIDF = stack->arrayOfItems[stack->finderOfParenthesis + 2];
+                    dataIDF.nameOfTheNonTerminal =  "$result\0";      // generovanie UNIQUE
+                    STACK_POP4;
                     stack_push(stack, E, dataIDF);                       // nakoniec pushneme E + datovu strukturu
                     break;
                 } else {  // TODO: pravidlo -> E -> f(E), E -> f(E, E), E -> f(E, E , E ), E -> f(E, E, ...)
                     int concreteOperator = stack->arrayOfNumbers[stack->finderOfParenthesis + 2];
                     switch (concreteOperator) {
-                        // PRAVIDLO E -> E + E
                         case ePLUS:
+                            // PRAVIDLO E -> E + E
+                            if (DEBUG) stack_print_prece(stack);
                              if ((&stack->arrayOfNumbers[stack->finderOfParenthesis + 3]) != NULL) {
-                                 instr_type = INSTRUCT_DEFVAR;
-                                 // generovanie DEFVAR %s@%s
                                  if ((stack->arrayOfItems[stack->finderOfParenthesis + 1].type == STRING) &&
                                      (stack->arrayOfItems[stack->finderOfParenthesis + 3].type == STRING)) {
                                      dataIDF.type = STRING;
                                      instr_type = INSTRUCT_CONCAT;
+                                     instr1.value.s = "$result\0";        // generovanie UNIQUE // generate non Term -> Unikatny nazov
+                                     // TODO: i do not know why it does not work
+//                                     instr1.value.s = "$result\0";        // generovanie UNIQUE // generate non Term -> Unikatny nazov
+//                                     instr2.type = S;
+//                                     instr3.type = S;
+//                                     instr2.value.s = stack->arrayOfItems[stack->finderOfParenthesis + 1].value.string.str;
+//                                     instr3.value.s = stack->arrayOfItems[stack->finderOfParenthesis + 3].value.string.str;
+//                                     printf("This is 1st string -> %s second -> %s\n", instr2.value.s, instr3.value.s);
+//                                     dataIDF.value.string.str = strcat(instr2.value.s, instr3.value.s);
+//                                     printf("This is DATA %s\n", dataIDF.value.string.str);
+//                                     insert_item(list, &instr_type, &instr1, &instr2, &instr3);
                                      // generovnaie CONCAT %s@%s %s@%s %s@%s
                                  } else if ((stack->arrayOfItems[stack->finderOfParenthesis + 1].type == STRING) &&
                                             (stack->arrayOfItems[stack->finderOfParenthesis + 3].type != STRING)) {
-                                     resultOfPrece.result = ERR_INCOMPATIBLE_TYPE;
-                                     return resultOfPrece;
+                                    fprintf(stderr, "Semanticka chyba typové kompatibility v aritmetických vyrazech, radek %d\n", gToken.row);
+                                    resultOfPrece.result = ERR_INCOMPATIBLE_TYPE;
+                                    return resultOfPrece;
                                  } else if ((stack->arrayOfItems[stack->finderOfParenthesis + 1].type != STRING) &&
                                             (stack->arrayOfItems[stack->finderOfParenthesis + 3].type == STRING)) {
-                                     resultOfPrece.result = ERR_INCOMPATIBLE_TYPE;
-                                     return resultOfPrece;
-                                 } else if ((stack->arrayOfItems[stack->finderOfParenthesis + 1].type == INTEGER) &&
+                                    fprintf(stderr, "Semanticka chyba typové kompatibility v aritmetických vyrazech, radek %d\n", gToken.row);
+                                    resultOfPrece.result = ERR_INCOMPATIBLE_TYPE;
+                                    return resultOfPrece;
+                                 }
+                                 else if ((stack->arrayOfItems[stack->finderOfParenthesis + 1].type == INTEGER) &&
                                             (stack->arrayOfItems[stack->finderOfParenthesis + 3].type == INTEGER)) {
+                                    if (is_result){
+                                        instr2.type = GF;
+                                        instr2.value.s = "$result";
+                                    } else{
+                                        if (isFirstVariable){
+                                            if (is_LF) { instr2.type = LF;} else { instr2.type = GF;}
+                                            instr2.value.s = stack->arrayOfItems[stack->finderOfParenthesis + 1].nameOfTheVariable;
+                                            dataIDF.value.is_variable = false;
+                                        }
+                                        else {
+                                            instr2.type = I;
+                                            instr2.value.i = stack->arrayOfItems[stack->finderOfParenthesis + 1].value.i;
+                                        }
+                                    }
+                                    if (isThirdVariable){
+                                        if (is_LF) { instr3.type = LF;} else {instr3.type = GF;}
+                                        instr3.value.s = stack->arrayOfItems[stack->finderOfParenthesis + 3].nameOfTheVariable;
+
+                                    }
+                                    else{
+                                        instr3.type = I;
+                                        instr3.value.i = stack->arrayOfItems[stack->finderOfParenthesis + 3].value.i;
+                                    }
+
                                      dataIDF.type = INTEGER;
                                      instr_type = INSTRUCT_ADD;
+                                     instr1.value.s = "$result\0";        // generovanie UNIQUE // generate non Term -> Unikatny nazov
+                                     dataIDF.value.i = stack->arrayOfItems[stack->finderOfParenthesis + 1].value.i + stack->arrayOfItems[stack->finderOfParenthesis + 3].value.i;
                                      // generovanie ADD %s@%s %s@%s %s@%s
+                                     insert_item(list, &instr_type, &instr1, &instr2, &instr3);
+                                     is_result = true;
+                                    // refresh promennych
+                                     isFirstVariable = false;
+                                     isThirdVariable = false;
                                  } else if ((stack->arrayOfItems[stack->finderOfParenthesis + 1].type == INTEGER) &&
                                             (stack->arrayOfItems[stack->finderOfParenthesis + 3].type == FLOAT)) {
                                      dataIDF.type = FLOAT;
                                      instr_type = INSTRUCT_INT2FLOAT;
+                                     instr1.value.s = "$result\0";        // generovanie UNIQUE // generate non Term -> Unikatny nazov
+                                     instr2.type = I;
+                                     instr2.value.i = (float) stack->arrayOfItems[stack->finderOfParenthesis + 1].value.i;
+                                     insert_item(list, &instr_type, &instr1, &instr2, &instr3);
                                      instr_type = INSTRUCT_ADD;
+                                     instr2.type = F;
+                                     instr3.type = F;
+                                     instr2.value.f = (float) stack->arrayOfItems[stack->finderOfParenthesis + 1].value.i;
+                                     instr3.value.f = (float) stack->arrayOfItems[stack->finderOfParenthesis + 3].value.f;
+                                     dataIDF.value.f = (float) stack->arrayOfItems[stack->finderOfParenthesis + 1].value.i + stack->arrayOfItems[stack->finderOfParenthesis + 3].value.f;
+                                     insert_item(list, &instr_type, &instr1, &instr2, &instr3);
                                      // generovanie  INT2FLOAT %s@%s %s@%s
                                      // generovanie  ADD %s@%s %s@%s %s@%s
                                  } else if ((stack->arrayOfItems[stack->finderOfParenthesis + 1].type == FLOAT) &&
                                             (stack->arrayOfItems[stack->finderOfParenthesis + 3].type == INTEGER)) {
                                      dataIDF.type = FLOAT;
                                      instr_type = INSTRUCT_INT2FLOAT;
+                                     instr1.value.s = "$result\0";        // generovanie UNIQUE // generate non Term -> Unikatny nazov
+                                     instr2.type = I;
+                                     instr2.value.i = (float) stack->arrayOfItems[stack->finderOfParenthesis + 3].value.i;
+                                     insert_item(list, &instr_type, &instr1, &instr2, &instr3);
                                      instr_type = INSTRUCT_ADD;
+                                     instr2.type = F;
+                                     instr3.type = F;
+                                     instr2.value.f = (float) stack->arrayOfItems[stack->finderOfParenthesis + 3].value.i;
+                                     instr3.value.f = (float) stack->arrayOfItems[stack->finderOfParenthesis + 1].value.f;
+                                     dataIDF.value.f = (float) stack->arrayOfItems[stack->finderOfParenthesis + 1].value.f + stack->arrayOfItems[stack->finderOfParenthesis + 3].value.i;
+                                     insert_item(list, &instr_type, &instr1, &instr2, &instr3);
                                      // generovanie INT@FLOAT %s@%s %s@%s
                                      // generovanie ADD %s@%s %s@%s %s@%s
                                  } else if ((stack->arrayOfItems[stack->finderOfParenthesis + 1].type == FLOAT) &&
                                             (stack->arrayOfItems[stack->finderOfParenthesis + 3].type == FLOAT)) {
                                      dataIDF.type = FLOAT;
                                      instr_type = INSTRUCT_ADD;
+                                     instr1.value.s = "$result\0";        // generovanie UNIQUE // generate non Term -> Unikatny nazov
+                                     instr2.type = F;
+                                     instr3.type = F;
+                                     instr2.value.f = (float) stack->arrayOfItems[stack->finderOfParenthesis + 3].value.f;
+                                     instr3.value.f = (float) stack->arrayOfItems[stack->finderOfParenthesis + 1].value.f;
+                                     dataIDF.value.f = (float) stack->arrayOfItems[stack->finderOfParenthesis + 1].value.f + stack->arrayOfItems[stack->finderOfParenthesis + 3].value.f;
+                                     insert_item(list, &instr_type, &instr1, &instr2, &instr3);
                                      // generovanie ADD %s@%s %s@%s %s@%s
-                                 } else {
-                                     resultOfPrece.result = ERR_INCOMPATIBLE_TYPE;
                                  }
+                                 else if (  (stack->arrayOfItems[stack->finderOfParenthesis + 1].type == INTEGER) && (stack->arrayOfItems[stack->finderOfParenthesis + 3].type == INTEGER) ){
+                                    instr_type = INSTRUCT_ADD;
+                                    instr1.type = GF;
+                                    instr1.value.s = "$result\0";
+
+                                    instr2.type = S;
+                                    printf("Tests %s\n", dataIDF.value.string.str);
+                                    instr2.value.s = dataIDF.value.string.str;
+
+                                    instr3.type = I;
+                                    instr3.value.i =  stack->arrayOfItems[stack->finderOfParenthesis + 3].value.i;
+
+                                    insert_item(list, &instr_type, &instr1, &instr2, &instr3);
+                                 }
+
+
+                                 else {
+                                    fprintf(stderr, "Semanticka chyba typové kompatibility v aritmetických vyrazech, radek %d\n", gToken.row);
+                                    resultOfPrece.result = ERR_INCOMPATIBLE_TYPE;
+                                    return resultOfPrece;
+                                 }
+
                              } else {
                                  resultOfPrece.result = SYN_ERR;
                                  return resultOfPrece;
                              }
-                            tempItemForPositionOne = stack_pop(stack);      // ulozenie si prveho E
-                            tempItemForPositionOne->token_data.nameOfTheNonTerminal = generateVariable(resultOfPrece.uniqueID)->str;    // generovanie UNIQUE
-                            stack_pop(stack);                               // popnutie znamienka +
-                            tempItemForPositionThree = stack_pop(stack);    // ulozenie si druheho E
-                            stack_pop(stack);                               // popnutie znamienak <
-//                            dataIDF = tempItemForPositionOne->token_data;  // do struktury nahrame adresu token->data
+                            STACK_POP4;
                             stack_push(stack, E, dataIDF);                 // nakoniec pushneme E + datovu strukturu
-                            if (DEBUG) stack_print_prece(stack);
                         break;
 
                             // PRAVIDLO E -> E - E
                         case eMINUS:
                             if ((&stack->arrayOfNumbers[stack->finderOfParenthesis + 3]) != NULL) {
-                                // generovanie DEFVAR %s@%s
-                                instr_type = INSTRUCT_DEFVAR;
                                 if ((stack->arrayOfItems[stack->finderOfParenthesis + 1].type == STRING) ||
                                     (stack->arrayOfItems[stack->finderOfParenthesis + 3].type == STRING)) {
+
+                                    fprintf(stderr, "Semanticka chyba typové kompatibility v aritmetických vyrazech, radek %d\n", gToken.row);
                                     resultOfPrece.result = ERR_INCOMPATIBLE_TYPE;
                                     return resultOfPrece;
+
                                 } else if ((stack->arrayOfItems[stack->finderOfParenthesis + 1].type == INTEGER) &&
                                            (stack->arrayOfItems[stack->finderOfParenthesis + 3].type == INTEGER)) {
                                     dataIDF.type = INTEGER;
                                     instr_type = INSTRUCT_SUB;
+                                    instr1.value.s = "$result\0";        // generovanie UNIQUE // generate non Term -> Unikatny nazov
+                                    instr2.type = I;
+                                    instr3.type = I;
+                                    instr2.value.i = stack->arrayOfItems[stack->finderOfParenthesis + 1].value.i;
+                                    instr3.value.i = stack->arrayOfItems[stack->finderOfParenthesis + 3].value.i;
+                                    dataIDF.value.i = stack->arrayOfItems[stack->finderOfParenthesis + 1].value.i - stack->arrayOfItems[stack->finderOfParenthesis + 3].value.i;
+                                    insert_item(list, &instr_type, &instr1, &instr2, &instr3);
                                     // generovanie SUB %s@%s %s@%s %s@%s
                                 } else if ((stack->arrayOfItems[stack->finderOfParenthesis + 1].type == INTEGER) &&
                                            (stack->arrayOfItems[stack->finderOfParenthesis + 3].type == FLOAT)) {
                                     dataIDF.type = FLOAT;
                                     instr_type = INSTRUCT_INT2FLOAT;
+                                    instr1.value.s = "$result\0";        // generovanie UNIQUE // generate non Term -> Unikatny nazov
+                                    instr2.type = I;
+                                    instr2.value.i = (float) stack->arrayOfItems[stack->finderOfParenthesis + 1].value.i;
+                                    insert_item(list, &instr_type, &instr1, &instr2, &instr3);
                                     instr_type = INSTRUCT_SUB;
+                                    instr2.type = F;
+                                    instr3.type = F;
+                                    instr2.value.f = (float) stack->arrayOfItems[stack->finderOfParenthesis + 1].value.i;
+                                    instr3.value.f = (float) stack->arrayOfItems[stack->finderOfParenthesis + 3].value.f;
+                                    dataIDF.value.f = (float) stack->arrayOfItems[stack->finderOfParenthesis + 1].value.i - stack->arrayOfItems[stack->finderOfParenthesis + 3].value.f;
+                                    insert_item(list, &instr_type, &instr1, &instr2, &instr3);
                                     // generovanie  INT2FLOAT %s@%s %s@%s
                                     // generovnaie  SUB %s@%s %s@%s %s@%s
                                 } else if ((stack->arrayOfItems[stack->finderOfParenthesis + 1].type == FLOAT) &&
                                            (stack->arrayOfItems[stack->finderOfParenthesis + 3].type == INTEGER)) {
                                     dataIDF.type = FLOAT;
                                     instr_type = INSTRUCT_INT2FLOAT;
+                                    instr1.value.s = "$result\0";        // generovanie UNIQUE // generate non Term -> Unikatny nazov
+                                    instr2.type = I;
+                                    instr2.value.i = (float) stack->arrayOfItems[stack->finderOfParenthesis + 3].value.i;
+                                    insert_item(list, &instr_type, &instr1, &instr2, &instr3);
                                     instr_type = INSTRUCT_SUB;
+                                    instr2.type = F;
+                                    instr3.type = F;
+                                    instr2.value.f = (float) stack->arrayOfItems[stack->finderOfParenthesis + 1].value.f;
+                                    instr3.value.f = (float) stack->arrayOfItems[stack->finderOfParenthesis + 3].value.i;
+                                    dataIDF.value.f = (float) stack->arrayOfItems[stack->finderOfParenthesis + 1].value.f - stack->arrayOfItems[stack->finderOfParenthesis + 3].value.i;
+                                    insert_item(list, &instr_type, &instr1, &instr2, &instr3);
                                     // generovanie  INT2FLOAT %s@%s %s@%s
                                     // generovnaie  SUB %s@%s %s@%s %s@%s
                                 } else if ((stack->arrayOfItems[stack->finderOfParenthesis + 1].type == FLOAT) &&
                                            (stack->arrayOfItems[stack->finderOfParenthesis + 3].type == FLOAT)) {
                                     dataIDF.type = FLOAT;
                                     instr_type = INSTRUCT_SUB;
+                                    instr1.value.s = "$result\0";        // generovanie UNIQUE // generate non Term -> Unikatny nazov
+                                    instr2.type = F;
+                                    instr3.type = F;
+                                    instr2.value.f = (float) stack->arrayOfItems[stack->finderOfParenthesis + 1].value.f;
+                                    instr3.value.f = (float) stack->arrayOfItems[stack->finderOfParenthesis + 3].value.f;
+                                    dataIDF.value.f = (float) stack->arrayOfItems[stack->finderOfParenthesis + 1].value.f - stack->arrayOfItems[stack->finderOfParenthesis + 3].value.f;
+                                    insert_item(list, &instr_type, &instr1, &instr2, &instr3);
                                     // generovanie  SUB %s@%s %s@%s %s@%s
                                 } else {
+                                    fprintf(stderr, "Semanticka chyba typové kompatibility v aritmetických vyrazech, radek %d\n", gToken.row);
                                     resultOfPrece.result = ERR_INCOMPATIBLE_TYPE;
+                                    return resultOfPrece;
                                 }
                             } else {
                                 resultOfPrece.result = SYN_ERR;
                                 return resultOfPrece;
                             }
-                            tempItemForPositionOne = stack_pop(stack);      // ulozenie si prveho E
-                            stack_pop(stack);                               // popnutie znamienka -
-                            tempItemForPositionThree = stack_pop(stack);    // ulozenie si druheho E
-                            stack_pop(stack);                               // popnutie znamienak <
-                            tempItemForPositionOne->token_data.value.i -= tempItemForPositionThree->token_data.value.i; //  E - E // TOTO JE IBA PRE KONTROLU
-                            dataIDF = tempItemForPositionOne->token_data;  // do struktury nahrame adresu token->data
+                            STACK_POP4;
                             stack_push(stack, E, dataIDF);                 // nakoniec pushneme E + datovu strukturu
                             if (DEBUG)
                                 stack_print(stack);
@@ -446,29 +546,57 @@ expr_return parse_expr(LocalMap* lMap, tList* list){
                             // PRAVIDLO E -> E * E
                         case eMUL:
                             if (&stack->arrayOfItems[stack->finderOfParenthesis + 3] != NULL) {
-                                // generovanie DEFVAR %s@%s
-                                instr_type = INSTRUCT_DEFVAR;
                                 if ((stack->arrayOfItems[stack->finderOfParenthesis + 1].type == STRING) ||
                                     (stack->arrayOfItems[stack->finderOfParenthesis + 3].type == STRING)) {
+
+                                    fprintf(stderr, "Semanticka chyba typové kompatibility v aritmetických vyrazech, radek %d\n", gToken.row);
                                     resultOfPrece.result = ERR_INCOMPATIBLE_TYPE;
                                     return resultOfPrece;
+
                                 } else if ((stack->arrayOfItems[stack->finderOfParenthesis + 1].type == INTEGER) &&
                                            (stack->arrayOfItems[stack->finderOfParenthesis + 3].type == INTEGER)) {
                                     dataIDF.type = INTEGER;
                                     instr_type = INSTRUCT_MUL;
+                                    instr1.value.s = "$result\0";        // generovanie UNIQUE // generate non Term -> Unikatny nazov
+                                    instr2.type = I;
+                                    instr3.type = I;
+                                    instr2.value.i = stack->arrayOfItems[stack->finderOfParenthesis + 1].value.i;
+                                    instr3.value.i = stack->arrayOfItems[stack->finderOfParenthesis + 3].value.i;
+                                    dataIDF.value.i = stack->arrayOfItems[stack->finderOfParenthesis + 1].value.i * stack->arrayOfItems[stack->finderOfParenthesis + 3].value.i;
+                                    insert_item(list, &instr_type, &instr1, &instr2, &instr3);
                                     //generovanie MUL %s@%s %s@%s %s@%s
                                 } else if ((stack->arrayOfItems[stack->finderOfParenthesis + 1].type == INTEGER) &&
                                            (stack->arrayOfItems[stack->finderOfParenthesis + 3].type == FLOAT)) {
                                     dataIDF.type = FLOAT;
                                     instr_type = INSTRUCT_INT2FLOAT;
+                                    instr1.value.s = "$result\0";        // generovanie UNIQUE // generate non Term -> Unikatny nazov
+                                    instr2.type = I;
+                                    instr2.value.i = (float) stack->arrayOfItems[stack->finderOfParenthesis + 1].value.i;
+                                    insert_item(list, &instr_type, &instr1, &instr2, &instr3);
                                     instr_type = INSTRUCT_MUL;
+                                    instr2.type = F;
+                                    instr3.type = F;
+                                    instr2.value.f = (float) stack->arrayOfItems[stack->finderOfParenthesis + 1].value.i;
+                                    instr3.value.f = (float) stack->arrayOfItems[stack->finderOfParenthesis + 3].value.f;
+                                    dataIDF.value.f = (float) stack->arrayOfItems[stack->finderOfParenthesis + 1].value.i * stack->arrayOfItems[stack->finderOfParenthesis + 3].value.f;
+                                    insert_item(list, &instr_type, &instr1, &instr2, &instr3);
                                     // generovanie INT2FLOAT %s@%s %s@%s
                                     //generovanie MUL %s@%s %s@%s %s@%s
                                 } else if ((stack->arrayOfItems[stack->finderOfParenthesis + 1].type == FLOAT) &&
                                            (stack->arrayOfItems[stack->finderOfParenthesis + 3].type == INTEGER)) {
                                     dataIDF.type = FLOAT;
                                     instr_type = INSTRUCT_INT2FLOAT;
+                                    instr1.value.s = "$result\0";        // generovanie UNIQUE // generate non Term -> Unikatny nazov
+                                    instr2.type = I;
+                                    instr2.value.i = (float) stack->arrayOfItems[stack->finderOfParenthesis + 3].value.i;
+                                    insert_item(list, &instr_type, &instr1, &instr2, &instr3);
                                     instr_type = INSTRUCT_MUL;
+                                    instr2.type = F;
+                                    instr3.type = F;
+                                    instr2.value.f = (float) stack->arrayOfItems[stack->finderOfParenthesis + 1].value.f;
+                                    instr3.value.f = (float) stack->arrayOfItems[stack->finderOfParenthesis + 3].value.i;
+                                    dataIDF.value.f = (float) stack->arrayOfItems[stack->finderOfParenthesis + 1].value.f * stack->arrayOfItems[stack->finderOfParenthesis + 3].value.i;
+                                    insert_item(list, &instr_type, &instr1, &instr2, &instr3);
                                     //generovanie INT2FLOAT %s@%s %s@%
                                     //generovanie MUL %s@%s %s@%s %s@%s
 
@@ -476,20 +604,25 @@ expr_return parse_expr(LocalMap* lMap, tList* list){
                                            (stack->arrayOfItems[stack->finderOfParenthesis + 3].type == FLOAT)) {
                                     dataIDF.type = FLOAT;
                                     instr_type = INSTRUCT_MUL;
+                                    instr1.value.s = "$result\0";        // generovanie UNIQUE // generate non Term -> Unikatny nazov
+                                    instr2.type = F;
+                                    instr3.type = F;
+                                    instr2.value.f = (float) stack->arrayOfItems[stack->finderOfParenthesis + 1].value.f;
+                                    instr3.value.f = (float) stack->arrayOfItems[stack->finderOfParenthesis + 3].value.f;
+                                    dataIDF.value.f = (float) stack->arrayOfItems[stack->finderOfParenthesis + 1].value.f * stack->arrayOfItems[stack->finderOfParenthesis + 3].value.f;
+                                    insert_item(list, &instr_type, &instr1, &instr2, &instr3);
                                     //generovanie MUL %s@%s %s@%s %s@%s
                                 } else {
+                                    fprintf(stderr, "Semanticka chyba typové kompatibility v aritmetických vyrazech, radek %d\n", gToken.row);
                                     resultOfPrece.result = ERR_INCOMPATIBLE_TYPE;
+                                    return resultOfPrece;
                                 }
 
                             } else {
                                 resultOfPrece.result = SYN_ERR;
                                 return resultOfPrece;
                             }
-                            tempItemForPositionOne = stack_pop(stack);      // ulozenie si prveho E
-                            stack_pop(stack);                               // popnutie znamienka -
-                            tempItemForPositionThree = stack_pop(stack);    // ulozenie si druheho E
-                            stack_pop(stack);                               // popnutie znamienak <
-//                            dataIDF = tempItemForPositionOne->token_data;  // do struktury nahrame adresu token->data
+                            STACK_POP4;
                             stack_push(stack, E, dataIDF);                 // nakoniec pushneme E + datovu strukturu
                             if (DEBUG)
                                 stack_print(stack);
@@ -497,46 +630,115 @@ expr_return parse_expr(LocalMap* lMap, tList* list){
                             // PRAVIDLO E -> E / E
                         case eDIV:
                             if (&stack->arrayOfItems[stack->finderOfParenthesis + 3] != NULL) {
-                                // generovanie DEFVAR %s@%s
-                                instr_type = INSTRUCT_DEFVAR;
                                 if ((stack->arrayOfItems[stack->finderOfParenthesis + 1].type == STRING) ||
                                     (stack->arrayOfItems[stack->finderOfParenthesis + 3].type == STRING)) {
+
+                                    fprintf(stderr, "Semanticka chyba typové kompatibility v aritmetických vyrazech, radek %d\n", gToken.row);
                                     resultOfPrece.result = ERR_INCOMPATIBLE_TYPE;
                                     return resultOfPrece;
+
                                 } else if ((stack->arrayOfItems[stack->finderOfParenthesis + 1].type == INTEGER) &&
                                            (stack->arrayOfItems[stack->finderOfParenthesis + 3].type == INTEGER)) {
-                                    dataIDF.type = FLOAT;
-                                    instr_type = INSTRUCT_DIV;
-                                    //generovanie DIV %s@%s %s@%s %s@%s
+                                    dataIDF.type = INTEGER;
+                                    instr_type = INSTRUCT_IDIV;
+                                    instr1.value.s = "$result\0";        // generovanie UNIQUE // generate non Term -> Unikatny nazov
+                                    instr2.type = I;
+                                    instr3.type = I;
+                                    instr2.value.i = stack->arrayOfItems[stack->finderOfParenthesis + 1].value.i;
+                                    instr3.value.i = stack->arrayOfItems[stack->finderOfParenthesis + 3].value.i;
+                                    if (instr3.value.i == 0){
+                                        fprintf(stderr, "Deleni nulou, radek cislo %d\n",gToken.row);
+                                        resultOfPrece.result = ERR_DIVISION;
+                                        return resultOfPrece;
+                                    }
+                                    else{
+                                        dataIDF.value.i = stack->arrayOfItems[stack->finderOfParenthesis + 1].value.i / stack->arrayOfItems[stack->finderOfParenthesis + 3].value.i;
+                                        insert_item(list, &instr_type, &instr1, &instr2, &instr3);
+                                        //generovanie IDIV %s@%s %s@%s %s@%s
+                                    }
+
+
                                 } else if ((stack->arrayOfItems[stack->finderOfParenthesis + 1].type == INTEGER) &&
                                            (stack->arrayOfItems[stack->finderOfParenthesis + 3].type == FLOAT)) {
                                     dataIDF.type = FLOAT;
+                                    instr_type = INSTRUCT_INT2FLOAT;
+                                    instr1.value.s = "$result\0";        // generovanie UNIQUE // generate non Term -> Unikatny nazov
+                                    instr2.type = I;
+                                    instr2.value.i = (float) stack->arrayOfItems[stack->finderOfParenthesis + 1].value.i;
+                                    insert_item(list, &instr_type, &instr1, &instr2, &instr3);
                                     instr_type = INSTRUCT_DIV;
+                                    instr2.type = F;
+                                    instr3.type = F;
+                                    instr2.value.f =stack->arrayOfItems[stack->finderOfParenthesis + 1].value.i;
+                                    instr3.value.f = stack->arrayOfItems[stack->finderOfParenthesis + 3].value.f;
+
+                                    if (instr3.value.f == 0.0){
+                                        fprintf(stderr, "Deleni nulou, radek cislo %d\n",gToken.row);
+                                        resultOfPrece.result = ERR_DIVISION;
+                                        return resultOfPrece;
+                                    }
+                                    else {
+                                        dataIDF.value.f = stack->arrayOfItems[stack->finderOfParenthesis + 1].value.i / stack->arrayOfItems[stack->finderOfParenthesis + 3].value.f;
+                                        insert_item(list, &instr_type, &instr1, &instr2, &instr3);
+                                    }
                                     // generovanie DIV %s@%s %s@%s %s@%s
                                 } else if ((stack->arrayOfItems[stack->finderOfParenthesis + 1].type == FLOAT) &&
                                            (stack->arrayOfItems[stack->finderOfParenthesis + 3].type == INTEGER)) {
                                     dataIDF.type = FLOAT;
+                                    instr_type = INSTRUCT_INT2FLOAT;
+                                    instr1.value.s = "$result\0";        // generovanie UNIQUE // generate non Term -> Unikatny nazov
+                                    instr2.type = I;
+                                    instr2.value.i = (float) stack->arrayOfItems[stack->finderOfParenthesis + 3].value.i;
+                                    insert_item(list, &instr_type, &instr1, &instr2, &instr3);
                                     instr_type = INSTRUCT_DIV;
-                                    // generovanie  DIV %s@%s %s@%s %s@%s
+                                    instr2.type = F;
+                                    instr3.type = F;
+                                    instr2.value.f = stack->arrayOfItems[stack->finderOfParenthesis + 1].value.f;
+                                    instr3.value.f = stack->arrayOfItems[stack->finderOfParenthesis + 3].value.i;
+
+                                    if (instr3.value.i == 0){
+                                        fprintf(stderr, "Deleni nulou, radek cislo %d\n",gToken.row);
+                                        resultOfPrece.result = ERR_DIVISION;
+                                        return resultOfPrece;
+                                    }
+
+                                    else {
+                                        dataIDF.value.f = stack->arrayOfItems[stack->finderOfParenthesis + 1].value.f / stack->arrayOfItems[stack->finderOfParenthesis + 3].value.i;
+                                        insert_item(list, &instr_type, &instr1, &instr2, &instr3);
+                                        // generovanie  DIV %s@%s %s@%s %s@%s
+                                    }
                                 } else if ((stack->arrayOfItems[stack->finderOfParenthesis + 1].type == FLOAT) &&
                                            (stack->arrayOfItems[stack->finderOfParenthesis + 3].type == FLOAT)) {
                                     dataIDF.type = FLOAT;
                                     instr_type = INSTRUCT_DIV;
-                                    // generovanie  DIV %s@%s %s@%s %s@%s
+                                    instr1.value.s = "$result\0";        // generovanie UNIQUE // generate non Term -> Unikatny nazov
+                                    instr2.type = F;
+                                    instr3.type = F;
+                                    instr2.value.f = stack->arrayOfItems[stack->finderOfParenthesis + 1].value.f;
+                                    instr3.value.f = stack->arrayOfItems[stack->finderOfParenthesis + 3].value.f;
+
+                                    if (instr3.value.f == 0.0){
+                                        fprintf(stderr, "Deleni nulou, radek cislo %d\n",gToken.row);
+                                        resultOfPrece.result = ERR_DIVISION;
+                                        return resultOfPrece;
+                                    }
+                                    else{
+                                        dataIDF.value.f = stack->arrayOfItems[stack->finderOfParenthesis + 1].value.f * stack->arrayOfItems[stack->finderOfParenthesis + 3].value.f;
+                                        insert_item(list, &instr_type, &instr1, &instr2, &instr3);
+                                        // generovanie  DIV %s@%s %s@%s %s@%s
+                                    }
+
+
                                 } else {   //printf("semanticky error BOOL \n");
+                                    fprintf(stderr, "Semanticka chyba typové kompatibility v aritmetických vyrazech, radek %d\n", gToken.row);
                                     resultOfPrece.result = ERR_INCOMPATIBLE_TYPE;
+                                    return resultOfPrece;
                                 }
                             } else {
-                                // error dal si zle tokeny
                                 resultOfPrece.result = SYN_ERR;
                                 return resultOfPrece;
                             }
-                            tempItemForPositionOne = stack_pop(stack);      // ulozenie si prveho E
-                            stack_pop(stack);                               // popnutie znamienka -
-                            tempItemForPositionThree = stack_pop(stack);    // ulozenie si druheho E
-                            stack_pop(stack);                               // popnutie znamienak <
-                            tempItemForPositionOne->token_data.value.i /= tempItemForPositionThree->token_data.value.i; //  E / E // TOTO JE IBA PRE KONTROLU
-                            dataIDF = tempItemForPositionOne->token_data;  // do struktury nahrame adresu token->data
+                            STACK_POP4;
                             stack_push(stack, E, dataIDF);                 // nakoniec pushneme E + datovu strukturu
                             if (DEBUG)
                                 stack_print(stack);
@@ -544,47 +746,82 @@ expr_return parse_expr(LocalMap* lMap, tList* list){
                             // PRAVIDLO E -> E < E
                         case eLESS:
                             if (&stack->arrayOfItems[stack->finderOfParenthesis + 3] != NULL) {
-                                // generovanie DEFVAR %s@%s
-                                instr_type = INSTRUCT_DEFVAR;
                                 if ((stack->arrayOfItems[stack->finderOfParenthesis + 1].type == STRING) &&
                                     (stack->arrayOfItems[stack->finderOfParenthesis + 3].type == STRING)) {
-                                    int result = strCompare(
-                                            &stack->arrayOfItems[stack->finderOfParenthesis + 1].value.string,
-                                            &stack->arrayOfItems[stack->finderOfParenthesis + 3].value.string);
+                                    int result = strcmp(
+                                            stack->arrayOfItems[stack->finderOfParenthesis + 1].value.string.str,
+                                            stack->arrayOfItems[stack->finderOfParenthesis + 3].value.string.str);
                                     if (result < 0) {
-                                        resultOfPrece.bool_result = 1; // true
+                                        dataIDF.type = BOOLEAN;
+                                        instr_type = INSTRUCT_LT;
+                                        instr1.value.s = "$$EXPR\0";
+                                        instr2.type = S;
+                                        instr3.type = S;
+                                        instr2.value.s = stack->arrayOfItems[stack->finderOfParenthesis + 1].value.string.str;
+                                        instr3.value.s = stack->arrayOfItems[stack->finderOfParenthesis + 3].value.string.str;
+                                        insert_item(list, &instr_type, &instr1, &instr2, &instr3);
                                     }
-                                    resultOfPrece.bool_result = 0; // false
-                                    dataIDF.type = BOOLEAN;
-                                    instr_type = INSTRUCT_LT;
                                     // generovanie LT %s@%s %s@%s %s@%s
                                 } else if ((stack->arrayOfItems[stack->finderOfParenthesis + 1].type == INTEGER) &&
                                            (stack->arrayOfItems[stack->finderOfParenthesis + 3].type == INTEGER)) {
                                     dataIDF.type = BOOLEAN;
-                                    resultOfPrece.bool_result = 1; // true
                                     instr_type = INSTRUCT_LT;
+                                    instr1.value.s = "$$EXPR\0";
+                                    instr2.type = I;
+                                    instr3.type = I;
+                                    instr2.value.i = stack->arrayOfItems[stack->finderOfParenthesis + 1].value.i;
+                                    instr3.value.i = stack->arrayOfItems[stack->finderOfParenthesis + 3].value.i;
+                                    dataIDF.value.i = stack->arrayOfItems[stack->finderOfParenthesis + 1].value.i < stack->arrayOfItems[stack->finderOfParenthesis + 3].value.i;
+                                    insert_item(list, &instr_type, &instr1, &instr2, &instr3);
                                     // generovanie LT %s@%s %s@%s %s@%s
                                 } else if ((stack->arrayOfItems[stack->finderOfParenthesis + 1].type == INTEGER) &&
                                            (stack->arrayOfItems[stack->finderOfParenthesis + 3].type == FLOAT)) {
                                     dataIDF.type = BOOLEAN;
-                                    resultOfPrece.bool_result = 1; // true
-                                    instr_type = INSTRUCT_FLOAT2INT; // asi najskor previest na integer a potom porovanat
+                                    instr_type = INSTRUCT_FLOAT2INT;    // asi najskor previest na integer a potom porovanat
+                                    instr1.value.s = "$result\0";        // generovanie UNIQUE // generate non Term -> Unikatny nazov
+                                    instr2.type = F;
+                                    instr2.value.f = (int) stack->arrayOfItems[stack->finderOfParenthesis + 3].value.f;
+                                    insert_item(list, &instr_type, &instr1, &instr2, &instr3);
                                     instr_type = INSTRUCT_LT;
+                                    instr1.value.s = "$$EXPR\0";
+                                    instr2.type = I;
+                                    instr3.type = I;
+                                    instr2.value.i = stack->arrayOfItems[stack->finderOfParenthesis + 1].value.i;
+                                    instr3.value.i = (int)stack->arrayOfItems[stack->finderOfParenthesis + 3].value.f;
+                                    dataIDF.value.f = stack->arrayOfItems[stack->finderOfParenthesis + 1].value.i < stack->arrayOfItems[stack->finderOfParenthesis + 3].value.f;
+                                    insert_item(list, &instr_type, &instr1, &instr2, &instr3);
                                     // generovanie LT %s@%s %s@%s %s@%s
                                 } else if ((stack->arrayOfItems[stack->finderOfParenthesis + 1].type == FLOAT) &&
                                            (stack->arrayOfItems[stack->finderOfParenthesis + 3].type == INTEGER)) {
                                     dataIDF.type = BOOLEAN;
-                                    resultOfPrece.bool_result = 1; // true
-                                    instr_type = INSTRUCT_FLOAT2INT; // asi najskor previest na integer a potom porovanat
+                                    instr_type = INSTRUCT_FLOAT2INT;        // asi najskor previest na integer a potom porovanat
+                                    instr1.value.s = "$result\0";        // generovanie UNIQUE // generate non Term -> Unikatny nazov
+                                    instr2.type = F;
+                                    instr2.value.f = (int) stack->arrayOfItems[stack->finderOfParenthesis + 1].value.f;
+                                    insert_item(list, &instr_type, &instr1, &instr2, &instr3);
                                     instr_type = INSTRUCT_LT;
+                                    instr1.value.s = "$$EXPR\0";
+                                    instr2.type = I;
+                                    instr3.type = I;
+                                    instr2.value.i = (int)stack->arrayOfItems[stack->finderOfParenthesis + 1].value.f;
+                                    instr3.value.i = stack->arrayOfItems[stack->finderOfParenthesis + 3].value.i;
+                                    dataIDF.value.i = stack->arrayOfItems[stack->finderOfParenthesis + 1].value.i < stack->arrayOfItems[stack->finderOfParenthesis + 3].value.i;
+                                    insert_item(list, &instr_type, &instr1, &instr2, &instr3);
                                     // generovanie LT %s@%s %s@%s %s@%s
                                 } else if ((stack->arrayOfItems[stack->finderOfParenthesis + 1].type == FLOAT) &&
                                            (stack->arrayOfItems[stack->finderOfParenthesis + 3].type == FLOAT)) {
                                     dataIDF.type = BOOLEAN;
-                                    resultOfPrece.bool_result = 1; // true
                                     instr_type = INSTRUCT_LT;
+                                    instr1.value.s = "$$EXPR\0";
+                                    instr2.type = F;
+                                    instr3.type = F;
+                                    instr2.value.f = stack->arrayOfItems[stack->finderOfParenthesis + 1].value.f;
+                                    instr3.value.f = stack->arrayOfItems[stack->finderOfParenthesis + 3].value.f;
+                                    dataIDF.value.f = stack->arrayOfItems[stack->finderOfParenthesis + 1].value.f <  stack->arrayOfItems[stack->finderOfParenthesis + 3].value.f;
+                                    insert_item(list, &instr_type, &instr1, &instr2, &instr3);
                                     // generovanie LT %s@%s %s@%s %s@%s
                                 } else {
+                                    fprintf(stderr, "Semanticka chyba typové kompatibility v aritmetických vyrazech, radek %d\n", gToken.row);
                                     resultOfPrece.result = ERR_INCOMPATIBLE_TYPE;
                                     return resultOfPrece;
                                 }
@@ -592,61 +829,92 @@ expr_return parse_expr(LocalMap* lMap, tList* list){
                                 resultOfPrece.result = SYN_ERR;
                                 return resultOfPrece;
                             }
-                            tempItemForPositionOne = stack_pop(stack);      // ulozenie si prveho E
-                            stack_pop(stack);                               // popnutie znamienka >=
-                            tempItemForPositionThree = stack_pop(stack);    // ulozenie si druheho E
-                            stack_pop(stack);                               // popnutie znamienak <
-//                            tempItemForPositionOne->token_data.value.i != tempItemForPositionThree->token_data.value.i; //  E >= E // TOTO JE IBA PRE KONTROLU
-                            dataIDF = tempItemForPositionOne->token_data;  // do struktury nahrame adresu token->data
+                            STACK_POP4;
                             stack_push(stack, E, dataIDF);                 // nakoniec pushneme E + datovu strukturu
                             if (DEBUG)
                                 stack_print(stack);
                         break;
                             // PRAVIDLO E -> E > E
                         case eGREAT:
-
                             if (&stack->arrayOfItems[stack->finderOfParenthesis + 3] != NULL) {
-                                // generovanie DEFVAR %s@%s
-                                instr_type = INSTRUCT_DEFVAR;
                                 if ((stack->arrayOfItems[stack->finderOfParenthesis + 1].type == STRING) &&
                                     (stack->arrayOfItems[stack->finderOfParenthesis + 3].type == STRING)) {
-                                    int result = strCompare(
-                                            &stack->arrayOfItems[stack->finderOfParenthesis + 1].value.string,
-                                            &stack->arrayOfItems[stack->finderOfParenthesis + 3].value.string);
+                                    int result = strcmp(
+                                            stack->arrayOfItems[stack->finderOfParenthesis + 1].value.string.str,
+                                            stack->arrayOfItems[stack->finderOfParenthesis + 3].value.string.str);
                                     if (result > 0) {
-                                        resultOfPrece.bool_result = 1; // true
+                                        dataIDF.type = BOOLEAN;
+                                        instr_type = INSTRUCT_GT;
+                                        instr1.value.s = "$$EXPR\0";
+                                        instr2.type = S;
+                                        instr3.type = S;
+                                        instr2.value.s = stack->arrayOfItems[stack->finderOfParenthesis + 1].value.string.str;
+                                        instr3.value.s = stack->arrayOfItems[stack->finderOfParenthesis + 3].value.string.str;
+                                        insert_item(list, &instr_type, &instr1, &instr2, &instr3);
                                     }
-                                    resultOfPrece.bool_result = 0; // false
-                                    dataIDF.type = BOOLEAN;
                                     // generovanie GT %s@%s %s@%s %s@%s
-                                    instr_type = INSTRUCT_GT;
+
                                 } else if ((stack->arrayOfItems[stack->finderOfParenthesis + 1].type == INTEGER) &&
                                            (stack->arrayOfItems[stack->finderOfParenthesis + 3].type == INTEGER)) {
                                     dataIDF.type = BOOLEAN;
-                                    resultOfPrece.bool_result = 1; // true
+                                    instr_type = INSTRUCT_GT;
+                                    instr1.value.s = "$$EXPR\0";
+                                    instr2.type = I;
+                                    instr3.type = I;
+                                    instr2.value.i = stack->arrayOfItems[stack->finderOfParenthesis + 1].value.i;
+                                    instr3.value.i = stack->arrayOfItems[stack->finderOfParenthesis + 3].value.i;
+                                    dataIDF.value.i = stack->arrayOfItems[stack->finderOfParenthesis + 1].value.i > stack->arrayOfItems[stack->finderOfParenthesis + 3].value.i;
+                                    insert_item(list, &instr_type, &instr1, &instr2, &instr3);
                                     // generovanie GT %s@%s %s@%s %s@%s
                                     instr_type = INSTRUCT_GT;
                                 } else if ((stack->arrayOfItems[stack->finderOfParenthesis + 1].type == INTEGER) &&
                                            (stack->arrayOfItems[stack->finderOfParenthesis + 3].type == FLOAT)) {
                                     dataIDF.type = BOOLEAN;
-                                    resultOfPrece.bool_result = 1; // true
+                                    instr_type = INSTRUCT_FLOAT2INT;    // asi najskor previest na integer a potom porovanat
+                                    instr1.value.s = "$result\0";        // generovanie UNIQUE // generate non Term -> Unikatny nazov
+                                    instr2.type = F;
+                                    instr2.value.f = (int) stack->arrayOfItems[stack->finderOfParenthesis + 3].value.f;
+                                    insert_item(list, &instr_type, &instr1, &instr2, &instr3);
+                                    instr_type = INSTRUCT_LT;
+                                    instr1.value.s = "$$EXPR\0";
+                                    instr2.type = I;
+                                    instr3.type = I;
+                                    instr2.value.i = stack->arrayOfItems[stack->finderOfParenthesis + 1].value.i;
+                                    instr3.value.i = (int)stack->arrayOfItems[stack->finderOfParenthesis + 3].value.f;
+                                    dataIDF.value.f = stack->arrayOfItems[stack->finderOfParenthesis + 1].value.i > stack->arrayOfItems[stack->finderOfParenthesis + 3].value.f;
+                                    insert_item(list, &instr_type, &instr1, &instr2, &instr3);
                                     // generovanie GT %s@%s %s@%s %s@%s
-                                    instr_type = INSTRUCT_FLOAT2INT;
-                                    instr_type = INSTRUCT_GT;
                                 } else if ((stack->arrayOfItems[stack->finderOfParenthesis + 1].type == FLOAT) &&
                                            (stack->arrayOfItems[stack->finderOfParenthesis + 3].type == INTEGER)) {
                                     dataIDF.type = BOOLEAN;
-                                    resultOfPrece.bool_result = 1; // true
+                                    instr_type = INSTRUCT_FLOAT2INT;        // asi najskor previest na integer a potom porovanat
+                                    instr1.value.s = "$result\0";        // generovanie UNIQUE // generate non Term -> Unikatny nazov
+                                    instr2.type = F;
+                                    instr2.value.f = (int) stack->arrayOfItems[stack->finderOfParenthesis + 1].value.f;
+                                    insert_item(list, &instr_type, &instr1, &instr2, &instr3);
+                                    instr_type = INSTRUCT_LT;
+                                    instr1.value.s = "$$EXPR\0";
+                                    instr2.type = I;
+                                    instr3.type = I;
+                                    instr2.value.i = (int)stack->arrayOfItems[stack->finderOfParenthesis + 1].value.f;
+                                    instr3.value.i = stack->arrayOfItems[stack->finderOfParenthesis + 3].value.i;
+                                    dataIDF.value.i = stack->arrayOfItems[stack->finderOfParenthesis + 1].value.i < stack->arrayOfItems[stack->finderOfParenthesis + 3].value.i;
+                                    insert_item(list, &instr_type, &instr1, &instr2, &instr3);
                                     // generovanie GT %s@%s %s@%s %s@%s
-                                    instr_type = INSTRUCT_FLOAT2INT;
-                                    instr_type = INSTRUCT_GT;
                                 } else if ((stack->arrayOfItems[stack->finderOfParenthesis + 1].type == FLOAT) &&
                                            (stack->arrayOfItems[stack->finderOfParenthesis + 3].type == FLOAT)) {
                                     dataIDF.type = BOOLEAN;
-                                    resultOfPrece.bool_result = 1; // true
-                                    // generovanie GT %s@%s %s@%s %s@%s
                                     instr_type = INSTRUCT_GT;
+                                    instr1.value.s = "$$EXPR\0";
+                                    instr2.type = F;
+                                    instr3.type = F;
+                                    instr2.value.f = stack->arrayOfItems[stack->finderOfParenthesis + 1].value.f;
+                                    instr3.value.f = stack->arrayOfItems[stack->finderOfParenthesis + 3].value.f;
+                                    dataIDF.value.f = stack->arrayOfItems[stack->finderOfParenthesis + 1].value.f >  stack->arrayOfItems[stack->finderOfParenthesis + 3].value.f;
+                                    insert_item(list, &instr_type, &instr1, &instr2, &instr3);
+                                    // generovanie GT %s@%s %s@%s %s@%s
                                 } else {
+                                    fprintf(stderr, "Semanticka chyba typové kompatibility v aritmetických vyrazech, radek %d\n", gToken.row);
                                     resultOfPrece.result = ERR_INCOMPATIBLE_TYPE;
                                     return resultOfPrece;
                                 }
@@ -654,12 +922,7 @@ expr_return parse_expr(LocalMap* lMap, tList* list){
                                 resultOfPrece.result = SYN_ERR;
                                 return resultOfPrece;
                             }
-                            tempItemForPositionOne = stack_pop(stack);      // ulozenie si prveho E
-                            stack_pop(stack);                               // popnutie znamienka >=
-                            tempItemForPositionThree = stack_pop(stack);    // ulozenie si druheho E
-                            stack_pop(stack);                               // popnutie znamienak <
-//                            tempItemForPositionOne->token_data.value.i != tempItemForPositionThree->token_data.value.i; //  E > E // TOTO JE IBA PRE KONTROLU
-                            dataIDF = tempItemForPositionOne->token_data;  // do struktury nahrame adresu token->data
+                            STACK_POP4;
                             stack_push(stack, E, dataIDF);                 // nakoniec pushneme E + datovu strukturu
                             if (DEBUG)
                                 stack_print(stack);
@@ -667,41 +930,84 @@ expr_return parse_expr(LocalMap* lMap, tList* list){
                             // PRAVIDLO E -> E <= E
                         case eLEQUAL: // <=
                             if (&stack->arrayOfItems[stack->finderOfParenthesis + 3] != NULL) {
-                                // generovanie DEFVAR %s@%s
-                                instr_type = INSTRUCT_DEFVAR;
                                 if ((stack->arrayOfItems[stack->finderOfParenthesis + 1].type == STRING) &&
                                     (stack->arrayOfItems[stack->finderOfParenthesis + 3].type == STRING)) {
-                                    resultOfPrece.bool_result = 1; // true
                                     dataIDF.type = BOOLEAN;
+                                    int result = strcmp(
+                                            stack->arrayOfItems[stack->finderOfParenthesis + 1].value.string.str,
+                                            stack->arrayOfItems[stack->finderOfParenthesis + 3].value.string.str);
+                                    if (result >= 0) {
+                                        dataIDF.type = BOOLEAN;
+                                        instr_type = INSTRUCT_LTS;
+                                        instr1.value.s = "$$EXPR\0";
+                                        instr2.type = S;
+                                        instr3.type = S;
+                                        instr2.value.s = stack->arrayOfItems[stack->finderOfParenthesis + 1].value.string.str;
+                                        instr3.value.s = stack->arrayOfItems[stack->finderOfParenthesis + 3].value.string.str;
+                                        insert_item(list, &instr_type, &instr1, &instr2, &instr3);
+                                    }
                                     // generovanie LTS %s@%s %s@%s %s@%s
-                                    instr_type = INSTRUCT_LTS;
                                 } else if ((stack->arrayOfItems[stack->finderOfParenthesis + 1].type == INTEGER) &&
                                            (stack->arrayOfItems[stack->finderOfParenthesis + 3].type == INTEGER)) {
-                                    resultOfPrece.bool_result = 1; // true
                                     dataIDF.type = BOOLEAN;
-                                    // generovanie LTS %s@%s %s@%s %s@%s
                                     instr_type = INSTRUCT_LTS;
+                                    instr1.value.s = "$$EXPR\0";
+                                    instr2.type = I;
+                                    instr3.type = I;
+                                    instr2.value.i = stack->arrayOfItems[stack->finderOfParenthesis + 1].value.i;
+                                    instr3.value.i = stack->arrayOfItems[stack->finderOfParenthesis + 3].value.i;
+                                    dataIDF.value.i = stack->arrayOfItems[stack->finderOfParenthesis + 1].value.i <= stack->arrayOfItems[stack->finderOfParenthesis + 3].value.i;
+                                    insert_item(list, &instr_type, &instr1, &instr2, &instr3);
+
+                                    // generovanie LTS %s@%s %s@%s %s@%s
                                 } else if ((stack->arrayOfItems[stack->finderOfParenthesis + 1].type == INTEGER) &&
                                            (stack->arrayOfItems[stack->finderOfParenthesis + 3].type == FLOAT)) {
-                                    resultOfPrece.bool_result = 1; // true
                                     dataIDF.type = BOOLEAN;
-                                    // generovanie LTS %s@%s %s@%s %s@%s
-                                    instr_type = INSTRUCT_FLOAT2INT;
+                                    instr_type = INSTRUCT_FLOAT2INT;    // asi najskor previest na integer a potom porovanat
+                                    instr1.value.s = "$result\0";        // generovanie UNIQUE // generate non Term -> Unikatny nazov
+                                    instr2.type = F;
+                                    instr2.value.f = (int) stack->arrayOfItems[stack->finderOfParenthesis + 3].value.f;
+                                    insert_item(list, &instr_type, &instr1, &instr2, &instr3);
                                     instr_type = INSTRUCT_LTS;
+                                    instr1.value.s = "$$EXPR\0";
+                                    instr2.type = I;
+                                    instr3.type = I;
+                                    instr2.value.i = stack->arrayOfItems[stack->finderOfParenthesis + 1].value.i;
+                                    instr3.value.i = (int)stack->arrayOfItems[stack->finderOfParenthesis + 3].value.f;
+                                    dataIDF.value.f = stack->arrayOfItems[stack->finderOfParenthesis + 1].value.i <= stack->arrayOfItems[stack->finderOfParenthesis + 3].value.f;
+                                    insert_item(list, &instr_type, &instr1, &instr2, &instr3);
+                                    // generovanie LTS %s@%s %s@%s %s@%s
                                 } else if ((stack->arrayOfItems[stack->finderOfParenthesis + 1].type == FLOAT) &&
                                            (stack->arrayOfItems[stack->finderOfParenthesis + 3].type == INTEGER)) {
-                                    resultOfPrece.bool_result = 1; // true
                                     dataIDF.type = BOOLEAN;
-                                    // generovanie LTS %s@%s %s@%s %s@%s
-                                    instr_type = INSTRUCT_FLOAT2INT;
+                                    instr_type = INSTRUCT_FLOAT2INT;        // asi najskor previest na integer a potom porovanat
+                                    instr1.value.s = "$result\0";        // generovanie UNIQUE // generate non Term -> Unikatny nazov
+                                    instr2.type = F;
+                                    instr2.value.f = (int) stack->arrayOfItems[stack->finderOfParenthesis + 1].value.f;
+                                    insert_item(list, &instr_type, &instr1, &instr2, &instr3);
                                     instr_type = INSTRUCT_LTS;
+                                    instr1.value.s = "$$EXPR\0";
+                                    instr2.type = I;
+                                    instr3.type = I;
+                                    instr2.value.i = (int)stack->arrayOfItems[stack->finderOfParenthesis + 1].value.f;
+                                    instr3.value.i = stack->arrayOfItems[stack->finderOfParenthesis + 3].value.i;
+                                    dataIDF.value.i = stack->arrayOfItems[stack->finderOfParenthesis + 1].value.i <= stack->arrayOfItems[stack->finderOfParenthesis + 3].value.i;
+                                    insert_item(list, &instr_type, &instr1, &instr2, &instr3);
+                                    // generovanie LTS %s@%s %s@%s %s@%s
                                 } else if ((stack->arrayOfItems[stack->finderOfParenthesis + 1].type == FLOAT) &&
                                            (stack->arrayOfItems[stack->finderOfParenthesis + 3].type == FLOAT)) {
-                                    resultOfPrece.bool_result = 1; // true
                                     dataIDF.type = BOOLEAN;
-                                    // generovanie LTS %s@%s %s@%s %s@%s
                                     instr_type = INSTRUCT_LTS;
+                                    instr1.value.s = "$$EXPR\0";
+                                    instr2.type = F;
+                                    instr3.type = F;
+                                    instr2.value.f = stack->arrayOfItems[stack->finderOfParenthesis + 1].value.f;
+                                    instr3.value.f = stack->arrayOfItems[stack->finderOfParenthesis + 3].value.f;
+                                    dataIDF.value.f = stack->arrayOfItems[stack->finderOfParenthesis + 1].value.f <= stack->arrayOfItems[stack->finderOfParenthesis + 3].value.f;
+                                    insert_item(list, &instr_type, &instr1, &instr2, &instr3);
+                                    // generovanie LTS %s@%s %s@%s %s@%s
                                 } else {
+                                    fprintf(stderr, "Semanticka chyba typové kompatibility v aritmetických vyrazech, radek %d\n", gToken.row);
                                     resultOfPrece.result = ERR_INCOMPATIBLE_TYPE;
                                     return resultOfPrece;
                                 }
@@ -709,54 +1015,91 @@ expr_return parse_expr(LocalMap* lMap, tList* list){
                                 resultOfPrece.result = SYN_ERR;
                                 return resultOfPrece;
                             }
-                            tempItemForPositionOne = stack_pop(stack);      // ulozenie si prveho E
-                            stack_pop(stack);                               // popnutie znamienka >=
-                            tempItemForPositionThree = stack_pop(stack);    // ulozenie si druheho E
-                            stack_pop(stack);                               // popnutie znamienak <
-//                            tempItemForPositionOne->token_data.value.i != tempItemForPositionThree->token_data.value.i; //  E >= E // TOTO JE IBA PRE KONTROLU
-                            dataIDF = tempItemForPositionOne->token_data;  // do struktury nahrame adresu token->data
+                            STACK_POP4;
                             stack_push(stack, E, dataIDF);                 // nakoniec pushneme E + datovu strukturu
                             if (DEBUG)
                                 stack_print(stack);
                         break;
                             // PRAVIDLO E -> E >= E
                         case eGEQUAL: // >=
-                            // generovanie DEFVAR %s@%s
-                            instr_type = INSTRUCT_DEFVAR;
                             if (&stack->arrayOfItems[stack->finderOfParenthesis + 3] != NULL) {
                                 if ((stack->arrayOfItems[stack->finderOfParenthesis + 1].type == STRING) &&
                                     (stack->arrayOfItems[stack->finderOfParenthesis + 3].type == STRING)) {
-                                    resultOfPrece.bool_result = 1; // true
                                     dataIDF.type = BOOLEAN;
+                                    int result = strcmp(
+                                            stack->arrayOfItems[stack->finderOfParenthesis + 1].value.string.str,
+                                            stack->arrayOfItems[stack->finderOfParenthesis + 3].value.string.str);
+                                    if (result <= 0) {
+                                        dataIDF.type = BOOLEAN;
+                                        instr_type = INSTRUCT_GTS;
+                                        instr1.value.s = "$$EXPR\0";
+                                        instr2.type = S;
+                                        instr3.type = S;
+                                        instr2.value.s = stack->arrayOfItems[stack->finderOfParenthesis + 1].value.string.str;
+                                        instr3.value.s = stack->arrayOfItems[stack->finderOfParenthesis + 3].value.string.str;
+                                        insert_item(list, &instr_type, &instr1, &instr2, &instr3);
+                                    }
                                     // generovanie GTS %s@%s %s@%s %s@%s
                                     instr_type = INSTRUCT_GTS;
                                 } else if ((stack->arrayOfItems[stack->finderOfParenthesis + 1].type == INTEGER) &&
                                            (stack->arrayOfItems[stack->finderOfParenthesis + 3].type == INTEGER)) {
-                                    resultOfPrece.bool_result = 1; // true
                                     dataIDF.type = BOOLEAN;
+                                    instr_type = INSTRUCT_GTS;
+                                    instr1.value.s = "$$EXPR\0";
+                                    instr2.type = I;
+                                    instr3.type = I;
+                                    instr2.value.i = stack->arrayOfItems[stack->finderOfParenthesis + 1].value.i;
+                                    instr3.value.i = stack->arrayOfItems[stack->finderOfParenthesis + 3].value.i;
+                                    dataIDF.value.i = stack->arrayOfItems[stack->finderOfParenthesis + 1].value.i >= stack->arrayOfItems[stack->finderOfParenthesis + 3].value.i;
+                                    insert_item(list, &instr_type, &instr1, &instr2, &instr3);
                                     // generovanie GTS %s@%s %s@%s %s@%s
                                     instr_type = INSTRUCT_GTS;
                                 } else if ((stack->arrayOfItems[stack->finderOfParenthesis + 1].type == INTEGER) &&
                                            (stack->arrayOfItems[stack->finderOfParenthesis + 3].type == FLOAT)) {
-                                    resultOfPrece.bool_result = 1; // true
                                     dataIDF.type = BOOLEAN;
+                                    instr_type = INSTRUCT_FLOAT2INT;    // asi najskor previest na integer a potom porovanat
+                                    instr1.value.s = "$result\0";        // generovanie UNIQUE // generate non Term -> Unikatny nazov
+                                    instr2.type = F;
+                                    instr2.value.f = (int) stack->arrayOfItems[stack->finderOfParenthesis + 3].value.f;
+                                    insert_item(list, &instr_type, &instr1, &instr2, &instr3);
+                                    instr_type = INSTRUCT_LTS;
+                                    instr1.value.s = "$$EXPR\0";
+                                    instr2.type = I;
+                                    instr3.type = I;
+                                    instr2.value.i = stack->arrayOfItems[stack->finderOfParenthesis + 1].value.i;
+                                    instr3.value.i = (int)stack->arrayOfItems[stack->finderOfParenthesis + 3].value.f;
+                                    dataIDF.value.f = stack->arrayOfItems[stack->finderOfParenthesis + 1].value.i >= stack->arrayOfItems[stack->finderOfParenthesis + 3].value.f;
+                                    insert_item(list, &instr_type, &instr1, &instr2, &instr3);
                                     // generovanie GTS %s@%s %s@%s %s@%s
-                                    instr_type = INSTRUCT_FLOAT2INT;
-                                    instr_type = INSTRUCT_GTS;
                                 } else if ((stack->arrayOfItems[stack->finderOfParenthesis + 1].type == FLOAT) &&
                                            (stack->arrayOfItems[stack->finderOfParenthesis + 3].type == INTEGER)) {
-                                    resultOfPrece.bool_result = 1; // true
                                     dataIDF.type = BOOLEAN;
-                                    // generovanie GTS %s@%s %s@%s %s@%s
-                                    instr_type = INSTRUCT_FLOAT2INT;
+                                    instr_type = INSTRUCT_FLOAT2INT;        // asi najskor previest na integer a potom porovanat
+                                    instr1.value.s = "$result\0";        // generovanie UNIQUE // generate non Term -> Unikatny nazov
+                                    instr2.type = F;
+                                    instr2.value.f = (int) stack->arrayOfItems[stack->finderOfParenthesis + 1].value.f;
+                                    insert_item(list, &instr_type, &instr1, &instr2, &instr3);
                                     instr_type = INSTRUCT_GTS;
+                                    instr1.value.s = "$$EXPR\0";
+                                    instr2.type = I;
+                                    instr3.type = I;
+                                    instr2.value.i = (int)stack->arrayOfItems[stack->finderOfParenthesis + 1].value.f;
+                                    instr3.value.i = stack->arrayOfItems[stack->finderOfParenthesis + 3].value.i;
+                                    dataIDF.value.i = stack->arrayOfItems[stack->finderOfParenthesis + 1].value.i >= stack->arrayOfItems[stack->finderOfParenthesis + 3].value.i;
+                                    insert_item(list, &instr_type, &instr1, &instr2, &instr3);
                                 } else if ((stack->arrayOfItems[stack->finderOfParenthesis + 1].type == FLOAT) &&
                                            (stack->arrayOfItems[stack->finderOfParenthesis + 3].type == FLOAT)) {
-                                    resultOfPrece.bool_result = 1; // true
                                     dataIDF.type = BOOLEAN;
-                                    // generovanie GTS %s@%s %s@%s %s@%s
                                     instr_type = INSTRUCT_GTS;
+                                    instr1.value.s = "$$EXPR\0";
+                                    instr2.type = F;
+                                    instr3.type = F;
+                                    instr2.value.f = stack->arrayOfItems[stack->finderOfParenthesis + 1].value.f;
+                                    instr3.value.f = stack->arrayOfItems[stack->finderOfParenthesis + 3].value.f;
+                                    dataIDF.value.f = stack->arrayOfItems[stack->finderOfParenthesis + 1].value.f >= stack->arrayOfItems[stack->finderOfParenthesis + 3].value.f;
+                                    insert_item(list, &instr_type, &instr1, &instr2, &instr3);
                                 } else {
+                                    fprintf(stderr, "Semanticka chyba typové kompatibility v aritmetických vyrazech, radek %d\n", gToken.row);
                                     resultOfPrece.result = ERR_INCOMPATIBLE_TYPE;
                                     return resultOfPrece;
                                 }
@@ -764,59 +1107,91 @@ expr_return parse_expr(LocalMap* lMap, tList* list){
                                 resultOfPrece.result = SYN_ERR;
                                 return resultOfPrece;
                             }
-                            tempItemForPositionOne = stack_pop(stack);      // ulozenie si prveho E
-                            stack_pop(stack);                               // popnutie znamienka >=
-                            tempItemForPositionThree = stack_pop(stack);    // ulozenie si druheho E
-                            stack_pop(stack);                               // popnutie znamienak <
-//                            tempItemForPositionOne->token_data.value.i != tempItemForPositionThree->token_data.value.i; //  E >= E // TOTO JE IBA PRE KONTROLU
-                            dataIDF = tempItemForPositionOne->token_data;  // do struktury nahrame adresu token->data
+                            STACK_POP4;
                             stack_push(stack, E, dataIDF);                 // nakoniec pushneme E + datovu strukturu
                             if (DEBUG)
                                 stack_print(stack);
                         break;
                             // PRAVIDLO E -> E == E
                         case eEQUAL: // ==
-                            // generovanie DEFVAR %s@%s
-                            instr_type = INSTRUCT_DEFVAR;
                             if (&stack->arrayOfItems[stack->finderOfParenthesis + 3] != NULL) {
                                 if ((stack->arrayOfItems[stack->finderOfParenthesis + 1].type == STRING) &&
                                     (stack->arrayOfItems[stack->finderOfParenthesis + 3].type == STRING)) {
-                                    int result = strCompare(
-                                            &stack->arrayOfItems[stack->finderOfParenthesis + 1].value.string,
-                                            &stack->arrayOfItems[stack->finderOfParenthesis + 3].value.string);
-                                    if (result < 0) {
-                                        resultOfPrece.bool_result = 1; // true
+                                    int result = strcmp(
+                                            stack->arrayOfItems[stack->finderOfParenthesis + 1].value.string.str,
+                                            stack->arrayOfItems[stack->finderOfParenthesis + 3].value.string.str);
+                                    if (result == 0) {
+                                        dataIDF.type = BOOLEAN;
+                                        instr_type = INSTRUCT_EQ;
+                                        instr1.value.s = "$$EXPR\0";
+                                        instr2.type = S;
+                                        instr3.type = S;
+                                        instr2.value.s = stack->arrayOfItems[stack->finderOfParenthesis + 1].value.string.str;
+                                        instr3.value.s = stack->arrayOfItems[stack->finderOfParenthesis + 3].value.string.str;
+                                        insert_item(list, &instr_type, &instr1, &instr2, &instr3);
                                     }
-                                    resultOfPrece.bool_result = 0; // false
-                                    dataIDF.type = BOOLEAN;
                                     // generovanie EQ %s@%s %s@%s %s@%s
                                     instr_type = INSTRUCT_EQ;
                                 } else if ((stack->arrayOfItems[stack->finderOfParenthesis + 1].type == INTEGER) &&
                                            (stack->arrayOfItems[stack->finderOfParenthesis + 3].type == INTEGER)) {
                                     dataIDF.type = BOOLEAN;
-                                    resultOfPrece.bool_result = 1; // true
+                                    instr_type = INSTRUCT_EQ;
+                                    instr1.value.s = "$$EXPR\0";
+                                    instr2.type = I;
+                                    instr3.type = I;
+                                    instr2.value.i = stack->arrayOfItems[stack->finderOfParenthesis + 1].value.i;
+                                    instr3.value.i = stack->arrayOfItems[stack->finderOfParenthesis + 3].value.i;
+                                    dataIDF.value.i = stack->arrayOfItems[stack->finderOfParenthesis + 1].value.i == stack->arrayOfItems[stack->finderOfParenthesis + 3].value.i;
+                                    insert_item(list, &instr_type, &instr1, &instr2, &instr3);
                                     // generovanie EQ %s@%s %s@%s %s@%s
                                     instr_type = INSTRUCT_EQ;
                                 } else if ((stack->arrayOfItems[stack->finderOfParenthesis + 1].type == INTEGER) &&
                                            (stack->arrayOfItems[stack->finderOfParenthesis + 3].type == FLOAT)) {
                                     dataIDF.type = BOOLEAN;
-                                    resultOfPrece.bool_result = 1; // true
-                                    // generovanie EQ %s@%s %s@%s %s@%s
-                                    instr_type = INSTRUCT_FLOAT2INT;
+                                    instr_type = INSTRUCT_FLOAT2INT;    // asi najskor previest na integer a potom porovanat
+                                    instr1.value.s = "$result\0";        // generovanie UNIQUE // generate non Term -> Unikatny nazov
+                                    instr2.type = F;
+                                    instr2.value.f = (int) stack->arrayOfItems[stack->finderOfParenthesis + 3].value.f;
+                                    insert_item(list, &instr_type, &instr1, &instr2, &instr3);
                                     instr_type = INSTRUCT_EQ;
+                                    instr1.value.s = "$$EXPR\0";
+                                    instr2.type = I;
+                                    instr3.type = I;
+                                    instr2.value.i = stack->arrayOfItems[stack->finderOfParenthesis + 1].value.i;
+                                    instr3.value.i = (int)stack->arrayOfItems[stack->finderOfParenthesis + 3].value.f;
+                                    dataIDF.value.f = stack->arrayOfItems[stack->finderOfParenthesis + 1].value.i == stack->arrayOfItems[stack->finderOfParenthesis + 3].value.f;
+                                    insert_item(list, &instr_type, &instr1, &instr2, &instr3);
+                                    // generovanie EQ %s@%s %s@%s %s@%s
                                 } else if ((stack->arrayOfItems[stack->finderOfParenthesis + 1].type == FLOAT) &&
                                            (stack->arrayOfItems[stack->finderOfParenthesis + 3].type == INTEGER)) {
                                     dataIDF.type = BOOLEAN;
-                                    resultOfPrece.bool_result = 1; // true
-                                    // generovanie EQ %s@%s %s@%s %s@%s
-                                    instr_type = INSTRUCT_FLOAT2INT;
+                                    instr_type = INSTRUCT_FLOAT2INT;        // asi najskor previest na integer a potom porovanat
+                                    instr1.value.s = "$result\0";        // generovanie UNIQUE // generate non Term -> Unikatny nazov
+                                    instr2.type = F;
+                                    instr2.value.f = (int) stack->arrayOfItems[stack->finderOfParenthesis + 1].value.f;
+                                    insert_item(list, &instr_type, &instr1, &instr2, &instr3);
                                     instr_type = INSTRUCT_EQ;
+                                    instr1.value.s = "$$EXPR\0";
+                                    instr2.type = I;
+                                    instr3.type = I;
+                                    instr2.value.i = (int)stack->arrayOfItems[stack->finderOfParenthesis + 1].value.f;
+                                    instr3.value.i = stack->arrayOfItems[stack->finderOfParenthesis + 3].value.i;
+                                    dataIDF.value.i = stack->arrayOfItems[stack->finderOfParenthesis + 1].value.i == stack->arrayOfItems[stack->finderOfParenthesis + 3].value.i;
+                                    insert_item(list, &instr_type, &instr1, &instr2, &instr3);
+                                    // generovanie EQ %s@%s %s@%s %s@%s
                                 } else if ((stack->arrayOfItems[stack->finderOfParenthesis + 1].type == FLOAT) &&
                                            (stack->arrayOfItems[stack->finderOfParenthesis + 3].type == FLOAT)) {
                                     dataIDF.type = BOOLEAN;
-                                    resultOfPrece.bool_result = 1; // true
                                     instr_type = INSTRUCT_EQ;
+                                    instr1.value.s = "$$EXPR\0";
+                                    instr2.type = F;
+                                    instr3.type = F;
+                                    instr2.value.f = stack->arrayOfItems[stack->finderOfParenthesis + 1].value.f;
+                                    instr3.value.f = stack->arrayOfItems[stack->finderOfParenthesis + 3].value.f;
+                                    dataIDF.value.f = stack->arrayOfItems[stack->finderOfParenthesis + 1].value.f == stack->arrayOfItems[stack->finderOfParenthesis + 3].value.f;
+                                    insert_item(list, &instr_type, &instr1, &instr2, &instr3);
                                 } else {
+                                    fprintf(stderr, "Semanticka chyba typové kompatibility v aritmetických vyrazech, radek %d\n", gToken.row);
                                     resultOfPrece.result = ERR_INCOMPATIBLE_TYPE;
                                     return resultOfPrece;
                                 }
@@ -824,20 +1199,13 @@ expr_return parse_expr(LocalMap* lMap, tList* list){
                                 resultOfPrece.result = SYN_ERR;
                                 return resultOfPrece;
                             }
-                            tempItemForPositionOne = stack_pop(stack);      // ulozenie si prveho E
-                            stack_pop(stack);                               // popnutie znamienka ==
-                            tempItemForPositionThree = stack_pop(stack);    // ulozenie si druheho E
-                            stack_pop(stack);                               // popnutie znamienak <
-//                            tempItemForPositionOne->token_data.value.i != tempItemForPositionThree->token_data.value.i; //  E == E // TOTO JE IBA PRE KONTROLU
-                            dataIDF = tempItemForPositionOne->token_data;  // do struktury nahrame adresu token->data
+                            STACK_POP4;
                             stack_push(stack, E, dataIDF);                 // nakoniec pushneme E + datovu strukturu
                             if (DEBUG)
                                 stack_print(stack);
                         break;
                             // PRAVIDLO E -> E != E
                         case eNEQUAL: // !=
-                            // generovanie DEFVAR %s@%s
-                            instr_type = INSTRUCT_DEFVAR;
                             if (&stack->arrayOfItems[stack->finderOfParenthesis + 3] != NULL) {
                                 if ((stack->arrayOfItems[stack->finderOfParenthesis + 1].type == STRING) &&
                                     (stack->arrayOfItems[stack->finderOfParenthesis + 3].type == STRING)) {
@@ -845,49 +1213,92 @@ expr_return parse_expr(LocalMap* lMap, tList* list){
                                             &stack->arrayOfItems[stack->finderOfParenthesis + 1].value.string,
                                             &stack->arrayOfItems[stack->finderOfParenthesis + 3].value.string);
                                     if (result != 0) {
-                                        resultOfPrece.bool_result = 1; // true
+                                        dataIDF.type = BOOLEAN;
+                                        instr1.value.s = "$$EXPR\0";
+                                        instr2.type = S;
+                                        instr2.value.s = stack->arrayOfItems[stack->finderOfParenthesis + 1].value.string.str;
+                                        instr_type = INSTRUCT_EQ;
+                                        instr3.type = S;
+                                        instr3.value.s = stack->arrayOfItems[stack->finderOfParenthesis + 3].value.string.str;
+                                        insert_item(list, &instr_type, &instr1, &instr2, &instr3);
+                                        instr_type = INSTRUCT_NOT;
+                                        insert_item(list, &instr_type, &instr1, &instr2, &instr3);
                                     }
-                                    resultOfPrece.bool_result = 0; // false
-                                    dataIDF.type = BOOLEAN;
                                     // generovanie NOT %s@%s %s@%s %s@%s
                                     // generovanie EQ %s@%s %s@%s %s@%s
-                                    instr_type = INSTRUCT_NOT;
-                                    instr_type = INSTRUCT_EQ;
                                 } else if ((stack->arrayOfItems[stack->finderOfParenthesis + 1].type == INTEGER) &&
                                            (stack->arrayOfItems[stack->finderOfParenthesis + 3].type == INTEGER)) {
                                     dataIDF.type = BOOLEAN;
-                                    resultOfPrece.bool_result = 1; // true
+                                    instr1.value.s = "$$EXPR\0";
+                                    instr2.type = I;
+                                    instr2.value.i = stack->arrayOfItems[stack->finderOfParenthesis + 1].value.i;
+                                    instr_type = INSTRUCT_EQ;
+                                    instr3.type = I;
+                                    instr3.value.i = stack->arrayOfItems[stack->finderOfParenthesis + 3].value.i;
+                                    dataIDF.value.i = stack->arrayOfItems[stack->finderOfParenthesis + 1].value.i != stack->arrayOfItems[stack->finderOfParenthesis + 3].value.i;
+                                    insert_item(list, &instr_type, &instr1, &instr2, &instr3);
+                                    instr_type = INSTRUCT_NOT;
+                                    insert_item(list, &instr_type, &instr1, &instr2, &instr3);
                                     // generovanie NOT %s@%s %s@%s %s@%s
                                     // generovanie EQ %s@%s %s@%s %s@%s
-                                    instr_type = INSTRUCT_NOT;
-                                    instr_type = INSTRUCT_EQ;
                                 } else if ((stack->arrayOfItems[stack->finderOfParenthesis + 1].type == INTEGER) &&
                                            (stack->arrayOfItems[stack->finderOfParenthesis + 3].type == FLOAT)) {
                                     dataIDF.type = BOOLEAN;
-                                    resultOfPrece.bool_result = 1; // true
+                                    instr_type = INSTRUCT_FLOAT2INT;    // asi najskor previest na integer a potom porovanat
+                                    instr1.value.s = "$result\0";        // generovanie UNIQUE // generate non Term -> Unikatny nazov
+                                    instr2.type = F;
+                                    instr2.value.f = (int) stack->arrayOfItems[stack->finderOfParenthesis + 3].value.f;
+                                    insert_item(list, &instr_type, &instr1, &instr2, &instr3);
+                                    instr_type = INSTRUCT_EQ;
+                                    instr1.value.s = "$$EXPR\0";
+                                    instr2.type = I;
+                                    instr3.type = I;
+                                    instr2.value.i = stack->arrayOfItems[stack->finderOfParenthesis + 1].value.i;
+                                    instr3.value.i = (int)stack->arrayOfItems[stack->finderOfParenthesis + 3].value.f;
+                                    dataIDF.value.f = stack->arrayOfItems[stack->finderOfParenthesis + 1].value.i != stack->arrayOfItems[stack->finderOfParenthesis + 3].value.f;
+                                    instr_type = INSTRUCT_NOT;
+                                    insert_item(list, &instr_type, &instr1, &instr2, &instr3);
                                     // generovanie NOT %s@%s %s@%s %s@%s
                                     // generovanie EQ %s@%s %s@%s %s@%s
-                                    instr_type = INSTRUCT_FLOAT2INT;
-                                    instr_type = INSTRUCT_NOT;
-                                    instr_type = INSTRUCT_EQ;
                                 } else if ((stack->arrayOfItems[stack->finderOfParenthesis + 1].type == FLOAT) &&
                                            (stack->arrayOfItems[stack->finderOfParenthesis + 3].type == INTEGER)) {
                                     dataIDF.type = BOOLEAN;
-                                    resultOfPrece.bool_result = 1; // true
+                                    instr_type = INSTRUCT_FLOAT2INT;        // asi najskor previest na integer a potom porovanat
+                                    instr1.value.s = "$result\0";        // generovanie UNIQUE // generate non Term -> Unikatny nazov
+                                    instr2.type = F;
+                                    instr2.value.f = (int) stack->arrayOfItems[stack->finderOfParenthesis + 1].value.f;
+                                    insert_item(list, &instr_type, &instr1, &instr2, &instr3);
+                                    instr_type = INSTRUCT_EQ;
+                                    instr1.value.s = "$$EXPR\0";
+                                    instr2.type = I;
+                                    instr3.type = I;
+                                    instr2.value.i = (int)stack->arrayOfItems[stack->finderOfParenthesis + 1].value.f;
+                                    instr3.value.i = stack->arrayOfItems[stack->finderOfParenthesis + 3].value.i;
+                                    dataIDF.value.i = stack->arrayOfItems[stack->finderOfParenthesis + 1].value.i == stack->arrayOfItems[stack->finderOfParenthesis + 3].value.i;
+                                    insert_item(list, &instr_type, &instr1, &instr2, &instr3);
+                                    instr_type = INSTRUCT_NOT;
+                                    insert_item(list, &instr_type, &instr1, &instr2, &instr3);
                                     // generovanie NOT %s@%s %s@%s %s@%s
                                     // generovanie EQ %s@%s %s@%s %s@%s
-                                    instr_type = INSTRUCT_FLOAT2INT;
-                                    instr_type = INSTRUCT_NOT;
-                                    instr_type = INSTRUCT_EQ;
+
                                 } else if ((stack->arrayOfItems[stack->finderOfParenthesis + 1].type == FLOAT) &&
                                            (stack->arrayOfItems[stack->finderOfParenthesis + 3].type == FLOAT)) {
                                     dataIDF.type = BOOLEAN;
-                                    resultOfPrece.bool_result = 1; // true
+                                    instr1.value.s = "$$EXPR\0";
+                                    instr2.type = F;
+                                    instr2.value.f = stack->arrayOfItems[stack->finderOfParenthesis + 1].value.f;
+                                    instr_type = INSTRUCT_EQ;
+                                    instr3.type = F;
+                                    instr3.value.f = stack->arrayOfItems[stack->finderOfParenthesis + 3].value.f;
+                                    dataIDF.value.f = stack->arrayOfItems[stack->finderOfParenthesis + 1].value.f != stack->arrayOfItems[stack->finderOfParenthesis + 3].value.f;
+                                    insert_item(list, &instr_type, &instr1, &instr2, &instr3);
+                                    instr_type = INSTRUCT_NOT;
+                                    insert_item(list, &instr_type, &instr1, &instr2, &instr3);
                                     // generovanie NOT %s@%s %s@%s %s@%s
                                     // generovanie EQ %s@%s %s@%s %s@%s
-                                    instr_type = INSTRUCT_NOT;
-                                    instr_type = INSTRUCT_EQ;
+
                                 } else {
+                                    fprintf(stderr, "Semanticka chyba typové kompatibility v aritmetických vyrazech, radek %d\n", gToken.row);
                                     resultOfPrece.result = ERR_INCOMPATIBLE_TYPE;
                                     return resultOfPrece;
                                 }
@@ -895,12 +1306,7 @@ expr_return parse_expr(LocalMap* lMap, tList* list){
                                 resultOfPrece.result = SYN_ERR;
                                 return resultOfPrece;
                             }
-                            tempItemForPositionOne = stack_pop(stack);      // ulozenie si prveho E
-                            stack_pop(stack);                               // popnutie znamienka !=
-                            tempItemForPositionThree = stack_pop(stack);    // ulozenie si druheho E
-                            stack_pop(stack);                               // popnutie znamienak <
-//                            tempItemForPositionOne->token_data.value.i != tempItemForPositionThree->token_data.value.i; //  E != E // TOTO JE IBA PRE KONTROLU
-                            dataIDF = tempItemForPositionOne->token_data;  // do struktury nahrame adresu token->data
+                            STACK_POP4;
                             stack_push(stack, E, dataIDF);                 // nakoniec pushneme E + datovu strukturu
                             if (DEBUG)
                                 stack_print(stack);
@@ -911,22 +1317,16 @@ expr_return parse_expr(LocalMap* lMap, tList* list){
                 // TODO: dokoncit pravidlo, a urobit funciu stack_print_preceeNonTermn
             case Err:
                 if(actTokenIndexToPreceTable == eDOLAR){
-                    if(DEBUG)printf("This is stackTop %s\n", convert_to_char(stack_top_token_number(stack)));
                     /* v pripade ak prijde vyraz a = then  v preklade $$ medzi nimi nebude nic ziaden nontermian(E) tak to vychodi syntakticku chybu */
                     if(stack->top == 0){
                         resultOfPrece.result = SYN_ERR;
                         return resultOfPrece;
                     }
-                     if(DEBUG)printf("STATE: $E$ -> EVERYTHING OK\n");
-                    // uvolnenie stacku
-                     if(DEBUG)printf("Vysledok operacie pre INT %d\n", dataIDF.value.i);
+                    if(DEBUG)printf("STATE: $E$ -> EVERYTHING OK\n");
+                    resultOfPrece.result = SUCCESS;                                                         // vratenie navratovej hodnoty
+                    resultOfPrece.uniqueID->str = stack_top_token_data(stack)->nameOfTheNonTerminal;        // vratenie UNIQUE nazvu identifikatora
+                    resultOfPrece.data_type = stack_top_token_data(stack)->type;                        // vratenie typu identificatora
 
-                    resultOfPrece.result = SUCCESS;                                 // vratenie navratovej hodnoty
-                    resultOfPrece.uniqueID->str = stack_top_token_data(stack)->nameOfTheNonTerminal;     // vratenie UNIQUE nazvu identifikatora
-                    resultOfPrece.data_type = stack_top_token_data(stack)->type;                    // vratenie typu identificatora
-
-//                    stack_print(stack);
-//                    stack_print_prece(stack);
                     stack_free(stack);
                     if(DEBUG)printf("Return exiting value -> |%d|, returning value -> |%s| abd returning type -> |%d|\n", resultOfPrece.result, resultOfPrece.uniqueID->str, resultOfPrece.data_type);
                     return resultOfPrece;

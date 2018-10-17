@@ -97,7 +97,14 @@ typedef enum
             INSTRUCT_ORD = 665,
             INSTRUCT_INPUT_S = 666,
             INSTRUCT_INPUT_I = 667,
-            INSTRUCT_INPUT_F = 668
+            INSTRUCT_INPUT_F = 668,
+            INSTRUCT_WHILE_START = 669,
+            INSTRUCT_WHILE_STATS = 670,
+            INSTRUCT_WHILE_END =  671,
+            INSTRUCT_IF_ELSE = 672,
+            INSTRUCT_IF_THEN = 673,
+            INSTRUCT_JUMP_ENDIF = 674,
+            INSTRUCT_ENDIF = 675
 
 } tInstructionTypes;
 

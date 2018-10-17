@@ -158,7 +158,7 @@ int getToken(){
                 else if(islower(c) || c == '_'){ pushToken(c); state = S_ID; }               // Identifikator (a-z, '_')
                 else{
                     pushToken(c);                                              //Chybny znak
-                    return ERROR_LEX;
+                    return LEX_UNKNOWN;
                 }
 
 
@@ -472,7 +472,7 @@ int getToken(){
                 if( c == EOF )
                   return LEX_EOF;
                 else if( c == '\n'){
-                    resetToken(); // ignoruje komentare
+                    resetToken();
                     gToken.row++;
                     state = S_EOL;
                 }
