@@ -432,7 +432,7 @@ int getToken(){
                   else { expr = true; DLInsertFirst(&tlist, gToken.data.str); return LEX_ID; }
                 }
                 break;
-                
+
             case S_ID_F_END:
                 if (isspace(c) || c == ',' || c == ')'){ // is delimiter
                     ungetc(c, stdin);
@@ -456,7 +456,7 @@ int getToken(){
                     return LEX_ID;
                 }
                 break;
-            
+
             case S_ID_F_END:
                 if (c == '?' || c == '!'){
                     pushToken(c);
@@ -469,12 +469,16 @@ int getToken(){
                 break;*/
             // Radkovy komentar
             case S_COMMENT_ROW:
-                if( c == EOF )
+                if( c == EOF ){
                   return LEX_EOF;
+                }
                 else if( c == '\n'){
+
                     resetToken();
                     gToken.row++;
-                    state = S_EOL;
+                    expr = false;
+                    return LEX_EOL;
+                    //state = S_EOL;
                 }
                 else state = S_COMMENT_ROW;
                 break;
@@ -565,7 +569,7 @@ int getToken(){
                         if (*endptr != '\0' || strcmp(endptr, ascii_val) == 0){
                             return ERROR_LEX;
                         }
-                            
+
 
                         pushToken((int) ascii_tmp);
                         state = S_STRING;
@@ -579,7 +583,7 @@ int getToken(){
                         printf("asci err here");
                         return ERROR_LEX;
                     }
-                        
+
 
                     pushToken((int) ascii_tmp);
                     state = S_STRING;
