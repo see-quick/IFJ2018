@@ -227,6 +227,7 @@ expr_return parse_expr(LocalMap* lMap, tList* list){
                 };
                 dataIDF = local_map_get_value(lMap, gToken.data.str);
                 dataIDF.nameOfTheVariable = gToken.data.str;
+                resultOfPrece.uniqueID = &gToken.data;  // generovanie $$nazvu premennej
                 dataIDF.value.is_variable = true;
             }
             else{
