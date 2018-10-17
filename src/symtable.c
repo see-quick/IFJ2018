@@ -42,7 +42,7 @@ int hashcode ( String key ) {
 LocalMap* local_map_init (unsigned int size) {
     LocalMap *ptrMap = (LocalMap*)malloc(sizeof(LocalMap));
     ptrMap->size = size;
-    ptrMap->list = malloc(sizeof(GlobalMapItem*)*size);
+    ptrMap->list = malloc(sizeof(LocalMapItem*)*size);
     int i;
     for(i=0;i<size;i++)
         ptrMap->list[i] = NULL;
@@ -247,8 +247,7 @@ void local_map_print( LocalMap* ptrMap ) {
     int sumcnt = 0;
 
     printf ("------------HASH TABLE--------------\n");
-    // for ( int i=0; i<sizeof(ptrMap); i++ ) {
-    for ( int i=0; i<=10; i++ ) {
+    for ( int i=0; i<ptrMap->size; i++ ) {
         printf ("%i:",i);
         int cnt = 0;
         LocalMapItem* ptr = (ptrMap->list[i]);

@@ -1,4 +1,0 @@
-print (ahoj)
-print "ahoj"
-print ("ahoj")
-print ("ahoj",ahoj)

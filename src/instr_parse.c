@@ -15,6 +15,12 @@
 #include "instr_parse.h"
 #include "list.h"
 
+
+
+int while_count = 0;
+int if_count = 0;
+
+
 /**
  * Ulahcenie vypisu podla typu instrukcie
  * @param instruction instrukcia
@@ -52,16 +58,23 @@ char* instruct_type(tDatType instruction) {
           return instr_type = "TF";
     break;
 
+    case FCE:
+    case EMPTY:
+      break;
   }
+  
+  return NULL;  //else -> ERROR
 }
 /*
  * Printuje symbol na zaklade jeho typu(int,id,float..)
  * @param instr_operand data a typ instrukcie
  */
 void print_symb(tInstructionData instr_operand)  {
-  if (instr_operand.type == I)  printf("%d\n",instr_operand.value.i);
+  if (instr_operand.type == I)  {
+    printf("%d\n",instr_operand.value.i);
+  }
   else if (instr_operand.type == F) printf("%f\n",instr_operand.value.f);
-  else printf("%s\n",instr_operand.value.s);
+  else { printf("%s\n",instr_operand.value.s); }
 }
 
 /*
@@ -106,12 +119,22 @@ void print_arit_instr(tNode *act_instr) {
     case INSTRUCT_CONCAT: name = "CONCAT"; break;
     case INSTRUCT_GETCHAR: name = "GETCHAR"; break;
     case INSTRUCT_SETCHAR: name = "SETCHAR"; break;
+    default:
+      break;
   }
 
-  printf("%s %s@%s %s@", name, instruct_type(act_instr->data.address1.type), act_instr->data.address1.value.s, instruct_type(act_instr->data.address2.type));
+  printf("%s %s@", name, instruct_type(act_instr->data.address1.type) );
+  print_multiple_symb(act_instr->data.address1);
+  printf("%s@",  instruct_type(act_instr->data.address2.type) );
   print_multiple_symb(act_instr->data.address2);
   printf("%s@", instruct_type(act_instr->data.address3.type));
   print_symb(act_instr->data.address3);
+
+
+  // printf("MOVE %s@",instruct_type(act_instr->data.address1.type));
+  //         print_symb(act_instr->data.address1);
+  //         printf("%s@",instruct_type(act_instr->data.address2.type));
+  //         print_symb(act_instr->data.address2);
 }
 
 /*
@@ -130,8 +153,16 @@ void parse_instructions(tList *instr_list)  {
     switch (act_instr->data.type) {
       case INSTRUCT_HEAD:
           printf(".IFJcode18\n");
-          printf("LABEL $$main\n");
           printf("JUMP $$main\n");
+          printf("LABEL $$main\n");
+          printf("DEFVAR GF@$$var_integer\n");
+          printf("MOVE GF@$$var_integer int@0\n");
+          printf("DEFVAR GF@$$var_double\n");
+          printf("MOVE GF@$$var_double floal@0.0\n");
+          printf("DEFVAR GF@$$var_string\n");
+          printf("MOVE GF@$$var_string string@\n");
+          printf("DEFVAR GF@$$EXPR\n");
+          printf("MOVE GF@EXPR int@0\n");
       break;
 
       case INSTRUCT_CREATEFREAME:
@@ -379,6 +410,90 @@ void parse_instructions(tList *instr_list)  {
           printf("DPRINT %s@", instruct_type(act_instr->data.address1.type));
           print_symb(act_instr->data.address1);
       break;
+
+      case INSTRUCT_LENGTH:
+          printf("LABEL length\n");
+          printf("STRLEN GF$$var_integer LF@_param1\n");
+          printf("RETURN\n");
+      break;
+
+
+      case INSTRUCT_INPUT_S:
+      case INSTRUCT_INPUT_I:
+      case INSTRUCT_INPUT_F:
+        printf("TODO\n");
+      break;
+
+      case INSTRUCT_CHR:
+          printf("LABEL chr\n");
+          printf("INT2CHAR GF@$$var_string LF@_param1\n");
+          printf("RETURN\n");
+      break;
+
+      case INSTRUCT_ORD:
+          printf("LABEL ord\n");
+          printf("STRLEN $$var_integer LF@_param1\n");
+          printf("LT GF@$$var_double GF@$$var_integer LF@_param2\n");
+          printf("JUMPIFEQ label_ord bool@true GF@$$var_double\n");
+
+          printf("SUB LF@_param2 LF@_param2 int@1\n");
+          printf("GETCHAR GF@$$var_string LF@_param1 LF@_param2\n");
+          printf("STRI2INT GF@$$var_integer GF@$$var_string int@0\n");
+
+          printf("JUMP label_end_ord\n");
+          printf("LABEL label_ord\n");
+
+          printf("MOVE GF@$$var_integer int@0\n");
+          printf("LABEL label_end_ord\n");
+          printf("MOVE GF@$$var_double float@0.0\n");
+          printf("RETURN\n");
+
+      break;
+
+
+      case INSTRUCT_PRINT:
+          // while pocet parametru ... zatim vypisu jen jeden parametr
+          printf("WRITE TF@_param1\n");
+      break;
+
+      case INSTRUCT_SUBSTR:
+          printf("LABEL substr\n");
+          // todo
+      break;
+
+
+      case INSTRUCT_WHILE_START:
+          printf("LABEL while_label%d\n",++while_count);
+      break;
+      case INSTRUCT_WHILE_STATS:
+          printf("JUMPIFEQ while_label%d_end GF@$$EXPR bool@false\n", while_count);
+      break;
+
+      case INSTRUCT_WHILE_END:
+          printf("JUMP while_label%d\n", while_count);
+          printf("LABEL while_label%d_end\n",while_count);
+      break;
+
+      case INSTRUCT_IF_THEN:
+          printf("JUMPIFEQ if_label_then%d GF@$$EXPR bool@true\n", ++if_count);
+          printf("JUMP if_label_else%d\n", if_count);
+          printf("LABEL if_label_then%d\n", if_count);
+      break;
+
+      case INSTRUCT_IF_ELSE:
+          printf("LABEL if_label_else %d\n", if_count);
+      break;
+
+      case INSTRUCT_JUMP_ENDIF:
+          printf("JUMP if_label%d_end\n", if_count);
+      break;
+
+      case INSTRUCT_ENDIF:
+          printf("LABEL if_label%d_end\n", if_count);
+      break;
+
+
     }
   }
 }
+

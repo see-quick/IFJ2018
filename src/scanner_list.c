@@ -381,7 +381,7 @@ void print_elements_of_list(tDLList TL)	{
 
 	while ((TempList.First!=NULL) && (CurrListLength<100))	{
 		// printf("\n \t%s - important: %d",TempList.First->data, TempList.First->is_important);
-		printf("\n \t%s",TempList.First->data);
+		printf("\n \t%s %d",TempList.First->data, TempList.First->is_important);
 		if ((TempList.First==TL.Act) && (TL.Act!=NULL))
 			printf("\t <= toto je aktivní prvek ");
 		TempList.First=TempList.First->rptr;
@@ -399,28 +399,53 @@ void DLIsImportant(tDLList *L){
 
 
 char * DLFirstImportant(tDLList *L){
-	while((L->Last->lptr != NULL) && (L->Last != NULL)){
+	if (L->First == L->Last){
+		if (L->First->is_important == 1){
+			return L->First->data;
+		}
+	}
+	else{
+		while(L->Last->lptr != NULL){
+			if (L->Last->is_important == 1){
+				return L->Last->data;
+			}
+			else{
+				L->Last = L->Last->lptr;
+			}
+		}
+	}
+	
+	return NULL;
+}
+
+void DLNotImportant(tDLList *L){
+	while((L->Last->lptr != NULL)){
 		if (L->Last->is_important == 1){
 			L->Last->is_important = 0;
-			return L->Last->data;
+			//return L->Last->data;
 		}
 		else{
 			L->Last = L->Last->lptr;
 		}
 	}
-	return NULL;
 }
 
 
 char * DLLastImportant(tDLList *L){
-	while((L->First->rptr != NULL) && (L->First != NULL)){
+	if (L->First == L->Last){
 		if (L->First->is_important == 1){
-			L->First->is_important = 0;
 			return L->First->data;
 		}
-		else{
-			L->First = L->First->rptr;
-		}
 	}
+	else{
+		while((L->First->rptr != NULL)){
+			if (L->First->is_important == 1){
+				return L->First->data;
+			}
+			else{
+				L->First = L->First->rptr;
+			}
+		}
+	}	
 	return NULL;
 }

@@ -26,7 +26,7 @@
 #include "list.h"
 #include "stack.h"
 
-#define SIZEOFTABLE 14
+#define SIZEOFTABLE 16
 
 /* VSTUPNY TOKEN (identifikator) */
 /* e = expresion */
@@ -44,10 +44,13 @@
 #define	eLBAR		11 // (
 #define	eRBAR		12 // )
 #define eDOLAR      13 // dolar $
+#define eCOMMA     14 // ,
+#define eFCE        15 // fce()
 
 
 #define eSOLVING_RULE   22 // preventujeme kvoli situacii kde ak najde symbol < a pride dalsi < tak nech sa z toho nezblazni
 #define E               42  // E - non terminal
+#define EMPTY_CHAR " \0";
 
 #define eSYNTERROR 800 // syntax error
 
@@ -64,7 +67,7 @@ typedef enum{
 }prece_states;
 
 typedef struct{
-    char *string;    // chces aby som ti vracal aj ten NonTerminal? :) ci staci iba hodnota
+    tString *uniqueID;    // chces aby som ti vracal aj ten NonTerminal? :) ci staci iba hodnota
     bool bool_result;;   // pri vyrazoch < > <= >= bude vzdy vysledok true alebo false;
     Types data_type;     // sem ti budem vracat datovy typ ?
     int result;         // pouzivaju sa navratove hodnoty z "error.h"

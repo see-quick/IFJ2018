@@ -51,7 +51,7 @@ elif [[ ! -z "$1" && ! -z "$2" ]]; then
       testfile=$(find $testpath/$currentdir -type f -printf "%f\n" | awk NR==$linef)  #nazov testovacieho suboru
       testtype=${testfile:0:6} #extrakt nazvu testu
 
-      if [ "$testtype" == "error1" ]; then  #vsetky testy obsahujuce chybu maju na zaciatku error. Error1 znaci ocakavanu navratovu hodnotu 1(LEXerror)
+      if [ "$testtype" == "error1" ]; then  #vsetky testy obsahujuce chybu maju na zaciatku error. error1->chyba v programu v rámci lexikální analýzy (chybná struktura aktuálního lexému).
         $prog < $testpath/$currentdir/$testfile > /dev/null 2>&1  #presmerovanie vystupu lexeru
         retval=$(echo $?)
         if [ "$retval" -eq "1" ]; then
@@ -62,9 +62,14 @@ elif [[ ! -z "$1" && ! -z "$2" ]]; then
           echo "${red}[TEST FAILED]${reset} : $currentdir/$testfile"
           echo "  expected return value = 1. Returned value = $retval"
         fi
-      elif [ "$testtype" == "error2" ]; then #testy oznacene error2 --> SyntaxError
+      ##### Syntax tests  #####
+      elif [ "$testtype" == "error2" ]; then #testy oznacene error2 --> chyba v programu v rámci syntaktické analýzy (chybná syntaxe programu).
         $prog < $testpath/$currentdir/$testfile > /dev/null 2>&1
-        retval=$(echo $?)
+        ##retval=$(echo $?)
+
+        retval=`echo $?`
+        #echo "RETURNED : $?"
+        #echo "RETURNED: $?"
         if [ "$retval" -eq "2" ]; then
           ((testsucc++))
           echo "${green}[TEST PASSED]${reset}"
@@ -73,6 +78,77 @@ elif [[ ! -z "$1" && ! -z "$2" ]]; then
           echo "${red}[TEST FAILED]${reset} : $currentdir/$testfile"
           echo "  expected return value = 2. Returned value = $retval"
         fi
+      ##### Semantic tests  #####
+      elif [ "$testtype" == "error3" ]; then #testy oznacene error3 --> sémantická chyba v programu – nedefinovaná funkce/proměnná, pokus o redefinici funkce/proměnné, atp
+        $prog < $testpath/$currentdir/$testfile > /dev/null 2>&1
+        retval=$(echo $?)
+        if [ "$retval" -eq "3" ]; then
+          ((testsucc++))
+          echo "${green}[TEST PASSED]${reset}"
+        else
+          ((testfail++))
+          echo "${red}[TEST FAILED]${reset} : $currentdir/$testfile"
+          echo "  expected return value = 3. Returned value = $retval"
+        fi
+      ##### Semantic tests of type compability  #####
+    elif [ "$testtype" == "error4" ]; then #testy oznacene error4 --> sémantická/běhová chyba typové kompatibility v aritmetických, řetězcových a relačních výrazech.
+      $prog < $testpath/$currentdir/$testfile > /dev/null 2>&1
+      retval=$(echo $?)
+      if [ "$retval" -eq "4" ]; then
+        ((testsucc++))
+        echo "${green}[TEST PASSED]${reset}"
+      else
+        ((testfail++))
+        echo "${red}[TEST FAILED]${reset} : $currentdir/$testfile"
+        echo "  expected return value = 4. Returned value = $retval"
+      fi
+      elif [ "$testtype" == "error5" ]; then #error5 -> sémantická chyba v programu – špatný počet parametrů u volání funkce.
+        $prog < $testpath/$currentdir/$testfile > /dev/null 2>&1
+        retval=$(echo $?)
+        if [ "$retval" -eq "5" ]; then
+          ((testsucc++))
+          echo "${green}[TEST PASSED]${reset}"
+        else
+          ((testfail++))
+          echo "${red}[TEST FAILED]${reset} : $currentdir/$testfile"
+          echo "  expected return value = 5. Returned value = $retval"
+        fi
+      elif [ "$testtype" == "error6" ]; then #error6 -> ostatní sémantické chyby
+        $prog < $testpath/$currentdir/$testfile > /dev/null 2>&1
+        retval=$(echo $?)
+        if [ "$retval" -eq "6" ]; then
+          ((testsucc++))
+          echo "${green}[TEST PASSED]${reset}"
+        else
+          ((testfail++))
+          echo "${red}[TEST FAILED]${reset} : $currentdir/$testfile"
+          echo "  expected return value = 6. Returned value = $retval"
+        fi
+      ##### Zero division #####
+      elif [ "$testtype" == "error9" ]; then #error9 -> běhová chyba dělení nulou.
+        $prog < $testpath/$currentdir/$testfile > /dev/null 2>&1
+        retval=$(echo $?)
+        if [ "$retval" -eq "9" ]; then
+          ((testsucc++))
+          echo "${green}[TEST PASSED]${reset}"
+        else
+          ((testfail++))
+          echo "${red}[TEST FAILED]${reset} : $currentdir/$testfile"
+          echo "  expected return value = 9. Returned value = $retval"
+        fi
+      ##### internal error  #####
+    elif [ "$testtype" == "error99" ]; then #error99 -> interní chyba překladače tj. neovlivněná vstupním programem (např. chyba alokace paměti, atd.).
+      $prog < $testpath/$currentdir/$testfile > /dev/null 2>&1
+      retval=$(echo $?)
+      if [ "$retval" -eq "99" ]; then
+        ((testsucc++))
+        echo "${green}[TEST PASSED]${reset}"
+      else
+        ((testfail++))
+        echo "${red}[TEST FAILED]${reset} : $currentdir/$testfile"
+        echo "  expected return value = 99. Returned value = $retval"
+      fi
+      ##### Success #####
       else
         $prog < $testpath/$currentdir/$testfile > /dev/null 2>&1
         retval=$(echo $?)

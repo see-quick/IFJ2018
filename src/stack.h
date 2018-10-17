@@ -55,6 +55,6 @@ void stack_print_prece(tStack *stack);
 void stack_refresh(tStack *stack);
 void stack_search_for_theorem(tStack *stack);
 
-void  stack_pop_free(tStack *stack, tItem* item);
+void  stack_pop_free(tStack *stack);
 
 #endif //STACK_STACK_H

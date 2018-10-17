@@ -42,9 +42,10 @@ typedef enum Types
 typedef union DataTypes
 {
     int i;
-    double d;
+    double f;
     tString string;
     bool nil;
+    bool is_variable;
 } dType;
 
 /** stucture for data of indetificator (for local map) **/
@@ -52,6 +53,8 @@ typedef struct DataIdentificator { // (toto bude obsah pre localnu mapu)
     Types type;                     // typ identifikatora
     dType value;                    // hodnota identifikatora
     bool defined;                   // zda bola premmena definovana (ale taktiez to zistime tak ak bude nebude value
+    char* nameOfTheNonTerminal;     // nazov nonterminalu $1, $240 atd.
+    char* nameOfTheVariable;
 } tDataIDF;
 
 /*Datová položka TRP s explicitně řetězenými synonymy pre Localnu mapu*/
@@ -123,7 +126,7 @@ void global_map_print( GlobalMap* ptrMap );
 void global_map_put ( GlobalMap* ptrMap, String key, tDataFunction data );
 
 // Testovacie funckie
-void hashtableTestGlobal(GlobalMap *globalMap);
+void hashtableTestGlobal();
 void hashtableTestLocal();
 #define  _HASHMAP_H_
 

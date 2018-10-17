@@ -57,14 +57,10 @@ typedef enum
             INSTRUCT_NOTS = 628,
             INSTRUCT_INT2FLOAT = 629,
             INSTRUCT_FLOAT2INT = 630,
-            INSTRUCT_FLOAT2R2EINT = 631,
-            INSTRUCT_FLOAT2R2OINT = 632,
             INSTRUCT_INT2CHAR = 633,
             INSTRUCT_STRI2INT = 634,
             INSTRUCT_INT2FLOATS = 635,
             INSTRUCT_FLOAT2INTS = 636,
-            INSTRUCT_FLOAT2R2EINTS = 637,
-            INSTRUCT_FLOAT2R2OINTS = 638,
             INSTRUCT_INT2CHARS = 639,
             INSTRUCT_STRI2INTS = 640,
     //vstupno-vstupne INSTRUCT.
@@ -93,7 +89,22 @@ typedef enum
             INSTRUCT_HEAD = 657,
             INSTRUCT_POPFRAME = 658,
             INSTRUCT_IDIV = 659,
-            INSTRUCT_IDIVS = 660
+            INSTRUCT_IDIVS = 660,
+            INSTRUCT_LENGTH = 661,
+            INSTRUCT_SUBSTR = 662,
+            INSTRUCT_PRINT = 663,
+            INSTRUCT_CHR = 664,
+            INSTRUCT_ORD = 665,
+            INSTRUCT_INPUT_S = 666,
+            INSTRUCT_INPUT_I = 667,
+            INSTRUCT_INPUT_F = 668,
+            INSTRUCT_WHILE_START = 669,
+            INSTRUCT_WHILE_STATS = 670,
+            INSTRUCT_WHILE_END =  671,
+            INSTRUCT_IF_ELSE = 672,
+            INSTRUCT_IF_THEN = 673,
+            INSTRUCT_JUMP_ENDIF = 674,
+            INSTRUCT_ENDIF = 675
 
 } tInstructionTypes;
 
