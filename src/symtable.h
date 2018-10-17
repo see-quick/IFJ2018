@@ -45,6 +45,7 @@ typedef union DataTypes
     double f;
     tString string;
     bool nil;
+    bool is_variable;
 } dType;
 
 /** stucture for data of indetificator (for local map) **/
@@ -53,6 +54,7 @@ typedef struct DataIdentificator { // (toto bude obsah pre localnu mapu)
     dType value;                    // hodnota identifikatora
     bool defined;                   // zda bola premmena definovana (ale taktiez to zistime tak ak bude nebude value
     char* nameOfTheNonTerminal;     // nazov nonterminalu $1, $240 atd.
+    char* nameOfTheVariable;
 } tDataIDF;
 
 /*Datová položka TRP s explicitně řetězenými synonymy pre Localnu mapu*/
@@ -72,9 +74,11 @@ typedef struct LocalMap{
 typedef struct DataFunction {
     Types type;                     // typ parametrov
     Types returnType;               // navratova hodnota
+    int positionOfParameter;        // pozicia parametrov  //TODO: toto bude fungovat iba pre 0 a 1 argument, implementovat to ako list(v GTS bude typ a hodnota daneho parametru), LTS(key -> nazov premmenej, value -> typ, hodnota(v pripade arguemntov NONE(prazdna)))
     bool defined;                   // zda bola funckcia definovana
     int paramCount;                 // pocet parametrov vo funckii
-    LocalMap *lmap;
+    tString functionParametersNames;
+    LocalMap* lMap;
 } tDataFunction;
 
 /*Datová položka TRP s explicitně řetězenými synonymy pre Globalnu mapu*/
@@ -122,7 +126,7 @@ void global_map_print( GlobalMap* ptrMap );
 void global_map_put ( GlobalMap* ptrMap, String key, tDataFunction data );
 
 // Testovacie funckie
-void hashtableTestGlobal(GlobalMap *globalMap);
+void hashtableTestGlobal();
 void hashtableTestLocal();
 #define  _HASHMAP_H_
 

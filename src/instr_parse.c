@@ -70,9 +70,11 @@ char* instruct_type(tDatType instruction) {
  * @param instr_operand data a typ instrukcie
  */
 void print_symb(tInstructionData instr_operand)  {
-  if (instr_operand.type == I)  printf("%d\n",instr_operand.value.i);
+  if (instr_operand.type == I)  {
+    printf("%d\n",instr_operand.value.i);
+  }
   else if (instr_operand.type == F) printf("%f\n",instr_operand.value.f);
-  else printf("%s\n",instr_operand.value.s);
+  else { printf("%s\n",instr_operand.value.s); }
 }
 
 /*
@@ -121,10 +123,18 @@ void print_arit_instr(tNode *act_instr) {
       break;
   }
 
-  printf("%s %s@%s %s@", name, instruct_type(act_instr->data.address1.type), act_instr->data.address1.value.s, instruct_type(act_instr->data.address2.type));
+  printf("%s %s@", name, instruct_type(act_instr->data.address1.type) );
+  print_multiple_symb(act_instr->data.address1);
+  printf("%s@",  instruct_type(act_instr->data.address2.type) );
   print_multiple_symb(act_instr->data.address2);
   printf("%s@", instruct_type(act_instr->data.address3.type));
   print_symb(act_instr->data.address3);
+
+
+  // printf("MOVE %s@",instruct_type(act_instr->data.address1.type));
+  //         print_symb(act_instr->data.address1);
+  //         printf("%s@",instruct_type(act_instr->data.address2.type));
+  //         print_symb(act_instr->data.address2);
 }
 
 /*

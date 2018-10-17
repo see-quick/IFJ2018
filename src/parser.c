@@ -383,10 +383,8 @@ int sth(){
 					}
 					else{
 						// je to promenna prirazenu typu a = b
-
 						res = parse_expr(localMap, ilist);
 						result = res.result;
-
 
 						if (result == SUCCESS){
 
@@ -401,8 +399,9 @@ int sth(){
 							else{
 								instr1.type = GF;
 							}
+
 							instr1.value.s = DLFirstImportant(&tlist);
-							instr2.type = LF;
+							instr2.type = GF;
 							instr2.value.s = res.uniqueID->str;
 
 							insert_item(ilist, &instr_type, &instr1, &instr2, &instr3);
@@ -427,7 +426,7 @@ int sth(){
 						
 				}
 				else{
-					// je funkce
+						// je funkce					
 						is_LF = true;
 
         	    		token = getToken();
@@ -437,9 +436,36 @@ int sth(){
 							return INT_ERR;
 						}
 
-						if ( (token == LEX_EOL || token == LEX_EOF) && tmp->paramCount == 0 ){}
-						else {
+						if ( (token == LEX_EOL || token == LEX_EOF) && tmp->paramCount == 0 ){
+							// pro dalsi volani funkce
+							argCount = 0;
 
+							instr_type = INSTRUCT_PUSHFRAME;
+							instr1.type = EMPTY;
+							insert_item(ilist, &instr_type, &instr1, &instr2, &instr3);
+
+							// instrukce pro volani funkce
+
+							instr_type = INSTRUCT_CALL;
+							instr1.type = FCE;
+							instr1.value.s = DLLastImportant(&tlist);
+
+							insert_item(ilist, &instr_type, &instr1, &instr2, &instr3);
+
+							// POPFRAME
+
+							instr_type = INSTRUCT_POPFRAME;
+							insert_item(ilist, &instr_type, &instr1, &instr2, &instr3);
+							token = getToken();
+							if(!error_lex()){
+								return ERROR_LEX;
+							} else if (!error_int()){
+								return INT_ERR;
+							}
+
+							is_LF = false; // refresh promenne
+						}
+						else {
 							switch(token){
 								case LEX_L_BRACKET:
 									token = getToken();
@@ -471,7 +497,36 @@ int sth(){
 									// pro dalsi volani funkce
 									argCount = 0;
 
+									instr_type = INSTRUCT_PUSHFRAME;
+									instr1.type = EMPTY;
+									insert_item(ilist, &instr_type, &instr1, &instr2, &instr3);
+
+									// instrukce pro volani funkce
+
+									instr_type = INSTRUCT_CALL;
+									instr1.type = FCE;
+									instr1.value.s = DLLastImportant(&tlist);
+
+									insert_item(ilist, &instr_type, &instr1, &instr2, &instr3);
+
+									// POPFRAME
+
+									instr_type = INSTRUCT_POPFRAME;
+									insert_item(ilist, &instr_type, &instr1, &instr2, &instr3);
+
+
+									token = getToken();
+									if(!error_lex()){
+										return ERROR_LEX;
+									} else if (!error_int()){
+										return INT_ERR;
+									}
+
+									is_LF = false; // refresh promenne
+
 									return SUCCESS;
+
+
 								break;
 								case LEX_ID:
 								case LEX_NUMBER:
@@ -494,40 +549,44 @@ int sth(){
 									argCount = 0;
 
 
+									instr_type = INSTRUCT_PUSHFRAME;
+									instr1.type = EMPTY;
+									insert_item(ilist, &instr_type, &instr1, &instr2, &instr3);
+
+									// instrukce pro volani funkce
+
+									instr_type = INSTRUCT_CALL;
+									instr1.type = FCE;
+									instr1.value.s = DLLastImportant(&tlist);
+
+									insert_item(ilist, &instr_type, &instr1, &instr2, &instr3);
+
+									// POPFRAME
+
+									instr_type = INSTRUCT_POPFRAME;
+									insert_item(ilist, &instr_type, &instr1, &instr2, &instr3);
+
+
+									token = getToken();
+									if(!error_lex()){
+										return ERROR_LEX;
+									} else if (!error_int()){
+										return INT_ERR;
+									}
+
+									is_LF = false; // refresh promenne
+
+									return SUCCESS;
+
+
 									return SUCCESS;
 								break;
 								default:
 									fprintf(stderr, "Syntakticka chyba, ocekavano '(', terminal na radku %d\n", gToken.row);
 									return SYN_ERR;
-							}
-						}
-
-
-
-						instr_type = INSTRUCT_PUSHFRAME;
-						instr1.type = EMPTY;
-						insert_item(ilist, &instr_type, &instr1, &instr2, &instr3);
-
-						// instrukce pro volani funkce
-
-						instr_type = INSTRUCT_CALL;
-						instr1.type = FCE;
-						instr1.value.s = DLLastImportant(&tlist);
-
-						insert_item(ilist, &instr_type, &instr1, &instr2, &instr3);
-
-						// POPFRAME
-
-						instr_type = INSTRUCT_POPFRAME;
-						insert_item(ilist, &instr_type, &instr1, &instr2, &instr3);
-
-
-						token = getToken();
-						if(!error_lex()){
-							return ERROR_LEX;
-						} else if (!error_int()){
-							return INT_ERR;
-						}
+							} // end switch pro kontrolu zavorek
+	
+					}
 				}			
 
 		break;
@@ -544,10 +603,9 @@ int sth(){
 			res = parse_expr(localMap, ilist);
 			result = res.result;
 
+
 			if (res.data_type == FUNCTION){
 				// volani funkce 
-						printf("bkpoint\n");
-
 						tmp = global_map_get_pointer_to_value(gMap, gToken.data.str);
 						is_LF = true;
 
@@ -557,8 +615,6 @@ int sth(){
 						} else if (!error_int()){
 							return INT_ERR;
 						}
-
-						returnToken();
 
 						if ( (token == LEX_EOL || token == LEX_EOF) && tmp->paramCount == 0 ){}
 						else {
@@ -655,28 +711,31 @@ int sth(){
 							return sth();
 						}
 
+						is_LF = false; // refresh promenne
+
 			}
 
 			else if (result == SUCCESS){
+
+
+				// SEGMENTATION FAULT
 
 				// ukladani vysledku do local_map
 				lData.type = res.data_type;  
 				local_map_put(localMap, DLFirstImportant(&tlist), lData);
 		
-				// instrukce MOVE
+				// MOVE GF@promenna / LF@promenna  TF@%retval
+				instr_type = INSTRUCT_MOVE;
+				if (is_LF) {instr1.type = LF;}
+				else{
+					instr1.type = GF;
+				}
 
-					// MOVE GF@promenna / LF@promenna  TF@%retval
-					instr_type = INSTRUCT_MOVE;
-					if (is_LF) {instr1.type = LF;}
-					else{
-						instr1.type = GF;
-					}
+				instr1.value.s = DLFirstImportant(&tlist);
+				instr2.type = GF;
+				instr2.value.s = "$result";
 
-					instr1.value.s = DLFirstImportant(&tlist);
-					instr2.type = LF;
-					instr2.value.s = res.uniqueID->str;
-
-					insert_item(ilist, &instr_type, &instr1, &instr2, &instr3);
+				insert_item(ilist, &instr_type, &instr1, &instr2, &instr3);
 
 			}
 			else {
@@ -693,7 +752,7 @@ int sth(){
 			DLNotImportant(&tlist);
 
 			return result;
-	}
+	} // end switch 
 
 	return result;
 }
@@ -768,8 +827,6 @@ int stat(){
 		break;
 
 		case KW_PRINT:
-
-			printf("in print\n");
 
 			token = getToken();
 			
@@ -1494,8 +1551,8 @@ int prog(){
 				return INT_ERR;
 			}
 			else{
-				fprintf(stderr, "Prazdny program \n");
-				return SYN_ERR;
+				// prazdny program a je to spravne
+				return SUCCESS;
 			}
     		
 	}
@@ -1507,16 +1564,12 @@ int prog(){
 int parse(GlobalMap* globalMap, tList *list) {
 
 	int result = SUCCESS;
-
 	gMap = globalMap;
-
-	//gDataptr->lmap = local_map_init(MAX_SIZE_OF_HASH_TABLE);
-
+	gDataptr = (tDataFunction* )malloc(sizeof(tDataFunction));
+	gDataptr->lMap = local_map_init(MAX_SIZE_OF_HASH_TABLE);
 	gDataptr = &gData;
 	ilist = list;
-
 	localMap = local_map_init(MAX_SIZE_OF_HASH_TABLE);
-
 	insert_build_in_functions();
 
 
@@ -1543,30 +1596,22 @@ int parse(GlobalMap* globalMap, tList *list) {
 		// vytvoreni docasneho ramce pro funkce
 		instr_type =  INSTRUCT_CREATEFREAME;
 		insert_item(ilist, &instr_type, &instr1, &instr2, &instr3);
-
-
-		// instr_type = INSTRUCT_LENGTH;
-		// insert_item(ilist, &instr_type, &instr1, &instr2, &instr3);
-
-		// instr_type = INSTRUCT_CHR;
-		// insert_item(ilist, &instr_type, &instr1, &instr2, &instr3);
-
-		// instr_type = INSTRUCT_ORD;
-		// insert_item(ilist, &instr_type, &instr1, &instr2, &instr3);
-
-		// instr_type = INSTRUCT_SUBSTR;
-		// insert_item(ilist, &instr_type, &instr1, &instr2, &instr3);
-
+		instr_type = INSTRUCT_LENGTH;
+		insert_item(ilist, &instr_type, &instr1, &instr2, &instr3);
+		instr_type = INSTRUCT_CHR;
+		insert_item(ilist, &instr_type, &instr1, &instr2, &instr3);
+		instr_type = INSTRUCT_ORD;
+		insert_item(ilist, &instr_type, &instr1, &instr2, &instr3);
+		instr_type = INSTRUCT_SUBSTR;
+		insert_item(ilist, &instr_type, &instr1, &instr2, &instr3);
 
 		result = prog();
 	}
 
 	DLDisposeList(&tlist);
-
 	strFree(&(gToken.data));
-	//local_map_free(gDataptr->lmap);
 	local_map_free(localMap);
-
+	local_map_free(gDataptr->lMap);
 	return result;
 
 }
