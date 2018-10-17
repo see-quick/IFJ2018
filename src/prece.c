@@ -219,16 +219,12 @@ expr_return parse_expr(LocalMap* lMap, tList* list){
             }
             // ak sa premenna nachadza v lokalnej mape tak
             else if(local_map_contain(lMap, gToken.data.str)){
-                if (isFirstVariable){
-                    isThirdVariable = true;
-                }
-                else{
-                    isFirstVariable = true;
-                };
+                if (isFirstVariable){ isThirdVariable = true; }
+                else{ isFirstVariable = true; };
                 dataIDF = local_map_get_value(lMap, gToken.data.str);
                 dataIDF.nameOfTheVariable = gToken.data.str;
-                resultOfPrece.uniqueID = &gToken.data;  // generovanie $$nazvu premennej
                 dataIDF.value.is_variable = true;
+                resultOfPrece.uniqueID = &gToken.data;
             }
             else{
                 // premenna nebola najdena v localnej mape a tym padom sa jedna o semanticku chybu
@@ -276,28 +272,6 @@ expr_return parse_expr(LocalMap* lMap, tList* list){
                 if ((stack->arrayOfNumbers[stack->finderOfParenthesis + 1]) == eIDENT) {
                     dataIDF = stack->arrayOfItems[stack->finderOfParenthesis];
                     dataIDF.nameOfTheNonTerminal =  "$result\0";      // generovanie UNIQUE
-
-                    instr_type = INSTRUCT_MOVE;
-                    instr1.type = GF;
-                    instr1.value.s = "$result\0";
-
-                    dataIDF = stack->arrayOfItems[stack->finderOfParenthesis + 1];
-                    if (dataIDF.type == STRING){
-                        instr2.type = S;
-                        instr2.value.s = dataIDF.value.string.str;
-                    }else if(dataIDF.type == INTEGER){
-                        instr2.type = I;
-                        instr2.value.i = dataIDF.value.i;
-                    }
-                    else if (dataIDF.type == FLOAT) {
-                        instr2.type = F;
-                        instr2.value.f = dataIDF.value.f;
-                    }
-                    // else IDENTIFIKATOR !!!
-
-
-                    insert_item(list, &instr_type, &instr1, &instr2, &instr3 );
-
                     stack_pop(stack);
                     stack_pop(stack);
                     stack_push(stack, E, dataIDF);
@@ -353,7 +327,7 @@ expr_return parse_expr(LocalMap* lMap, tList* list){
                                             (stack->arrayOfItems[stack->finderOfParenthesis + 3].type == INTEGER)) {
                                     if (is_result){
                                         instr2.type = GF;
-                                        instr2.value.s = "$result";
+                                        instr2.value.s = "$result\0";
                                     } else{
                                         if (isFirstVariable){
                                             if (is_LF) { instr2.type = LF;} else { instr2.type = GF;}
@@ -365,7 +339,7 @@ expr_return parse_expr(LocalMap* lMap, tList* list){
                                             instr2.value.i = stack->arrayOfItems[stack->finderOfParenthesis + 1].value.i;
                                         }
                                     }
-                                    if (isThirdVariable){
+                                    if (isThirdVariable == true ){
                                         if (is_LF) { instr3.type = LF;} else {instr3.type = GF;}
                                         instr3.value.s = stack->arrayOfItems[stack->finderOfParenthesis + 3].nameOfTheVariable;
 
@@ -377,14 +351,19 @@ expr_return parse_expr(LocalMap* lMap, tList* list){
 
                                      dataIDF.type = INTEGER;
                                      instr_type = INSTRUCT_ADD;
+
+                                     instr1.type = GF;
                                      instr1.value.s = "$result\0";        // generovanie UNIQUE // generate non Term -> Unikatny nazov
+
                                      dataIDF.value.i = stack->arrayOfItems[stack->finderOfParenthesis + 1].value.i + stack->arrayOfItems[stack->finderOfParenthesis + 3].value.i;
-                                     // generovanie ADD %s@%s %s@%s %s@%s
                                      insert_item(list, &instr_type, &instr1, &instr2, &instr3);
+
                                      is_result = true;
-                                    // refresh promennych
+                                     // generovanie ADD %s@%s %s@%s %s@%s
+
                                      isFirstVariable = false;
                                      isThirdVariable = false;
+
                                  } else if ((stack->arrayOfItems[stack->finderOfParenthesis + 1].type == INTEGER) &&
                                             (stack->arrayOfItems[stack->finderOfParenthesis + 3].type == FLOAT)) {
                                      dataIDF.type = FLOAT;
@@ -923,6 +902,9 @@ expr_return parse_expr(LocalMap* lMap, tList* list){
                                 resultOfPrece.result = SYN_ERR;
                                 return resultOfPrece;
                             }
+
+                            isFirstVariable = false;
+                            isThirdVariable = false;
                             STACK_POP4;
                             stack_push(stack, E, dataIDF);                 // nakoniec pushneme E + datovu strukturu
                             if (DEBUG)
@@ -1327,7 +1309,6 @@ expr_return parse_expr(LocalMap* lMap, tList* list){
                     resultOfPrece.result = SUCCESS;                                                         // vratenie navratovej hodnoty
                     resultOfPrece.uniqueID->str = stack_top_token_data(stack)->nameOfTheNonTerminal;        // vratenie UNIQUE nazvu identifikatora
                     resultOfPrece.data_type = stack_top_token_data(stack)->type;                        // vratenie typu identificatora
-
                     stack_free(stack);
                     if(DEBUG)printf("Return exiting value -> |%d|, returning value -> |%s| abd returning type -> |%d|\n", resultOfPrece.result, resultOfPrece.uniqueID->str, resultOfPrece.data_type);
                     return resultOfPrece;

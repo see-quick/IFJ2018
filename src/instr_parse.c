@@ -71,10 +71,10 @@ char* instruct_type(tDatType instruction) {
  */
 void print_symb(tInstructionData instr_operand)  {
   if (instr_operand.type == I)  {
-    printf("%d\n",instr_operand.value.i);
+    printf("%d",instr_operand.value.i);
   }
-  else if (instr_operand.type == F) printf("%f\n",instr_operand.value.f);
-  else { printf("%s\n",instr_operand.value.s); }
+  else if (instr_operand.type == F) printf("%f",instr_operand.value.f);
+  else { printf("%s",instr_operand.value.s); }
 }
 
 /*
@@ -129,6 +129,7 @@ void print_arit_instr(tNode *act_instr) {
   print_multiple_symb(act_instr->data.address2);
   printf("%s@", instruct_type(act_instr->data.address3.type));
   print_symb(act_instr->data.address3);
+  printf("\n");
 
 
   // printf("MOVE %s@",instruct_type(act_instr->data.address1.type));
@@ -190,8 +191,11 @@ void parse_instructions(tList *instr_list)  {
       break;
 
       case INSTRUCT_MOVE:
-          printf("MOVE %s@%s %s@", instruct_type(act_instr->data.address1.type), act_instr->data.address1.value.s, instruct_type(act_instr->data.address2.type));
+          printf("MOVE %s@",instruct_type(act_instr->data.address1.type));
+          print_symb(act_instr->data.address1);
+          printf(" %s@",instruct_type(act_instr->data.address2.type));
           print_symb(act_instr->data.address2);
+          printf("\n");
       break;
 
       case INSTRUCT_DEFVAR:
@@ -205,6 +209,7 @@ void parse_instructions(tList *instr_list)  {
       case INSTRUCT_PUSHS:
           printf("PUSHS %s@", instruct_type(act_instr->data.address1.type));
           print_symb(act_instr->data.address1);
+          printf("\n");
       break;
 
       case INSTRUCT_POPS:
@@ -286,6 +291,7 @@ void parse_instructions(tList *instr_list)  {
       case INSTRUCT_NOT:
           printf("NOT %s@%s %s@", instruct_type(act_instr->data.address1.type), act_instr->data.address1.value.s, instruct_type(act_instr->data.address2.type));
           print_symb(act_instr->data.address2);
+          printf("\n");
       break;
 
       case INSTRUCT_ANDS:
@@ -299,21 +305,25 @@ void parse_instructions(tList *instr_list)  {
       case INSTRUCT_NOTS:
           printf("NOTS %s@%s %s@", instruct_type(act_instr->data.address1.type), act_instr->data.address1.value.s, instruct_type(act_instr->data.address2.type));
           print_symb(act_instr->data.address2);
+          printf("\n");
       break;
 
       case INSTRUCT_INT2FLOAT:
           printf("INT2FLOAT %s@%s %s@", instruct_type(act_instr->data.address1.type), act_instr->data.address1.value.s, instruct_type(act_instr->data.address2.type));
           print_symb(act_instr->data.address2);
+          printf("\n");
       break;
 
       case INSTRUCT_FLOAT2INT:
           printf("FLOAT2INT %s@%s %s@", instruct_type(act_instr->data.address1.type), act_instr->data.address1.value.s, instruct_type(act_instr->data.address2.type));
           print_symb(act_instr->data.address2);
+          printf("\n");
       break;
 
       case INSTRUCT_INT2CHAR:
           printf("INT2CHAR %s@%s %s@", instruct_type(act_instr->data.address1.type), act_instr->data.address1.value.s, instruct_type(act_instr->data.address2.type));
           print_symb(act_instr->data.address2);
+          printf("\n");
       break;
 
       case INSTRUCT_STRI2INT:
@@ -323,16 +333,19 @@ void parse_instructions(tList *instr_list)  {
       case INSTRUCT_INT2FLOATS:
           printf("INT2FLOATS %s@%s %s@", instruct_type(act_instr->data.address1.type), act_instr->data.address1.value.s, instruct_type(act_instr->data.address2.type));
           print_symb(act_instr->data.address2);
+          printf("\n");
       break;
 
       case INSTRUCT_FLOAT2INTS:
           printf("INT2FLOAT %s@%s %s@", instruct_type(act_instr->data.address1.type), act_instr->data.address1.value.s, instruct_type(act_instr->data.address2.type));
           print_symb(act_instr->data.address2);
+          printf("\n");
       break;
 
       case INSTRUCT_INT2CHARS:
           printf("INT2CHARS %s@%s %s@", instruct_type(act_instr->data.address1.type), act_instr->data.address1.value.s, instruct_type(act_instr->data.address2.type));
           print_symb(act_instr->data.address2);
+          printf("\n");
       break;
 
       case INSTRUCT_STRI2INTS:
@@ -346,6 +359,7 @@ void parse_instructions(tList *instr_list)  {
       case INSTRUCT_WRITE:
           printf("WRITE %s@", instruct_type(act_instr->data.address1.type));
           print_symb(act_instr->data.address1);
+          printf("\n");
       break;
 
       case INSTRUCT_CONCAT:
@@ -355,6 +369,7 @@ void parse_instructions(tList *instr_list)  {
       case INSTRUCT_STRLEN:
           printf("STRLEN %s@%s %s@", instruct_type(act_instr->data.address1.type), act_instr->data.address1.value.s, instruct_type(act_instr->data.address2.type));
           print_symb(act_instr->data.address2);
+          printf("\n");
       break;
 
       case INSTRUCT_GETCHAR:
@@ -368,6 +383,7 @@ void parse_instructions(tList *instr_list)  {
       case INSTRUCT_TYPE:
           printf("TYPE %s@%s %s@", instruct_type(act_instr->data.address1.type), act_instr->data.address1.value.s, instruct_type(act_instr->data.address2.type));
           print_symb(act_instr->data.address2);
+          printf("\n");
       break;
 
       case INSTRUCT_LABEL:
@@ -383,6 +399,7 @@ void parse_instructions(tList *instr_list)  {
           print_multiple_symb(act_instr->data.address2);
           printf("%s@", instruct_type(act_instr->data.address3.type));
           print_symb(act_instr->data.address3);
+          printf("\n");
       break;
 
       case INSTRUCT_JUMPIFNEQ:
@@ -390,6 +407,7 @@ void parse_instructions(tList *instr_list)  {
           print_multiple_symb(act_instr->data.address2);
           printf("%s@", instruct_type(act_instr->data.address3.type));
           print_symb(act_instr->data.address3);
+          printf("\n");
 
       break;
 
@@ -404,11 +422,13 @@ void parse_instructions(tList *instr_list)  {
       case INSTRUCT_EXIT:
           printf("EXIT %s@", instruct_type(act_instr->data.address1.type));
           print_symb(act_instr->data.address1);
+          printf("\n");
       break;
 
       case INSTRUCT_DPRINT:
           printf("DPRINT %s@", instruct_type(act_instr->data.address1.type));
           print_symb(act_instr->data.address1);
+          printf("\n");
       break;
 
       case INSTRUCT_LENGTH:

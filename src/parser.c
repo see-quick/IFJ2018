@@ -371,7 +371,7 @@ int sth(){
 		case KW_INPUT_I:
 		case KW_INPUT_F:
 
-				DLIsImportant(&tlist);
+				// DLIsImportant(&tlist);
 
 				//SEMANTICKA AKCE, KONTROLA DEFINICE FUNKCE
 				tmp = global_map_get_pointer_to_value(gMap, gToken.data.str);
@@ -382,34 +382,56 @@ int sth(){
 						return SEM_ERR;
 					}
 					else{
+						instr_type = INSTRUCT_MOVE;
+						instr1.type = GF;
+						instr1.value.s = "$result\0";
+						if (is_LF){ instr2.type = LF; } else {instr2.type = GF;}
+						instr2.value.s = gToken.data.str;
+						insert_item(ilist, &instr_type, &instr1, &instr2, &instr3);
+
+
 						// je to promenna prirazenu typu a = b
 						res = parse_expr(localMap, ilist);
 						result = res.result;
 
 						if (result == SUCCESS){
-
-							lData.type = res.data_type; 
-							local_map_put(localMap, DLFirstImportant(&tlist), lData);
-
-							// instrukce MOVE
-
-							// MOVE GF@promenna / LF@promenna  TF@%$result
 							instr_type = INSTRUCT_MOVE;
-							if (is_LF) {instr1.type = LF;}
-							else{
-								instr1.type = GF;
+							lData = local_map_get_value(localMap, DLLastImportant(&tlist));
+							if (lData.type == NONE){
+								lData.type = res.data_type;
+								local_map_put(localMap, DLLastImportant(&tlist), lData);
+								if (is_LF) { instr1.type = LF; instr2.type = LF; } else {instr1.type = GF; instr2.type = GF;}
+								instr1.value.s = DLLastImportant(&tlist);
+								instr2.type = GF;
+								instr2.value.s = "$result"; 
+								insert_item(ilist, &instr_type, &instr1, &instr2, &instr3);
+							}
+							else if (    (lData.type == FLOAT && res.data_type == INTEGER ) 
+									  || (lData.type == FLOAT && res.data_type == FLOAT) 
+									  || (lData.type == INTEGER && res.data_type == INTEGER) 
+									  || (lData.type == STRING && res.data_type == STRING)  ){
+								if (is_LF) { instr1.type = LF; instr2.type = LF; } else {instr1.type = GF; instr2.type = GF;}
+								instr1.value.s = DLLastImportant(&tlist);
+								instr2.type = GF;
+								instr2.value.s = "$result";
+
+								insert_item(ilist, &instr_type, &instr1, &instr2, &instr3);
+							}
+							else if (lData.type == INTEGER && res.data_type == FLOAT){
+								if (is_LF) { instr1.type = LF; instr2.type = LF; } else {instr1.type = GF; instr2.type = GF;}
+								instr1.value.s = DLLastImportant(&tlist);
+								instr2.type = GF;
+								instr2.value.s = "$result";
+								lData.type = FLOAT;
+								local_map_put(localMap, DLLastImportant(&tlist), lData);
+
+								insert_item(ilist, &instr_type, &instr1, &instr2, &instr3);
+							}
+							else {
+								fprintf(stderr, "Semanticka chyba typové kompatibility v aritmetických vyrazech, radek %d\n", gToken.row);
+								return ERR_INCOMPATIBLE_TYPE;
 							}
 
-							instr1.value.s = DLFirstImportant(&tlist);
-							instr2.type = GF;
-							instr2.value.s = res.uniqueID->str;
-
-							insert_item(ilist, &instr_type, &instr1, &instr2, &instr3);
-
-						}
-
-						else{
-							return result;
 						}
 
 						// cokoliv jineho syntakticka chyba
@@ -418,10 +440,6 @@ int sth(){
 							return SYN_ERR;
 						}
 
-						DLNotImportant(&tlist);
-
-
-						return result;
 					}
 						
 				}
@@ -600,6 +618,31 @@ int sth(){
 
 		//pokud neni token LEX_ID_F, prozenem to precedencni SA
 		default:
+
+			instr_type = INSTRUCT_MOVE;
+			if (token == LEX_NUMBER){
+				instr2.type = I;
+				instr2.value.i = atoi(gToken.data.str);
+			}
+			else if (token == LEX_REAL_NUMBER){
+				instr2.type = F;
+				instr2.value.f = atof(gToken.data.str);
+			}
+			else if (token == LEX_STRING) {
+				instr2.type = S;
+				instr2.value.s = gToken.data.str;
+			}
+			else if (token == LEX_ID){
+				if (is_LF){instr2.type = LF;} else {instr2.type = GF;}
+				instr2.value.s = gToken.data.str;
+			}
+
+			instr1.type = GF;
+			instr1.value.s = "$result\0";
+
+			insert_item(ilist, &instr_type, &instr1, &instr2, &instr3);
+
+
 			res = parse_expr(localMap, ilist);
 			result = res.result;
 
@@ -717,25 +760,62 @@ int sth(){
 
 			else if (result == SUCCESS){
 
+							instr_type = INSTRUCT_MOVE;
+							lData = local_map_get_value(localMap, DLFirstImportant(&tlist));
+							if (lData.type == NONE){
+								lData.type = res.data_type;
+								local_map_put(localMap, DLFirstImportant(&tlist), lData);
+								if (is_LF) { instr1.type = LF; instr2.type = LF; } else {instr1.type = GF; instr2.type = GF;}
+								instr1.value.s = DLFirstImportant(&tlist);
+								instr2.value.s = "$result"; 
+								insert_item(ilist, &instr_type, &instr1, &instr2, &instr3);
+							}
+							else if (    (lData.type == FLOAT && res.data_type == INTEGER ) 
+									  || (lData.type == FLOAT && res.data_type == FLOAT) 
+									  || (lData.type == INTEGER && res.data_type == INTEGER) 
+									  || (lData.type == STRING && res.data_type == STRING)  ){
+								//if (is_LF) { instr1.type = LF; instr2.type = LF; } else {instr1.type = GF; instr2.type = GF;}
+								instr1.value.s = DLFirstImportant(&tlist);
+								instr1.type = GF;
+								instr2.type = I;
+								instr2.value.s = "$result";
+
+								insert_item(ilist, &instr_type, &instr1, &instr2, &instr3);
+							}
+							else if (lData.type == INTEGER && res.data_type == FLOAT){
+								if (is_LF) { instr1.type = LF; instr2.type = LF; } else {instr1.type = GF; instr2.type = GF;}
+								instr1.value.s = DLFirstImportant(&tlist);
+								instr2.value.s = gToken.data.str;
+								lData.type = FLOAT;
+								local_map_put(localMap, DLFirstImportant(&tlist), lData);
+
+								insert_item(ilist, &instr_type, &instr1, &instr2, &instr3);
+							}
+							else {
+								fprintf(stderr, "Semanticka chyba typové kompatibility v aritmetických vyrazech, radek %d\n", gToken.row);
+								return ERR_INCOMPATIBLE_TYPE;
+							}
+				//printf("Type o %s is %d\n", DLLastImportant(&tlist), lData.type);
+
 
 				// SEGMENTATION FAULT
 
-				// ukladani vysledku do local_map
-				lData.type = res.data_type;  
-				local_map_put(localMap, DLFirstImportant(&tlist), lData);
+				// // ukladani vysledku do local_map
+				// lData.type = res.data_type;  
+				// local_map_put(localMap, DLFirstImportant(&tlist), lData);
 		
-				// MOVE GF@promenna / LF@promenna  TF@%retval
-				instr_type = INSTRUCT_MOVE;
-				if (is_LF) {instr1.type = LF;}
-				else{
-					instr1.type = GF;
-				}
+				// // MOVE GF@promenna / LF@promenna  TF@%retval
+				// instr_type = INSTRUCT_MOVE;
+				// if (is_LF) {instr1.type = LF;}
+				// else{
+				// 	instr1.type = GF;
+				// }
 
-				instr1.value.s = DLFirstImportant(&tlist);
-				instr2.type = GF;
-				instr2.value.s = "$result";
+				// instr1.value.s = DLFirstImportant(&tlist);
+				// instr2.type = GF;
+				// instr2.value.s = "$result";
 
-				insert_item(ilist, &instr_type, &instr1, &instr2, &instr3);
+				// insert_item(ilist, &instr_type, &instr1, &instr2, &instr3);
 
 			}
 			else {
@@ -1596,14 +1676,14 @@ int parse(GlobalMap* globalMap, tList *list) {
 		// vytvoreni docasneho ramce pro funkce
 		instr_type =  INSTRUCT_CREATEFREAME;
 		insert_item(ilist, &instr_type, &instr1, &instr2, &instr3);
-		instr_type = INSTRUCT_LENGTH;
-		insert_item(ilist, &instr_type, &instr1, &instr2, &instr3);
-		instr_type = INSTRUCT_CHR;
-		insert_item(ilist, &instr_type, &instr1, &instr2, &instr3);
-		instr_type = INSTRUCT_ORD;
-		insert_item(ilist, &instr_type, &instr1, &instr2, &instr3);
-		instr_type = INSTRUCT_SUBSTR;
-		insert_item(ilist, &instr_type, &instr1, &instr2, &instr3);
+		// instr_type = INSTRUCT_LENGTH;
+		// insert_item(ilist, &instr_type, &instr1, &instr2, &instr3);
+		// instr_type = INSTRUCT_CHR;
+		// insert_item(ilist, &instr_type, &instr1, &instr2, &instr3);
+		// instr_type = INSTRUCT_ORD;
+		// insert_item(ilist, &instr_type, &instr1, &instr2, &instr3);
+		// instr_type = INSTRUCT_SUBSTR;
+		// insert_item(ilist, &instr_type, &instr1, &instr2, &instr3);
 
 		result = prog();
 	}
