@@ -52,8 +52,11 @@ elif [[ ! -z "$1" && ! -z "$2" ]]; then
       testtype=${testfile:0:6} #extrakt nazvu testu
 
       if [ "$testtype" == "error1" ]; then  #vsetky testy obsahujuce chybu maju na zaciatku error. error1->chyba v programu v rámci lexikální analýzy (chybná struktura aktuálního lexému).
-        $prog < $testpath/$currentdir/$testfile > /dev/null 2>&1  #presmerovanie vystupu lexeru
+        timeout 3 $prog < $testpath/$currentdir/$testfile > /dev/null 2>&1  #presmerovanie vystupu lexeru
         retval=$(echo $?)
+        if [ "$retval" -eq "124" ]; then
+            echo "${red}[TEST FAILED]${reset} Program got stucked killed process after 3 sec"
+        fi
         if [ "$retval" -eq "1" ]; then
           ((testsucc++))
           echo "${green}[TEST PASSED]${reset}"
@@ -64,10 +67,13 @@ elif [[ ! -z "$1" && ! -z "$2" ]]; then
         fi
       ##### Syntax tests  #####
       elif [ "$testtype" == "error2" ]; then #testy oznacene error2 --> chyba v programu v rámci syntaktické analýzy (chybná syntaxe programu).
-        $prog < $testpath/$currentdir/$testfile > /dev/null 2>&1
+        timeout 3 $prog < $testpath/$currentdir/$testfile > /dev/null 2>&1
         ##retval=$(echo $?)
 
         retval=`echo $?`
+        if [ "$retval" -eq "124" ]; then
+            echo "${red}[TEST FAILED]${reset} Program got stucked killed process after 3 sec"
+        fi
         #echo "RETURNED : $?"
         #echo "RETURNED: $?"
         if [ "$retval" -eq "2" ]; then
@@ -80,8 +86,11 @@ elif [[ ! -z "$1" && ! -z "$2" ]]; then
         fi
       ##### Semantic tests  #####
       elif [ "$testtype" == "error3" ]; then #testy oznacene error3 --> sémantická chyba v programu – nedefinovaná funkce/proměnná, pokus o redefinici funkce/proměnné, atp
-        $prog < $testpath/$currentdir/$testfile > /dev/null 2>&1
+        timeout 3 $prog < $testpath/$currentdir/$testfile > /dev/null 2>&1
         retval=$(echo $?)
+        if [ "$retval" -eq "124" ]; then
+            echo "${red}[TEST FAILED]${reset} Program got stucked killed process after 3 sec"
+        fi
         if [ "$retval" -eq "3" ]; then
           ((testsucc++))
           echo "${green}[TEST PASSED]${reset}"
@@ -92,8 +101,11 @@ elif [[ ! -z "$1" && ! -z "$2" ]]; then
         fi
       ##### Semantic tests of type compability  #####
     elif [ "$testtype" == "error4" ]; then #testy oznacene error4 --> sémantická/běhová chyba typové kompatibility v aritmetických, řetězcových a relačních výrazech.
-      $prog < $testpath/$currentdir/$testfile > /dev/null 2>&1
+      timeout 3 $prog < $testpath/$currentdir/$testfile > /dev/null 2>&1
       retval=$(echo $?)
+      if [ "$retval" -eq "124" ]; then
+          echo "${red}[TEST FAILED]${reset} Program got stucked killed process after 3 sec"
+      fi
       if [ "$retval" -eq "4" ]; then
         ((testsucc++))
         echo "${green}[TEST PASSED]${reset}"
@@ -103,8 +115,11 @@ elif [[ ! -z "$1" && ! -z "$2" ]]; then
         echo "  expected return value = 4. Returned value = $retval"
       fi
       elif [ "$testtype" == "error5" ]; then #error5 -> sémantická chyba v programu – špatný počet parametrů u volání funkce.
-        $prog < $testpath/$currentdir/$testfile > /dev/null 2>&1
+        timeout 3 $prog < $testpath/$currentdir/$testfile > /dev/null 2>&1
         retval=$(echo $?)
+        if [ "$retval" -eq "124" ]; then
+            echo "${red}[TEST FAILED]${reset} Program got stucked killed process after 3 sec"
+        fi
         if [ "$retval" -eq "5" ]; then
           ((testsucc++))
           echo "${green}[TEST PASSED]${reset}"
@@ -114,8 +129,11 @@ elif [[ ! -z "$1" && ! -z "$2" ]]; then
           echo "  expected return value = 5. Returned value = $retval"
         fi
       elif [ "$testtype" == "error6" ]; then #error6 -> ostatní sémantické chyby
-        $prog < $testpath/$currentdir/$testfile > /dev/null 2>&1
+        timeout 3 $prog < $testpath/$currentdir/$testfile > /dev/null 2>&1
         retval=$(echo $?)
+        if [ "$retval" -eq "124" ]; then
+            echo "${red}[TEST FAILED]${reset} Program got stucked killed process after 3 sec"
+        fi
         if [ "$retval" -eq "6" ]; then
           ((testsucc++))
           echo "${green}[TEST PASSED]${reset}"
@@ -126,8 +144,11 @@ elif [[ ! -z "$1" && ! -z "$2" ]]; then
         fi
       ##### Zero division #####
       elif [ "$testtype" == "error9" ]; then #error9 -> běhová chyba dělení nulou.
-        $prog < $testpath/$currentdir/$testfile > /dev/null 2>&1
+        timeout 3 $prog < $testpath/$currentdir/$testfile > /dev/null 2>&1
         retval=$(echo $?)
+        if [ "$retval" -eq "124" ]; then
+            echo "${red}[TEST FAILED]${reset} Program got stucked killed process after 3 sec"
+        fi
         if [ "$retval" -eq "9" ]; then
           ((testsucc++))
           echo "${green}[TEST PASSED]${reset}"
@@ -138,8 +159,11 @@ elif [[ ! -z "$1" && ! -z "$2" ]]; then
         fi
       ##### internal error  #####
     elif [ "$testtype" == "error99" ]; then #error99 -> interní chyba překladače tj. neovlivněná vstupním programem (např. chyba alokace paměti, atd.).
-      $prog < $testpath/$currentdir/$testfile > /dev/null 2>&1
+      timeout 3 $prog < $testpath/$currentdir/$testfile > /dev/null 2>&1
       retval=$(echo $?)
+      if [ "$retval" -eq "124" ]; then
+          echo "${red}[TEST FAILED]${reset} Program got stucked killed process after 3 sec"
+      fi
       if [ "$retval" -eq "99" ]; then
         ((testsucc++))
         echo "${green}[TEST PASSED]${reset}"
@@ -150,8 +174,11 @@ elif [[ ! -z "$1" && ! -z "$2" ]]; then
       fi
       ##### Success #####
       else
-        $prog < $testpath/$currentdir/$testfile > /dev/null 2>&1
+        timeout 3  $prog < $testpath/$currentdir/$testfile > /dev/null 2>&1
         retval=$(echo $?)
+        if [ "$retval" -eq "124" ]; then
+            echo "${red}[TEST FAILED]${reset} Program got stucked killed process after 3 sec"
+        fi
         if [ "$retval" -eq "0" ]; then
           ((testsucc++))
           echo "${green}[TEST PASSED]${reset}"
@@ -164,7 +191,15 @@ elif [[ ! -z "$1" && ! -z "$2" ]]; then
     done
   done
 
-  echo "TESTED $((testfail+testsucc)) tests, PASSED: $testsucc, FAILED: $testfail"
+  #tests succession
+  tests=$((testfail+testsucc))
+  total=$(echo " scale=2;
+  var1 = $testsucc * 100;
+  var1 = var1 / $tests;
+  var1 " \
+  | bc)
+
+  echo "TESTED $tests tests, PASSED: $testsucc, FAILED: $testfail Totally: ${green}$total%${reset}"
   echo "..."
   echo "Trying to run valgrind to check for correct allocations"
 
