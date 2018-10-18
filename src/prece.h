@@ -68,7 +68,7 @@ typedef enum{
 
 typedef struct{
     tString *uniqueID;    // chces aby som ti vracal aj ten NonTerminal? :) ci staci iba hodnota
-    bool bool_result;;   // pri vyrazoch < > <= >= bude vzdy vysledok true alebo false;
+    bool bool_result;   // pri vyrazoch < > <= >= bude vzdy vysledok true alebo false;
     Types data_type;     // sem ti budem vracat datovy typ ?
     int result;         // pouzivaju sa navratove hodnoty z "error.h"
 }expr_return;

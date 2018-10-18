@@ -24,7 +24,6 @@
 
 GlobalMap* gMap;		     // globalni tabulka symbolu
 
-
 int error_lex(void);
 int error_int(void);
 
@@ -35,6 +34,7 @@ int error_int(void);
 int checkTokenType(int);
 
 int parse(GlobalMap* , tList *);
+
 
 /**
 ** Pocatecni stav pruchodu

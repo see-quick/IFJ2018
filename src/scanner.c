@@ -438,7 +438,7 @@ int getToken(){
                   else { expr = true; DLInsertFirst(&tlist, gToken.data.str); return LEX_ID; }
                 }
                 break;
-
+                
             case S_ID_F_END:
                 if (isspace(c) || ',' || ')'){ // is delimiter
                     ungetc(c, stdin);
@@ -479,7 +479,7 @@ int getToken(){
                     return LEX_ID;
                 }
                 break;
-
+            
             case S_ID_F_END:
                 if (c == '?' || c == '!'){
                     pushToken(c);
@@ -495,11 +495,9 @@ int getToken(){
                 if( c == EOF )
                   return LEX_EOF;
                 else if( c == '\n'){
-                    resetToken();
+                    resetToken(); // ignoruje komentare
                     gToken.row++;
-                    expr = false;
-                    return LEX_EOL;
-                    //state = S_EOL;
+                    state = S_EOL;
                 }
                 else state = S_COMMENT_ROW;
                 break;
@@ -592,7 +590,7 @@ int getToken(){
                             printf("asci err here 1");
                             return ERROR_LEX;
                         }
-
+                            
 
                         pushToken((int) ascii_tmp);
                         state = S_STRING;
@@ -607,7 +605,7 @@ int getToken(){
                         printf("asci err here 2");
                         return ERROR_LEX;
                     }
-
+                        
 
                     pushToken((int) ascii_tmp);
                     state = S_STRING;
