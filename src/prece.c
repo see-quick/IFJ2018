@@ -193,11 +193,13 @@ expr_return parse_expr(LocalMap* lMap, tList* list){
             dataIDF.type = INTEGER;
             dataIDF.value.i = atoi(gToken.data.str);
             resultOfPrece.uniqueID = &gToken.data;
+            dataIDF.isVariable = false;
         }
         else if (token == LEX_REAL_NUMBER){
             dataIDF.type = FLOAT;
             dataIDF.value.f = atof(gToken.data.str);
             resultOfPrece.uniqueID = &gToken.data;
+            dataIDF.isVariable = false;
             instr2.type = F;
             instr2.value.f = dataIDF.value.f;
         }
@@ -205,6 +207,7 @@ expr_return parse_expr(LocalMap* lMap, tList* list){
             dataIDF.type = STRING;
             dataIDF.value.string.str = gToken.data.str;
             resultOfPrece.uniqueID = &gToken.data;
+            dataIDF.isVariable = false;
             instr2.type = S;
             instr2.value.s = gToken.data.str;
         }
@@ -219,11 +222,9 @@ expr_return parse_expr(LocalMap* lMap, tList* list){
             }
             // ak sa premenna nachadza v lokalnej mape tak
             else if(local_map_contain(lMap, gToken.data.str)){
-                if (isFirstVariable){ isThirdVariable = true; }
-                else{ isFirstVariable = true; };
                 dataIDF = local_map_get_value(lMap, gToken.data.str);
                 dataIDF.nameOfTheVariable = gToken.data.str;
-                dataIDF.value.is_variable = true;
+                dataIDF.isVariable = true;
                 resultOfPrece.uniqueID = &gToken.data;
             }
             else{
@@ -325,7 +326,19 @@ expr_return parse_expr(LocalMap* lMap, tList* list){
                                  }
                                  else if ((stack->arrayOfItems[stack->finderOfParenthesis + 1].type == INTEGER) &&
                                             (stack->arrayOfItems[stack->finderOfParenthesis + 3].type == INTEGER)) {
-                                    if (is_result){
+
+                                     if(stack->arrayOfItems[stack->finderOfParenthesis + 1].isVariable){
+                                         isFirstVariable = true;
+                                     }
+                                     else{ isFirstVariable = false;
+                                     }
+                                     if(stack->arrayOfItems[stack->finderOfParenthesis + 3].isVariable){
+                                         isThirdVariable = true;
+                                     }
+                                     else{ isThirdVariable = false;
+                                     }
+
+                                     if (is_result){
                                         instr2.type = GF;
                                         instr2.value.s = "$result\0";
                                     } else{
