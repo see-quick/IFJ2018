@@ -144,7 +144,7 @@ char* convert_to_char(int token){
         case 14: return ",\0";
         case 15: return "f\0";
         case 22: return "[<]\0";
-        case 30: return EMPTY_CHAR;
+        case 30: return "\0";
         case 42: return "E\0";
     }
     return "\0";
@@ -295,7 +295,7 @@ expr_return parse_expr(LocalMap* lMap, tList* list){
                         case ePLUS:
                             // PRAVIDLO E -> E + E
                             if (DEBUG) stack_print_prece(stack);
-                             if ((&stack->arrayOfNumbers[stack->finderOfParenthesis + 3]) != NULL) {
+                             if ((stack->arrayOfNumbers[stack->finderOfParenthesis + 3]) != EMPTY_CHAR) {
                                  if ((stack->arrayOfItems[stack->finderOfParenthesis + 1].type == STRING) &&
                                      (stack->arrayOfItems[stack->finderOfParenthesis + 3].type == STRING)) {
                                      dataIDF.type = STRING;
@@ -332,7 +332,6 @@ expr_return parse_expr(LocalMap* lMap, tList* list){
                                         if (isFirstVariable){
                                             if (is_LF) { instr2.type = LF;} else { instr2.type = GF;}
                                             instr2.value.s = stack->arrayOfItems[stack->finderOfParenthesis + 1].nameOfTheVariable;
-                                            dataIDF.value.is_variable = false;
                                         }
                                         else {
                                             instr2.type = I;
@@ -443,7 +442,7 @@ expr_return parse_expr(LocalMap* lMap, tList* list){
 
                             // PRAVIDLO E -> E - E
                         case eMINUS:
-                            if ((&stack->arrayOfNumbers[stack->finderOfParenthesis + 3]) != NULL) {
+                            if ((stack->arrayOfNumbers[stack->finderOfParenthesis + 3]) != EMPTY_CHAR) {
                                 if ((stack->arrayOfItems[stack->finderOfParenthesis + 1].type == STRING) ||
                                     (stack->arrayOfItems[stack->finderOfParenthesis + 3].type == STRING)) {
 
@@ -525,7 +524,7 @@ expr_return parse_expr(LocalMap* lMap, tList* list){
                         break;
                             // PRAVIDLO E -> E * E
                         case eMUL:
-                            if (&stack->arrayOfItems[stack->finderOfParenthesis + 3] != NULL) {
+                            if ((stack->arrayOfNumbers[stack->finderOfParenthesis + 3]) != EMPTY_CHAR) {
                                 if ((stack->arrayOfItems[stack->finderOfParenthesis + 1].type == STRING) ||
                                     (stack->arrayOfItems[stack->finderOfParenthesis + 3].type == STRING)) {
 
@@ -609,7 +608,7 @@ expr_return parse_expr(LocalMap* lMap, tList* list){
                         break;
                             // PRAVIDLO E -> E / E
                         case eDIV:
-                            if (&stack->arrayOfItems[stack->finderOfParenthesis + 3] != NULL) {
+                            if ((stack->arrayOfNumbers[stack->finderOfParenthesis + 3]) != EMPTY_CHAR) {
                                 if ((stack->arrayOfItems[stack->finderOfParenthesis + 1].type == STRING) ||
                                     (stack->arrayOfItems[stack->finderOfParenthesis + 3].type == STRING)) {
 
@@ -725,7 +724,7 @@ expr_return parse_expr(LocalMap* lMap, tList* list){
                         break;
                             // PRAVIDLO E -> E < E
                         case eLESS:
-                            if (&stack->arrayOfItems[stack->finderOfParenthesis + 3] != NULL) {
+                            if ((stack->arrayOfNumbers[stack->finderOfParenthesis + 3]) != EMPTY_CHAR) {
                                 if ((stack->arrayOfItems[stack->finderOfParenthesis + 1].type == STRING) &&
                                     (stack->arrayOfItems[stack->finderOfParenthesis + 3].type == STRING)) {
                                     int result = strcmp(
@@ -816,7 +815,7 @@ expr_return parse_expr(LocalMap* lMap, tList* list){
                         break;
                             // PRAVIDLO E -> E > E
                         case eGREAT:
-                            if (&stack->arrayOfItems[stack->finderOfParenthesis + 3] != NULL) {
+                            if ((stack->arrayOfNumbers[stack->finderOfParenthesis + 3]) != EMPTY_CHAR) {
                                 if ((stack->arrayOfItems[stack->finderOfParenthesis + 1].type == STRING) &&
                                     (stack->arrayOfItems[stack->finderOfParenthesis + 3].type == STRING)) {
                                     int result = strcmp(
@@ -912,7 +911,7 @@ expr_return parse_expr(LocalMap* lMap, tList* list){
                         break;
                             // PRAVIDLO E -> E <= E
                         case eLEQUAL: // <=
-                            if (&stack->arrayOfItems[stack->finderOfParenthesis + 3] != NULL) {
+                            if ((stack->arrayOfNumbers[stack->finderOfParenthesis + 3]) != EMPTY_CHAR) {
                                 if ((stack->arrayOfItems[stack->finderOfParenthesis + 1].type == STRING) &&
                                     (stack->arrayOfItems[stack->finderOfParenthesis + 3].type == STRING)) {
                                     dataIDF.type = BOOLEAN;
@@ -1005,7 +1004,7 @@ expr_return parse_expr(LocalMap* lMap, tList* list){
                         break;
                             // PRAVIDLO E -> E >= E
                         case eGEQUAL: // >=
-                            if (&stack->arrayOfItems[stack->finderOfParenthesis + 3] != NULL) {
+                            if ((stack->arrayOfNumbers[stack->finderOfParenthesis + 3]) != EMPTY_CHAR) {
                                 if ((stack->arrayOfItems[stack->finderOfParenthesis + 1].type == STRING) &&
                                     (stack->arrayOfItems[stack->finderOfParenthesis + 3].type == STRING)) {
                                     dataIDF.type = BOOLEAN;
@@ -1097,7 +1096,7 @@ expr_return parse_expr(LocalMap* lMap, tList* list){
                         break;
                             // PRAVIDLO E -> E == E
                         case eEQUAL: // ==
-                            if (&stack->arrayOfItems[stack->finderOfParenthesis + 3] != NULL) {
+                            if ((stack->arrayOfNumbers[stack->finderOfParenthesis + 3]) != EMPTY_CHAR) {
                                 if ((stack->arrayOfItems[stack->finderOfParenthesis + 1].type == STRING) &&
                                     (stack->arrayOfItems[stack->finderOfParenthesis + 3].type == STRING)) {
                                     int result = strcmp(
@@ -1189,7 +1188,7 @@ expr_return parse_expr(LocalMap* lMap, tList* list){
                         break;
                             // PRAVIDLO E -> E != E
                         case eNEQUAL: // !=
-                            if (&stack->arrayOfItems[stack->finderOfParenthesis + 3] != NULL) {
+                            if ((stack->arrayOfNumbers[stack->finderOfParenthesis + 3]) != EMPTY_CHAR) {
                                 if ((stack->arrayOfItems[stack->finderOfParenthesis + 1].type == STRING) &&
                                     (stack->arrayOfItems[stack->finderOfParenthesis + 3].type == STRING)) {
                                     int result = strCompare(
