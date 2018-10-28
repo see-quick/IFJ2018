@@ -502,7 +502,7 @@ void parse_instructions(tList *instr_list)  {
       break;
 
       case INSTRUCT_IF_ELSE:
-          printf("LABEL if_label_else %d\n", if_count);
+          printf("LABEL if_label_else%d\n", if_count);
       break;
 
       case INSTRUCT_JUMP_ENDIF:
