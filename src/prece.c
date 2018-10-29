@@ -35,7 +35,7 @@ tInstructionData instr3;
 
 extern bool is_LF;
 int counterVar = 1;
-int DEBUG = 0;  /* premenna na debugovanie  0 --> pre ziadnej vypis, 1 --> pre vypis */
+int DEBUG = 1;  /* premenna na debugovanie  0 --> pre ziadnej vypis, 1 --> pre vypis */
 
 prece_states prece_table [SIZEOFTABLE][SIZEOFTABLE] = {
 /*        +    -    *    /    <    >   <=   >=   ==   !=   i    (    )    $   ,   f          <------- ACT TOKEN */
@@ -157,7 +157,7 @@ expr_return parse_expr(LocalMap* lMap, tList* list){
 //    tItem* tempItemForPositionOne; /* GLOBALNY ITEM pre stack pri pravidle E -> i */
 //    tItem* tempItemForPositionThree; /* GLOBALNY ITEM pre stack pri pravidlach E -> E + E, E -> E - E a podobne. */
     expr_return resultOfPrece = {.result=SUCCESS, .bool_result=""};
-    tStack* stack = stack_init(15);
+    tStack* stack = stack_init(6);
     int actTokenIndexToPreceTable = 0;
     int stackTopTokenIndexToPreceTable = 0;
 
@@ -252,8 +252,6 @@ expr_return parse_expr(LocalMap* lMap, tList* list){
                 if (DEBUG)printf("CASE: |<| (shifting)\n");
                 if (stack_top_token_number(stack) == E) {
                     dataIDF = stack->arrayOfItems[stack->finderOfParenthesis];
-
-
                     stack_pop(stack);
                     stack_push(stack, eSOLVING_RULE, dataIDF);
                     stack_push(stack, E, dataIDF);
@@ -1306,6 +1304,11 @@ expr_return parse_expr(LocalMap* lMap, tList* list){
                             if (DEBUG)
                                 stack_print(stack);
                         break;
+
+                        // tato podmienka je kvoli prikladu a = ++ ....
+                        default:
+                            resultOfPrece.result = SYN_ERR;
+                            return resultOfPrece;
                     }
                 }
             break;
