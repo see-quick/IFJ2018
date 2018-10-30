@@ -129,7 +129,7 @@ int getToken(){
                 else if(c == '[') { pushToken(c); DLInsertFirst(&tlist, gToken.data.str); return LEX_L_SBRACKET; }     // leva hranata zavorka
                 else if(c == ']') { pushToken(c); DLInsertFirst(&tlist, gToken.data.str); return LEX_R_SBRACKET; }     // prava hranata zavorka
                 else if(c == '+') { pushToken(c); DLInsertFirst(&tlist, gToken.data.str); return LEX_ADDITION; }       // plus
-                else if(c == '-') { pushToken(c); state = S_NEG_NUMBER; }   // minus || zaporne cislo
+                else if(c == '-') { pushToken(c); DLInsertFirst(&tlist, gToken.data.str); return LEX_SUBSTRACTION;}   // minus || zaporne cislo
                 else if(c == '*') { pushToken(c); DLInsertFirst(&tlist, gToken.data.str); return LEX_MULTIPLICATION; } // hvezdicka
                 else if(c == '/') { pushToken(c); DLInsertFirst(&tlist, gToken.data.str); return LEX_DIVISION; }       // deleni
                 else if(c == '=') { pushToken(c); state = S_EQUAL; }          // rovnitko
@@ -308,20 +308,6 @@ int getToken(){
                         ungetc(c, stdin);
                         return LEX_EOL;
                     }
-            break;
-
-            case S_NEG_NUMBER:
-              if(isdigit(c)){
-                pushToken(c);
-                state = S_NUMBER;
-                sub = true;
-              }
-              else {
-                ungetc(c, stdin);
-                sub = false;
-                DLInsertFirst(&tlist, gToken.data.str);
-                return LEX_SUBSTRACTION;
-              }
             break;
 
             //Cislo - cela cast

@@ -759,14 +759,19 @@ int sth(){
 			}
 
 			else if (result == SUCCESS){
+							//printf("type i %d\n", res.data_type);
+							//local_map_print(localMap);
 
 							instr_type = INSTRUCT_MOVE;
-							lData = local_map_get_value(localMap, DLFirstImportant(&tlist));
+							//print_elements_of_list(tlist);
+							//printf("Frst important %s\n", DLLastImportant(&tlist));
+							lData = local_map_get_value(localMap, DLLastImportant(&tlist));
 							if (lData.type == NONE){
+								//printf("none\n");
 								lData.type = res.data_type;
-								local_map_put(localMap, DLFirstImportant(&tlist), lData);
+								local_map_put(localMap, DLLastImportant(&tlist), lData);
 								if (is_LF) { instr1.type = LF; instr2.type = LF; } else {instr1.type = GF; instr2.type = GF;}
-								instr1.value.s = DLFirstImportant(&tlist);
+								instr1.value.s = DLLastImportant(&tlist);
 								instr2.value.s = "$result"; 
 								insert_item(ilist, &instr_type, &instr1, &instr2, &instr3);
 							}
@@ -775,7 +780,7 @@ int sth(){
 									  || (lData.type == INTEGER && res.data_type == INTEGER) 
 									  || (lData.type == STRING && res.data_type == STRING)  ){
 								//if (is_LF) { instr1.type = LF; instr2.type = LF; } else {instr1.type = GF; instr2.type = GF;}
-								instr1.value.s = DLFirstImportant(&tlist);
+								instr1.value.s = DLLastImportant(&tlist);
 								instr1.type = GF;
 								instr2.type = I;
 								instr2.value.s = "$result";
@@ -784,10 +789,10 @@ int sth(){
 							}
 							else if (lData.type == INTEGER && res.data_type == FLOAT){
 								if (is_LF) { instr1.type = LF; instr2.type = LF; } else {instr1.type = GF; instr2.type = GF;}
-								instr1.value.s = DLFirstImportant(&tlist);
+								instr1.value.s = DLLastImportant(&tlist);
 								instr2.value.s = gToken.data.str;
 								lData.type = FLOAT;
-								local_map_put(localMap, DLFirstImportant(&tlist), lData);
+								local_map_put(localMap, DLLastImportant(&tlist), lData);
 
 								insert_item(ilist, &instr_type, &instr1, &instr2, &instr3);
 							}

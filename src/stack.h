@@ -26,7 +26,7 @@
 
 typedef struct{
     int top;
-    int finderOfParenthesis; // TODO: same as top, but this variable is used for finding first occurence of '<' in Non-terminal
+    int finderOfParenthesis;
     unsigned memory;
     int *arrayOfNumbers;
     tDataIDF *arrayOfItems;

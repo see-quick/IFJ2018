@@ -50,7 +50,7 @@
 
 #define eSOLVING_RULE   22 // preventujeme kvoli situacii kde ak najde symbol < a pride dalsi < tak nech sa z toho nezblazni
 #define E               42  // E - non terminal
-#define EMPTY_CHAR " \0";
+#define EMPTY_CHAR     30
 
 #define eSYNTERROR 800 // syntax error
 
