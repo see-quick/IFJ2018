@@ -25,6 +25,7 @@
 
 GlobalMap* gMap;		     // globalni tabulka symbolu
 
+void instruction_exit(int);
 int error_lex(void);
 int error_int(void);
 
