@@ -25,6 +25,9 @@
 #include "instr_parse.h"
 #include "list.h"
 
+extern char * function_name;
+extern char * variable_name;
+
 
 int main(int argc, char** argv) {
    
@@ -37,16 +40,19 @@ int main(int argc, char** argv) {
 
   result = parse(globalMap, list);
 
-  if(result == SUCCESS) {
+  // if(result == SUCCESS) {
       reverse(&(list->first));
       set_active(list);
       parse_instructions(list);
-  }
+  // }
 
   global_map_free(globalMap);
 
   dispose_list(list);
   free(list);
+
+  free(function_name);
+  free(variable_name);
 
   return result;  
 }

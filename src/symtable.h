@@ -45,7 +45,6 @@ typedef union DataTypes
     double f;
     tString string;
     bool nil;
-    bool is_variable;
 } dType;
 
 /** stucture for data of indetificator (for local map) **/
@@ -55,6 +54,7 @@ typedef struct DataIdentificator { // (toto bude obsah pre localnu mapu)
     bool defined;                   // zda bola premmena definovana (ale taktiez to zistime tak ak bude nebude value
     char* nameOfTheNonTerminal;     // nazov nonterminalu $1, $240 atd.
     char* nameOfTheVariable;
+    bool isVariable;        // pomocna premenna ktora nam presne povie zda je dany token premenna alebo nie
 } tDataIDF;
 
 /*Datová položka TRP s explicitně řetězenými synonymy pre Localnu mapu*/

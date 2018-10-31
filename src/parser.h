@@ -20,10 +20,10 @@
 
 #include "symtable.h"
 #include "list.h"
+#include "prece.h"
 #include <stdbool.h>
 
 GlobalMap* gMap;		     // globalni tabulka symbolu
-
 
 int error_lex(void);
 int error_int(void);
@@ -36,6 +36,7 @@ int checkTokenType(int);
 
 int parse(GlobalMap* , tList *);
 
+
 /**
 ** Pocatecni stav pruchodu
 ** Dale nasleduje zacatek programu <prog> - <main_p> EOF
@@ -44,6 +45,7 @@ int prog(void);
 int main_p(void);
 int st_list();
 int stat();
+int move_value(expr_return res);
 int sth();
 int pm_list();
 int pm_list2();
