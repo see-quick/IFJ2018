@@ -161,7 +161,7 @@ expr_return parse_expr(LocalMap* lMap, tList* list){
 //    tItem* tempItemForPositionOne; /* GLOBALNY ITEM pre stack pri pravidle E -> i */
 //    tItem* tempItemForPositionThree; /* GLOBALNY ITEM pre stack pri pravidlach E -> E + E, E -> E - E a podobne. */
     expr_return resultOfPrece = {.result=SUCCESS, .bool_result=""};
-    tStack* stack = stack_init(6);
+    tStack* stack = stack_init(100);
     int actTokenIndexToPreceTable = 0;
     int stackTopTokenIndexToPreceTable = 0;
 
@@ -263,8 +263,6 @@ expr_return parse_expr(LocalMap* lMap, tList* list){
                 if (DEBUG)printf("CASE: |<| (shifting)\n");
                 if (stack_top_token_number(stack) == E) {
                     dataIDF = stack->arrayOfItems[stack->finderOfParenthesis];
-
-
                     stack_pop(stack);
                     stack_push(stack, eSOLVING_RULE, dataIDF);
                     stack_push(stack, E, dataIDF);

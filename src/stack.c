@@ -112,19 +112,17 @@ void stack_push ( tStack *stack, int tokenNumber, tDataIDF tokenData){
  * @param stack konkrenty token
  * @return vrati token na vrchole zasobnika
  */
-tItem* stack_pop(tStack *stack){
+void stack_pop(tStack *stack){
     // ak zasobnik nie je prazdny
     if(!(stack_empty(stack))){
-        item = (tItem *)malloc(sizeof(tItem));
-        item->token_number = stack->arrayOfNumbers[stack->top];
-        item->token_data = stack->arrayOfItems[stack->top];
         stack->arrayOfNumbers[stack->top] = 30; // pre printf funckiu -> mapujeme 30 ako prazdny znak
         stack->top--;
         stack->finderOfParenthesis--;
-        return item;
     }
-    printf("Popping empty stack\n");
-    return NULL;
+    else{
+        printf("Popping empty stack\n");
+    }
+
 }
 /**
  * Funckia, ktora sa vyuziva pri popovani poloziek ktore su nam pri redukcii uz nepotrebne napriklad  $<i   polozka < nepotrebne tak stack_pop_free, i je potrebne takze dame stack_pop
