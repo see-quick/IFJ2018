@@ -267,8 +267,6 @@ int term_list(bool zavorka){
 			// if LEX_ID -> zkontrolovat zda je promenna definovana
 			// pokud je to LEX_ID, LEX_NUMBER, LEX_REAL, LEX_STRING , podle typu vytvorit vnitrni promennou s hodnotou argumentu
 
-			//printf("TEST %s\n", DLLastImportant(&tlist));
-
 			instr_type = INSTRUCT_DEFVAR;
 			instr1.type = TF;
 			instr1.value.s = generate_param("$_param", argCount);
@@ -749,7 +747,7 @@ int sth(){
 
 						instr_type = INSTRUCT_CALL;
 						instr1.type = FCE;
-						instr1.value.s = DLLastImportant(&tlist);
+						instr1.value.s = function_name;
 
 						insert_item(ilist, &instr_type, &instr1, &instr2, &instr3);
 
@@ -1736,7 +1734,7 @@ int parse(GlobalMap* globalMap, tList *list) {
 
 	int result = SUCCESS;
 	gMap = globalMap;
-	
+
 	ilist = list;
 	localMap = local_map_init(MAX_SIZE_OF_HASH_TABLE);
 	insert_build_in_functions();
