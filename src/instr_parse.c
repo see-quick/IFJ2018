@@ -160,7 +160,7 @@ void parse_instructions(tList *instr_list)  {
           printf("MOVE GF@$$var_integer int@0\n");
           printf("DEFVAR GF@$$var_double\n");
           // nejaka chyba??
-          printf("MOVE GF@$$var_double float@0.000000\n");
+          printf("MOVE GF@$$var_double float@0x0p+0\n");
           printf("DEFVAR GF@$$var_string\n");
           printf("MOVE GF@$$var_string string@\n");
           printf("DEFVAR GF@$$EXPR\n");
@@ -467,7 +467,7 @@ void parse_instructions(tList *instr_list)  {
 
           printf("MOVE GF@$$var_integer int@0\n");
           printf("LABEL label_end_ord\n");
-          printf("MOVE GF@$$var_double float@0.0\n");
+          printf("MOVE GF@$$var_double float@0x0p+0\n");
           printf("RETURN\n");
 
       break;
