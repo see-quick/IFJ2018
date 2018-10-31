@@ -25,6 +25,8 @@
 #define STACK_POP4 stack_pops(4, stack)
 //#define GLOBAL_OR_LOCAL_FRAME
 
+extern char * function_name;
+
 bool isFirstVariable = false;
 bool isThirdVariable = false;
 bool is_result = false;
@@ -32,6 +34,8 @@ tInstructionTypes instr_type;
 tInstructionData instr1;
 tInstructionData instr2;
 tInstructionData instr3;
+
+extern tDataFunction gData;
 
 extern bool is_LF;
 int counterVar = 1;
@@ -219,6 +223,13 @@ expr_return parse_expr(LocalMap* lMap, tList* list){
                 resultOfPrece.uniqueID = &gToken.data;
                 return resultOfPrece;       // predavam riadenie parseru
                 // je to funckia
+            }
+            else if (is_LF){
+                gData = global_map_get_value(gMap, function_name);
+                dataIDF = local_map_get_value(gData.lMap, gToken.data.str);
+                dataIDF.nameOfTheVariable = gToken.data.str;
+                dataIDF.isVariable = true;
+                resultOfPrece.uniqueID = &gToken.data;
             }
             // ak sa premenna nachadza v lokalnej mape tak
             else if(local_map_contain(lMap, gToken.data.str)){
