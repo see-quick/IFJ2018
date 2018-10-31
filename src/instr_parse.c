@@ -73,7 +73,7 @@ void print_symb(tInstructionData instr_operand)  {
   if (instr_operand.type == I)  {
     printf("%d",instr_operand.value.i);
   }
-  else if (instr_operand.type == F) printf("%f",instr_operand.value.f);
+  else if (instr_operand.type == F) printf("%a",instr_operand.value.f);
   else { printf("%s",instr_operand.value.s); }
 }
 
@@ -83,7 +83,7 @@ void print_symb(tInstructionData instr_operand)  {
  */
 void print_multiple_symb(tInstructionData instr_operand)  {
   if (instr_operand.type == I)  printf("%d ",instr_operand.value.i);
-  else if (instr_operand.type == F) printf("%f ",instr_operand.value.f);
+  else if (instr_operand.type == F) printf("%a ",instr_operand.value.f);
   else printf("%s ",instr_operand.value.s);
 }
 
