@@ -20,6 +20,7 @@
 
 #include "symtable.h"
 #include "list.h"
+#include "prece.h"
 #include <stdbool.h>
 
 GlobalMap* gMap;		     // globalni tabulka symbolu
@@ -44,6 +45,7 @@ int prog(void);
 int main_p(void);
 int st_list();
 int stat();
+int move_value(expr_return res);
 int sth();
 int pm_list();
 int pm_list2();

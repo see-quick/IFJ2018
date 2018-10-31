@@ -62,7 +62,7 @@ char* instruct_type(tDatType instruction) {
     case EMPTY:
       break;
   }
-
+  
   return NULL;  //else -> ERROR
 }
 /*
@@ -158,8 +158,9 @@ void parse_instructions(tList *instr_list)  {
           printf("LABEL $$main\n");
           printf("DEFVAR GF@$$var_integer\n");
           printf("MOVE GF@$$var_integer int@0\n");
-          //printf("DEFVAR GF@$$var_double\n");
-          //printf("MOVE GF@$$var_double float@0.0\n");
+          printf("DEFVAR GF@$$var_double\n");
+          // nejaka chyba??
+          printf("MOVE GF@$$var_double float@0x0p+0\n");
           printf("DEFVAR GF@$$var_string\n");
           printf("MOVE GF@$$var_string string@\n");
           printf("DEFVAR GF@$$EXPR\n");
@@ -466,7 +467,7 @@ void parse_instructions(tList *instr_list)  {
 
           printf("MOVE GF@$$var_integer int@0\n");
           printf("LABEL label_end_ord\n");
-          printf("MOVE GF@$$var_double float@0.0\n");
+          printf("MOVE GF@$$var_double float@0x0p+0\n");
           printf("RETURN\n");
 
       break;
@@ -502,7 +503,7 @@ void parse_instructions(tList *instr_list)  {
       break;
 
       case INSTRUCT_IF_ELSE:
-          printf("LABEL if_label_else%d\n", if_count);
+          printf("LABEL if_label_else %d\n", if_count);
       break;
 
       case INSTRUCT_JUMP_ENDIF:
@@ -517,3 +518,4 @@ void parse_instructions(tList *instr_list)  {
     }
   }
 }
+

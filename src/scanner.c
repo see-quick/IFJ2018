@@ -129,7 +129,7 @@ int getToken(){
                 else if(c == '[') { pushToken(c); DLInsertFirst(&tlist, gToken.data.str); return LEX_L_SBRACKET; }     // leva hranata zavorka
                 else if(c == ']') { pushToken(c); DLInsertFirst(&tlist, gToken.data.str); return LEX_R_SBRACKET; }     // prava hranata zavorka
                 else if(c == '+') { pushToken(c); DLInsertFirst(&tlist, gToken.data.str); return LEX_ADDITION; }       // plus
-                else if(c == '-') { pushToken(c); DLInsertFirst(&tlist, gToken.data.str); return LEX_SUBSTRACTION; }   // minus || zaporne cislo
+                else if(c == '-') { pushToken(c); DLInsertFirst(&tlist, gToken.data.str); return LEX_SUBSTRACTION;}   // minus || zaporne cislo
                 else if(c == '*') { pushToken(c); DLInsertFirst(&tlist, gToken.data.str); return LEX_MULTIPLICATION; } // hvezdicka
                 else if(c == '/') { pushToken(c); DLInsertFirst(&tlist, gToken.data.str); return LEX_DIVISION; }       // deleni
                 else if(c == '=') { pushToken(c); state = S_EQUAL; }          // rovnitko
@@ -297,6 +297,7 @@ int getToken(){
                     return LEX_EQUAL;
                 }
             break;
+
 
             case S_EOL:
                     if(c == '\n'){
