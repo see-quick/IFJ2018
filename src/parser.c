@@ -1754,8 +1754,11 @@ int parse(GlobalMap* globalMap, tList *list) {
 	do {
 		if((token = getToken()) == ERROR_LEX) {
 			//fprintf(stderr, "Lexikalni chyba programu\n");
+			instruction_exit(ERROR_LEX);
 			result = ERROR_LEX;
 		} else if (token == INT_ERR) {
+			instruction_exit(INT_ERR);
+			return INT_ERR;
 			//fprintf(stderr, "Interni chyba\n");
 		}
 	} while(token == LEX_EOL);
@@ -1780,7 +1783,7 @@ int parse(GlobalMap* globalMap, tList *list) {
 
 
 	DLDisposeList(&tlist);
-	strFree(&(gToken.data));
+	freeToken();
 	local_map_free(localMap);
 	return result;
 

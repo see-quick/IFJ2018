@@ -158,6 +158,7 @@ void returnToken();
 // Navrat tokenu do pocatecniho stavu
 void resetToken();
 
+void freeToken();
 
 int isKeyword(tString *);
 

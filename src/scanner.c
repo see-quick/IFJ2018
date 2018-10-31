@@ -54,10 +54,15 @@ void returnToken(){
 
 void resetToken(){
     strFree(&(gToken.data));
-    //strClear(&(gToken.data));
-    strInit(&(gToken.data));
 }
 
+void freeToken(){
+    if (gToken.data.str != NULL){
+        free(gToken.data.str);
+    }
+   gToken.data.memory = 0;
+   gToken.data.length = 0;
+}
 
 const char* keyWords[] = {
     "def" ,"do", "else",

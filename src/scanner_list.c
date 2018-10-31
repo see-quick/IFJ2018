@@ -56,7 +56,6 @@ void DLInsertFirst (tDLList *L, char * val) {
 	else 
 	{
 		pomocny->data = val; //nahrame data
-		pomocny->is_important = 0;
 		pomocny->lptr = NULL; 
 		pomocny->rptr = L->First; 
 		if(L->Last == NULL) 
@@ -94,8 +93,7 @@ void print_elements_of_list(tDLList TL)	{
 	printf("-------TOKEN LIST-------");
 
 	while ((TempList.First!=NULL) && (CurrListLength<100))	{
-		// printf("\n \t%s - important: %d",TempList.First->data, TempList.First->is_important);
-		printf("\n \t%s %d",TempList.First->data, TempList.First->is_important);
+		printf("\n \t%s",TempList.First->data);
 		if ((TempList.First==TL.Act) && (TL.Act!=NULL))
 			printf("\t <= toto je aktivní prvek ");
 		TempList.First=TempList.First->rptr;

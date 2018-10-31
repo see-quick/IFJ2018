@@ -51,6 +51,7 @@ int main(int argc, char** argv) {
   dispose_list(list);
   free(list);
 
+
   free(function_name);
   free(variable_name);
 
