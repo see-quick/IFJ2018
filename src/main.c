@@ -27,6 +27,8 @@
 
 extern char * function_name;
 extern char * variable_name;
+extern tList * while_list;
+extern tList * variables_list;
 
 
 int main(int argc, char** argv) {
@@ -49,7 +51,11 @@ int main(int argc, char** argv) {
   global_map_free(globalMap);
 
   dispose_list(list);
+  dispose_list(while_list);
+  dispose_list(variables_list);
   free(list);
+  free(while_list);
+  free(variables_list);
 
 
   free(function_name);

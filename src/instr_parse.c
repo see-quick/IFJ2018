@@ -138,6 +138,27 @@ void print_arit_instr(tNode *act_instr) {
   //         print_symb(act_instr->data.address2);
 }
 
+
+
+/**
+ * Append `list` to root list
+ * @param root Main list
+ * @param list Appended list
+ * @return True on success, otherwise False
+ */
+void append_list(tList* root, tList* list) {
+    if (list->first == NULL) {
+        return;
+    }
+
+    for (tNode* tmp = list->first; tmp != NULL; tmp = tmp->next) {
+        tData data = tmp->data;
+        insert_item(root, &data.type, &data.address1, &data.address2, &data.address3);
+    }
+}
+
+
+
 /*
  * Parsuje list s instrukciami a printuje na stdout instrukcie v IFJcode18
  * @param instr_list list s instrukciami
@@ -493,7 +514,7 @@ void parse_instructions(tList *instr_list)  {
 
       case INSTRUCT_WHILE_END:
           printf("JUMP while_label%d\n", while_count);
-          printf("LABEL while_label%d_end\n",while_count);
+          printf("LABEL while_label%d_end\n",while_count--);
       break;
 
       case INSTRUCT_IF_THEN:

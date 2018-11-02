@@ -25,6 +25,14 @@
 
 GlobalMap* gMap;		     // globalni tabulka symbolu
 
+
+typedef struct Call_list{
+	char * func;
+	struct Call_list* lptr;
+	struct Call_list* rptr;
+}tCall_list;
+
+
 void instruction_exit(int);
 int error_lex(void);
 int error_int(void);

@@ -22,6 +22,7 @@
 #include "scanner.h"
 #include "error.h"
 #include "prece.h"
+#include "instr_parse.h"
 
 int token;        	         // aktualni token
 
@@ -30,6 +31,8 @@ bool is_LF = false;
 bool zavorka = false;
 char * function_name;
 char * variable_name;
+bool in_while = false;
+int while_counter = 0;
 /*********************************************************************/
 /*LOKALNI TABULKA SYMBOLU*/
 LocalMap* localMap;
@@ -56,6 +59,9 @@ int argCount = 0;            // pocet argumentu pri volani funkce
 /*********************************************************************/
 /*GLOBALNI PROMENNE PRO UKLADANI INSTRUKCI DO PASKY TRIADRESNEHO KODU*/
 tList * ilist;               // instruction list
+tList * while_list;
+tList * tmp_list;
+tList * variables_list;
 tInstructionTypes instr_type;
 tInstructionData instr1;
 tInstructionData instr2;
@@ -851,7 +857,7 @@ int stat(){
 					}
 
 					instr1.value.s = variable_name; // nazev promenne
-					insert_item(ilist, &instr_type, &instr1, &instr2, &instr3);
+					if (in_while) insert_item(variables_list, &instr_type, &instr1, &instr2, &instr3);
 
 				}
 			}
@@ -875,7 +881,7 @@ int stat(){
 					}
 
 					instr1.value.s = DLCopyFirst(&tlist); // nazev promenne
-					insert_item(ilist, &instr_type, &instr1, &instr2, &instr3);
+					if (in_while) insert_item(variables_list, &instr_type, &instr1, &instr2, &instr3);
 				
 				}
 			}
@@ -1134,6 +1140,16 @@ int stat(){
 		//<STAT> -> while <EXPR> do eol <ST-LIST> end
 		case KW_WHILE:
 
+			in_while = true;
+
+			++while_counter;
+
+			if (while_counter == 1){
+				//printf("Furst while");
+				tmp_list = ilist;
+				ilist = while_list;
+			}
+
 			instr_type = INSTRUCT_WHILE_START;
 			insert_item(ilist, &instr_type, &instr1, &instr2, &instr3);
 
@@ -1206,6 +1222,24 @@ int stat(){
 				instruction_exit(SYN_ERR);
 				return SYN_ERR;
 			}
+
+			if (while_counter == 1){
+
+				ilist = tmp_list;
+
+				reverse(&(variables_list->first));
+      			set_active(variables_list);
+
+      			append_list(ilist, variables_list);
+
+				reverse(&(while_list->first));
+      			set_active(while_list);
+
+				append_list(ilist, while_list);
+
+			}
+
+			while_counter--;
 
 			instr_type = INSTRUCT_WHILE_END;
 			insert_item(ilist, &instr_type, &instr1, &instr2, &instr3);
@@ -1751,7 +1785,10 @@ int parse(GlobalMap* globalMap, tList *list) {
 	// inicializace listu pro tokeny
 	DLInitList(&tlist);
 
-	do {
+	while_list = list_init();
+	tmp_list = list_init();
+	variables_list = list_init();
+
 		if((token = getToken()) == ERROR_LEX) {
 			//fprintf(stderr, "Lexikalni chyba programu\n");
 			instruction_exit(ERROR_LEX);
@@ -1761,7 +1798,6 @@ int parse(GlobalMap* globalMap, tList *list) {
 			return INT_ERR;
 			//fprintf(stderr, "Interni chyba\n");
 		}
-	} while(token == LEX_EOL);
 
 	if(result == SUCCESS){
 		instr_type = INSTRUCT_HEAD;
