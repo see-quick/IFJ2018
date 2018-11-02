@@ -858,6 +858,7 @@ int stat(){
 
 					instr1.value.s = variable_name; // nazev promenne
 					if (in_while) insert_item(variables_list, &instr_type, &instr1, &instr2, &instr3);
+					else {insert_item(ilist, &instr_type, &instr1, &instr2, &instr3);}
 
 				}
 			}
@@ -882,6 +883,7 @@ int stat(){
 
 					instr1.value.s = DLCopyFirst(&tlist); // nazev promenne
 					if (in_while) insert_item(variables_list, &instr_type, &instr1, &instr2, &instr3);
+					else {insert_item(ilist, &instr_type, &instr1, &instr2, &instr3);}
 				
 				}
 			}
@@ -1251,6 +1253,10 @@ int stat(){
 			} else if (!error_int()){
 				instruction_exit(INT_ERR);
 				return INT_ERR;
+			}
+
+			if (while_counter == 0){
+					in_while = false;
 			}
 
 			return result;
