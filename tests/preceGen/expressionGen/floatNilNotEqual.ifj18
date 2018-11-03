@@ -1,0 +1,8 @@
+a = 5.2
+b = b
+
+if a != b then
+	a = 6.45
+else
+	b = 6
+end

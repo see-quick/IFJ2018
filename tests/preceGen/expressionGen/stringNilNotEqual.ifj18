@@ -1,0 +1,8 @@
+a = "HEllo"
+b = b
+
+if a != b then
+	a = "Yes"
+else
+	b = "No"
+end
