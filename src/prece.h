@@ -50,7 +50,7 @@
 
 #define eSOLVING_RULE   22 // preventujeme kvoli situacii kde ak najde symbol < a pride dalsi < tak nech sa z toho nezblazni
 #define E               42  // E - non terminal
-#define EMPTY_CHAR " \0";
+#define EMPTY_CHAR     30
 
 #define eSYNTERROR 800 // syntax error
 
@@ -68,7 +68,7 @@ typedef enum{
 
 typedef struct{
     tString *uniqueID;    // chces aby som ti vracal aj ten NonTerminal? :) ci staci iba hodnota
-    bool bool_result;;   // pri vyrazoch < > <= >= bude vzdy vysledok true alebo false;
+    bool bool_result;   // pri vyrazoch < > <= >= bude vzdy vysledok true alebo false;
     Types data_type;     // sem ti budem vracat datovy typ ?
     int result;         // pouzivaju sa navratove hodnoty z "error.h"
 }expr_return;

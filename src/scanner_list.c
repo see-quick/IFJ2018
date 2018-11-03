@@ -422,7 +422,7 @@ void DLNotImportant(tDLList *L){
 	while((L->Last->lptr != NULL)){
 		if (L->Last->is_important == 1){
 			L->Last->is_important = 0;
-			//return L->Last->data;
+			return;
 		}
 		else{
 			L->Last = L->Last->lptr;

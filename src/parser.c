@@ -27,12 +27,9 @@ int token;        	         // aktualni token
 
 
 bool is_LF = false;
-
 bool zavorka = false;
-
-
-
-
+char * function_name;
+char * variable_name;
 /*********************************************************************/
 /*LOKALNI TABULKA SYMBOLU*/
 LocalMap* localMap;
@@ -299,16 +296,6 @@ int term_list(bool zavorka){
 			// zvetsit pocet argumentu
 			argCount++;
 
-
-			// SEMANTIKA KONTROLA KOMPATIBILITY TYPU
-
-			// tDataFunction tmp;
-
-			// tmp = global_map_get_value(gMap, gToken.data.str);
-			// printf("Test %d\n", tmp.params[argCount]);
-
-
-
 			//nacteni a volani term_list2()
 			token = getToken();
 			if(!error_lex()){
@@ -352,6 +339,27 @@ int term_list(bool zavorka){
 }
 
 
+int move_value(expr_return res){
+	instr_type = INSTRUCT_MOVE;
+
+	lData.type = res.data_type;
+	if (is_LF){
+		//printf("Move in function %s, promenna je %s\n", function_name, variable_name);
+		gData = global_map_get_value(gMap, function_name);
+		local_map_put(gData.lMap, variable_name, lData);
+	}
+	else{
+		local_map_put(localMap, variable_name, lData);
+	}
+
+	if (is_LF) { instr1.type = LF; } else {instr1.type = GF;}
+	instr2.type = GF;
+	instr1.value.s = variable_name;
+	instr2.value.s = "$result"; 
+	insert_item(ilist, &instr_type, &instr1, &instr2, &instr3);
+	return SUCCESS;
+}
+
 int sth(){
 	int result = SUCCESS;
 	expr_return res;
@@ -371,8 +379,6 @@ int sth(){
 		case KW_INPUT_I:
 		case KW_INPUT_F:
 
-				DLIsImportant(&tlist);
-
 				//SEMANTICKA AKCE, KONTROLA DEFINICE FUNKCE
 				tmp = global_map_get_pointer_to_value(gMap, gToken.data.str);
 				if (tmp == NULL){
@@ -382,34 +388,20 @@ int sth(){
 						return SEM_ERR;
 					}
 					else{
+						instr_type = INSTRUCT_MOVE;
+						instr1.type = GF;
+						instr1.value.s = "$result\0";
+						if (is_LF){ instr2.type = LF; } else {instr2.type = GF;}
+						instr2.value.s = gToken.data.str;
+						insert_item(ilist, &instr_type, &instr1, &instr2, &instr3);
+
+
 						// je to promenna prirazenu typu a = b
 						res = parse_expr(localMap, ilist);
 						result = res.result;
 
 						if (result == SUCCESS){
-
-							lData.type = res.data_type; 
-							local_map_put(localMap, DLFirstImportant(&tlist), lData);
-
-							// instrukce MOVE
-
-							// MOVE GF@promenna / LF@promenna  TF@%$result
-							instr_type = INSTRUCT_MOVE;
-							if (is_LF) {instr1.type = LF;}
-							else{
-								instr1.type = GF;
-							}
-
-							instr1.value.s = DLFirstImportant(&tlist);
-							instr2.type = GF;
-							instr2.value.s = res.uniqueID->str;
-
-							insert_item(ilist, &instr_type, &instr1, &instr2, &instr3);
-
-						}
-
-						else{
-							return result;
+							move_value(res);
 						}
 
 						// cokoliv jineho syntakticka chyba
@@ -418,10 +410,6 @@ int sth(){
 							return SYN_ERR;
 						}
 
-						DLNotImportant(&tlist);
-
-
-						return result;
 					}
 						
 				}
@@ -448,7 +436,7 @@ int sth(){
 
 							instr_type = INSTRUCT_CALL;
 							instr1.type = FCE;
-							instr1.value.s = DLLastImportant(&tlist);
+							instr1.value.s = function_name;
 
 							insert_item(ilist, &instr_type, &instr1, &instr2, &instr3);
 
@@ -505,7 +493,7 @@ int sth(){
 
 									instr_type = INSTRUCT_CALL;
 									instr1.type = FCE;
-									instr1.value.s = DLLastImportant(&tlist);
+									instr1.value.s = function_name;
 
 									insert_item(ilist, &instr_type, &instr1, &instr2, &instr3);
 
@@ -557,7 +545,7 @@ int sth(){
 
 									instr_type = INSTRUCT_CALL;
 									instr1.type = FCE;
-									instr1.value.s = DLLastImportant(&tlist);
+									instr1.value.s = function_name;
 
 									insert_item(ilist, &instr_type, &instr1, &instr2, &instr3);
 
@@ -600,6 +588,31 @@ int sth(){
 
 		//pokud neni token LEX_ID_F, prozenem to precedencni SA
 		default:
+
+			instr_type = INSTRUCT_MOVE;
+			if (token == LEX_NUMBER){
+				instr2.type = I;
+				instr2.value.i = atoi(gToken.data.str);
+			}
+			else if (token == LEX_REAL_NUMBER){
+				instr2.type = F;
+				instr2.value.f = atof(gToken.data.str);
+			}
+			else if (token == LEX_STRING) {
+				instr2.type = S;
+				instr2.value.s = gToken.data.str;
+			}
+			else if (token == LEX_ID){
+				if (is_LF){instr2.type = LF;} else {instr2.type = GF;}
+				instr2.value.s = gToken.data.str;
+			}
+
+			instr1.type = GF;
+			instr1.value.s = "$result\0";
+
+			insert_item(ilist, &instr_type, &instr1, &instr2, &instr3);
+
+
 			res = parse_expr(localMap, ilist);
 			result = res.result;
 
@@ -716,27 +729,7 @@ int sth(){
 			}
 
 			else if (result == SUCCESS){
-
-
-				// SEGMENTATION FAULT
-
-				// ukladani vysledku do local_map
-				lData.type = res.data_type;  
-				local_map_put(localMap, DLFirstImportant(&tlist), lData);
-		
-				// MOVE GF@promenna / LF@promenna  TF@%retval
-				instr_type = INSTRUCT_MOVE;
-				if (is_LF) {instr1.type = LF;}
-				else{
-					instr1.type = GF;
-				}
-
-				instr1.value.s = DLFirstImportant(&tlist);
-				instr2.type = GF;
-				instr2.value.s = "$result";
-
-				insert_item(ilist, &instr_type, &instr1, &instr2, &instr3);
-
+					move_value(res);
 			}
 			else {
 				return result;
@@ -747,9 +740,6 @@ int sth(){
 				fprintf(stderr, "Syntakticka chyba, ocekavano 'eol' na radku %d\n", gToken.row);
 				return SYN_ERR;
 			}
-
-
-			DLNotImportant(&tlist);
 
 			return result;
 	} // end switch 
@@ -763,8 +753,7 @@ int stat(){
 	switch(token){
 		//<STAT> -> id = <STH>
 		case LEX_ID:
-
-			DLIsImportant(&tlist);
+			variable_name = gToken.data.str;
 
 			//dalsi musi byt '='
 			token = getToken();
@@ -779,33 +768,56 @@ int stat(){
 				return SYN_ERR;
 			}
 
-			if (global_map_contain(gMap, DLCopyFirst(&tlist))){
+			if (global_map_contain(gMap, variable_name)){
 				fprintf(stderr, "Semanticka chyba na radku %d, existuje promenna se stejnym jmenem \n", gToken.row);
 				return SEM_ERR;
 			}
 
-			if ( !local_map_contain(localMap, DLCopyFirst(&tlist)) ){
-				// ulozeni promenne do lokalni mapy, hodnota nil, typ nil
-				lData.defined = 1;
-				lData.value.nil = true;
-				lData.type = 500; // typ nil - NONE
+			if (is_LF){
+				gData = global_map_get_value(gMap, function_name);
+				if (!local_map_contain(gData.lMap, variable_name)){
+					lData.defined = 1;
+					lData.value.nil = true;
+					lData.type = 500;
+
+					local_map_put(gData.lMap, variable_name, lData);
+
+					instr_type = INSTRUCT_DEFVAR;
+					if (is_LF) {instr1.type = LF;}
+					else{
+						instr1.type = GF;
+					}
+
+					instr1.value.s = variable_name; // nazev promenne
+					insert_item(ilist, &instr_type, &instr1, &instr2, &instr3);
+
+				}
+			}
+			else {
+				if ( !local_map_contain(localMap, variable_name) ){
+					// ulozeni promenne do lokalni mapy, hodnota nil, typ nil
+					lData.defined = 1;
+					lData.value.nil = true;
+					lData.type = 500; // typ nil - NONE
 
 
-				// nazev promenne ziskame z list pro tokeny pomoci funkce DLCOPYFISRT
-				local_map_put(localMap, DLCopyFirst(&tlist), lData);
+					// nazev promenne ziskame z list pro tokeny pomoci funkce DLCOPYFISRT
+					local_map_put(localMap, DLCopyFirst(&tlist), lData);
 		
 
-				// generovani instrukce pro definice promenne s typem nil a hodnotou nil
-				instr_type = INSTRUCT_DEFVAR;
-				if (is_LF) {instr1.type = LF;}
-				else{
-					instr1.type = GF;
-				}
+					// generovani instrukce pro definice promenne s typem nil a hodnotou nil
+					instr_type = INSTRUCT_DEFVAR;
+					if (is_LF) {instr1.type = LF;}
+					else{
+						instr1.type = GF;
+					}
 
-				instr1.value.s = DLCopyFirst(&tlist); // nazev promenne
-				insert_item(ilist, &instr_type, &instr1, &instr2, &instr3);
+					instr1.value.s = DLCopyFirst(&tlist); // nazev promenne
+					insert_item(ilist, &instr_type, &instr1, &instr2, &instr3);
 				
+				}
 			}
+			// jinak promenna je v lokalni mape, nebudeme ukladat promennou s typem none
 
 			
 			// nacteni dalsiho tokenu , musi byt  bud' identifikator nebo vyraz nebo funkce
@@ -1170,6 +1182,8 @@ int st_list(){
 				return SYN_ERR;
 			}
 
+			is_LF = false;
+
 			// dalsi token pro st_list
 			token = getToken();
 			if(!error_lex()){
@@ -1266,6 +1280,8 @@ int pm_list(){
 
 		paramCount++;
 
+		lData = local_map_get_value(localMap, gToken.data.str);
+
 		token = getToken();
 
 		if(!error_lex()){
@@ -1312,6 +1328,7 @@ int func(){
     	}
     	else{
     		gData.defined = 1;
+    		gData.lMap = local_map_init(MAX_SIZE_OF_HASH_TABLE);
     		global_map_put(gMap, gToken.data.str, gData);
     	}
     }
@@ -1328,8 +1345,8 @@ int func(){
 
 	insert_item(ilist, &instr_type, &instr1, &instr2, &instr3);
 
-
-	
+	function_name = gToken.data.str;
+	//printf("Function name is %s\n", function_name);
 
 	// navratova hodnota
 	instr_type = INSTRUCT_DEFVAR;
@@ -1344,9 +1361,6 @@ int func(){
 	instr2.value.f = 0.0;
 
 	insert_item(ilist, &instr_type, &instr1, &instr2, &instr3);
-
-
-	DLIsImportant(&tlist); // nastaveni priznaku navratu
 
 
 
@@ -1392,13 +1406,10 @@ int func(){
 
 	// ulozeni poctu formalnich parametru funkce
 	gData.paramCount = paramCount;
-	
-	global_map_put(gMap, DLFirstImportant(&tlist), gData);
+	global_map_put(gMap, function_name, gData);
 
 	// pro dalsi funkce
 	paramCount = 0;
-
-	DLNotImportant(&tlist);
 
 
 
@@ -1437,7 +1448,6 @@ int func(){
 	}
 
 	if(!(checkTokenType(KW_END))){
-		returnToken();
 		fprintf(stderr,"Ocekavan 'end' na radku %d\n", gToken.row);
 		return SYN_ERR;
 	}
@@ -1457,6 +1467,12 @@ int func(){
 	// end of function, navrat na predchozi pozici
 
 
+	//uvolneni lokalni mapy z polozky globalni mapy pro funkce
+
+	gData = global_map_get_value(gMap, function_name);
+	local_map_free(gData.lMap);
+
+
 	//nacteni a kontrola dalsiho tokenu
 	token = getToken();
 	if(!error_lex()){
@@ -1464,6 +1480,7 @@ int func(){
 	} else if (!error_int()){
 		return INT_ERR;
 	}
+
 
 	return SUCCESS;
 
@@ -1566,11 +1583,14 @@ int parse(GlobalMap* globalMap, tList *list) {
 	int result = SUCCESS;
 	gMap = globalMap;
 	gDataptr = (tDataFunction* )malloc(sizeof(tDataFunction));
-	gDataptr->lMap = local_map_init(MAX_SIZE_OF_HASH_TABLE);
+	//gDataptr->lMap = local_map_init(MAX_SIZE_OF_HASH_TABLE);
 	gDataptr = &gData;
 	ilist = list;
 	localMap = local_map_init(MAX_SIZE_OF_HASH_TABLE);
 	insert_build_in_functions();
+
+	function_name = (char *) malloc( sizeof(char));
+	variable_name = (char *) malloc( sizeof(char));
 
 
 	if(initToken() == INT_ERR){
@@ -1596,22 +1616,22 @@ int parse(GlobalMap* globalMap, tList *list) {
 		// vytvoreni docasneho ramce pro funkce
 		instr_type =  INSTRUCT_CREATEFREAME;
 		insert_item(ilist, &instr_type, &instr1, &instr2, &instr3);
-		instr_type = INSTRUCT_LENGTH;
-		insert_item(ilist, &instr_type, &instr1, &instr2, &instr3);
-		instr_type = INSTRUCT_CHR;
-		insert_item(ilist, &instr_type, &instr1, &instr2, &instr3);
-		instr_type = INSTRUCT_ORD;
-		insert_item(ilist, &instr_type, &instr1, &instr2, &instr3);
-		instr_type = INSTRUCT_SUBSTR;
-		insert_item(ilist, &instr_type, &instr1, &instr2, &instr3);
+		// instr_type = INSTRUCT_LENGTH;
+		// insert_item(ilist, &instr_type, &instr1, &instr2, &instr3);
+		// instr_type = INSTRUCT_CHR;
+		// insert_item(ilist, &instr_type, &instr1, &instr2, &instr3);
+		// instr_type = INSTRUCT_ORD;
+		// insert_item(ilist, &instr_type, &instr1, &instr2, &instr3);
+		// instr_type = INSTRUCT_SUBSTR;
+		// insert_item(ilist, &instr_type, &instr1, &instr2, &instr3);
 
 		result = prog();
 	}
 
+
 	DLDisposeList(&tlist);
 	strFree(&(gToken.data));
 	local_map_free(localMap);
-	local_map_free(gDataptr->lMap);
 	return result;
 
 }
