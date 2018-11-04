@@ -1856,7 +1856,7 @@ int parse(GlobalMap* globalMap, tList *list) {
 			return INT_ERR;
 			//fprintf(stderr, "Interni chyba\n");
 		}
-	}while((token = getToken()) == LEX_EOL);
+	}while(token == LEX_EOL);
 
 
 	if(result == SUCCESS){
