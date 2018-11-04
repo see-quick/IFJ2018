@@ -427,7 +427,7 @@ int sth(){
 
 
 						// je to promenna prirazenu typu a = b
-						res = parse_expr(localMap, ilist);
+						res = parse_expr(localMap, ilist, false);
 						result = res.result;
 
 						// if (res.bool_result){
@@ -668,7 +668,7 @@ int sth(){
 			insert_item(ilist, &instr_type, &instr1, &instr2, &instr3);
 
 
-			res = parse_expr(localMap, ilist);
+			res = parse_expr(localMap, ilist, false);
 			result = res.result;
 
 			// if (res.bool_result){
@@ -1014,6 +1014,18 @@ int stat(){
 		case KW_IF:
 
 
+			in_while = true;
+
+			++while_counter;
+
+			if (while_counter == 1){
+				//printf("Furst while");
+				tmp_list = ilist;
+				ilist = while_list;
+			}
+
+
+
 			//nacteni a predani do vyrazove SA
 			token = getToken();
 			if(!error_lex()){
@@ -1024,7 +1036,7 @@ int stat(){
 				return INT_ERR;
 			}
 
-			res = parse_expr(localMap, ilist);
+			res = parse_expr(localMap, ilist, true);
 			result = res.result;
 
 			// if (!res.bool_result){
@@ -1135,6 +1147,23 @@ int stat(){
 				instruction_exit(SYN_ERR);
 				return SYN_ERR;
 			}
+			if (while_counter == 1){
+
+				ilist = tmp_list;
+
+				reverse(&(variables_list->first));
+      			set_active(variables_list);
+
+      			append_list(ilist, variables_list);
+
+				reverse(&(while_list->first));
+      			set_active(while_list);
+
+				append_list(ilist, while_list);
+
+			}
+
+			while_counter--;
 
 			instr_type = INSTRUCT_ENDIF;
 			insert_item(ilist, &instr_type, &instr1, &instr2, &instr3);
@@ -1148,6 +1177,9 @@ int stat(){
 				return INT_ERR;
 			}
 
+			if (while_counter == 0){
+				in_while = false;
+			}
 
 			return SUCCESS;
 		break;
@@ -1179,7 +1211,7 @@ int stat(){
 				return INT_ERR;
 			}
 
-			res = parse_expr(localMap, ilist);
+			res = parse_expr(localMap, ilist, true);
 			result = res.result;
 
 			// if (!res.bool_result){
