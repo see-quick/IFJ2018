@@ -304,6 +304,7 @@ expr_return parse_expr(LocalMap* lMap, tList* list){
                     switch (concreteOperator) {
                         case ePLUS:
                             // PRAVIDLO E -> E + E
+
                             if (DEBUG) stack_print_prece(stack);
                              if ((stack->arrayOfNumbers[stack->finderOfParenthesis + 3]) != EMPTY_CHAR) {
                                  if ((stack->arrayOfItems[stack->finderOfParenthesis + 1].type == STRING) &&

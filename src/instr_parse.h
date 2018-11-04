@@ -21,6 +21,7 @@
 char* instruct_type(tDatType instruction);
 void print_symb(tInstructionData instr_operand);
 void parse_instructions(tList *instr_list);
+void append_list(tList* root, tList* list);
 
 
 #endif //_INSTR_PARSE_H

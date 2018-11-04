@@ -19,7 +19,7 @@
 
 int while_count = 0;
 int if_count = 0;
-
+extern int argCount;
 
 /**
  * Ulahcenie vypisu podla typu instrukcie
@@ -62,7 +62,7 @@ char* instruct_type(tDatType instruction) {
     case EMPTY:
       break;
   }
-  
+
   return NULL;  //else -> ERROR
 }
 /*
@@ -137,6 +137,27 @@ void print_arit_instr(tNode *act_instr) {
   //         printf("%s@",instruct_type(act_instr->data.address2.type));
   //         print_symb(act_instr->data.address2);
 }
+
+
+
+/**
+ * Append `list` to root list
+ * @param root Main list
+ * @param list Appended list
+ * @return True on success, otherwise False
+ */
+void append_list(tList* root, tList* list) {
+    if (list->first == NULL) {
+        return;
+    }
+
+    for (tNode* tmp = list->first; tmp != NULL; tmp = tmp->next) {
+        tData data = tmp->data;
+        insert_item(root, &data.type, &data.address1, &data.address2, &data.address3);
+    }
+}
+
+
 
 /*
  * Parsuje list s instrukciami a printuje na stdout instrukcie v IFJcode18
@@ -444,9 +465,19 @@ void parse_instructions(tList *instr_list)  {
 
 
       case INSTRUCT_INPUT_S:
+           printf("LABEL inputs\n");
+           printf("READ GF@$$var_string string\n");
+           printf("RETURN\n");
+      break;
       case INSTRUCT_INPUT_I:
+           printf("LABEL inputi\n");
+           printf("READ GF@$$var_integer int\n");
+           printf("RETURN\n");
+      break;
       case INSTRUCT_INPUT_F:
-        printf("TODO\n");
+           printf("LABEL inputf\n");
+           printf("READ GF@$$var_double float\n");
+           printf("RETURN\n");
       break;
 
       case INSTRUCT_CHR:
@@ -478,14 +509,41 @@ void parse_instructions(tList *instr_list)  {
 
       case INSTRUCT_PRINT:
           // while pocet parametru ... zatim vypisu jen jeden parametr
-          printf("WRITE TF@_param1\n");
+          //printf("Terms count %d\n", argCount);
+          for (int i=1; i <= argCount; i++){
+              printf("WRITE TF@$_param%d\n", i);
+          }
       break;
 
       case INSTRUCT_SUBSTR:
           printf("LABEL substr\n");
-          // todo
-      break;
+          printf("STRLEN $$var_integer LF@_param2\n");
+          printf("LT GF@$$var_double GF@$$var_integer LF@_param1\n"); // i out of 0 - length(s)
+          printf("JUMPIFEQ label_substr bool@true GF@$$var_double\n");
 
+          printf("MOVE GF@$$var_integer int@0\n");
+          printf("LT GF@$$var_integer LF@_param3 GF@$$var_integer\n");  // n < 0
+          printf("JUMPIFEQ label_substr bool@true GF@$$var_integer\n");
+          printf("MOVE GF@$$var_integer int@0\n");  // GF@var_int = 0
+
+          printf("SUB LF@_param2 LF@_param2 int@1\n");  //index 0
+
+          printf("LABEL label_substr_read\n");
+          printf("EQ GF@$$var_integer LF@_param3 int@0\n"); // while n == 0 -> end of loop
+            printf("JUMPIFEQ label_substr bool@true GF@$$var_integer\n");
+            printf("GETCHAR GF@$$var_string LF@_param1 LF@_param2\n");
+            printf("CONCAT GF@$result GF@$result GF@$$var_string\n");
+            printf("SUB LF@_param3 LF@_param3 int@1\n");  //n--
+          printf("JUMP label_substr_read\n");
+
+          printf("LABEL label_substr\n");
+
+          printf("MOVE GF@$$var_integer int@0\n");
+          printf("LABEl label_end_substr\n");
+          printf("MOVE GF@$$var_double float@0x0p+0\n");
+          printf("MOVE GF@$$var_string string@\n");
+          printf("RETURN\n");
+      break;
 
       case INSTRUCT_WHILE_START:
           printf("LABEL while_label%d\n",++while_count);
@@ -496,7 +554,7 @@ void parse_instructions(tList *instr_list)  {
 
       case INSTRUCT_WHILE_END:
           printf("JUMP while_label%d\n", while_count);
-          printf("LABEL while_label%d_end\n",while_count);
+          printf("LABEL while_label%d_end\n",while_count--);
       break;
 
       case INSTRUCT_IF_THEN:
@@ -506,7 +564,7 @@ void parse_instructions(tList *instr_list)  {
       break;
 
       case INSTRUCT_IF_ELSE:
-          printf("LABEL if_label_else %d\n", if_count);
+          printf("LABEL if_label_else%d\n", if_count);
       break;
 
       case INSTRUCT_JUMP_ENDIF:
@@ -521,4 +579,3 @@ void parse_instructions(tList *instr_list)  {
     }
   }
 }
-
