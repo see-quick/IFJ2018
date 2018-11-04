@@ -1846,6 +1846,7 @@ int parse(GlobalMap* globalMap, tList *list) {
 	tmp_list = list_init();
 	variables_list = list_init();
 
+	do{
 		if((token = getToken()) == ERROR_LEX) {
 			//fprintf(stderr, "Lexikalni chyba programu\n");
 			instruction_exit(ERROR_LEX);
@@ -1855,6 +1856,8 @@ int parse(GlobalMap* globalMap, tList *list) {
 			return INT_ERR;
 			//fprintf(stderr, "Interni chyba\n");
 		}
+	}while((token = getToken()) == LEX_EOL);
+
 
 	if(result == SUCCESS){
 		instr_type = INSTRUCT_HEAD;
