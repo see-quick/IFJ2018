@@ -230,7 +230,6 @@ int term_list2(bool zavorka){
 				return result;
 			}
 
-
 			// +1 argument
 			argCount++;
 
@@ -332,7 +331,7 @@ int term_list(bool zavorka){
 		break;
 
 		case LEX_R_BRACKET:
-			if (zavorka){return SUCCESS;}
+			if (zavorka){ return SUCCESS;}
 			else { //fprintf(stderr, "Syntakticka chyba, neocekavana ')' na radku %d\n", gToken.row); 
 			instruction_exit(SYN_ERR);
 			return SYN_ERR;
@@ -430,6 +429,11 @@ int sth(){
 						// je to promenna prirazenu typu a = b
 						res = parse_expr(localMap, ilist);
 						result = res.result;
+
+						// if (res.bool_result){
+						// 	instruction_exit(ERR_SEMANTIC);
+						// 	return ERR_SEMANTIC;
+						// }
 
 						if (result == SUCCESS){
 							move_value(res);
@@ -666,6 +670,11 @@ int sth(){
 
 			res = parse_expr(localMap, ilist);
 			result = res.result;
+
+			// if (res.bool_result){
+			// 	instructiot_exit(ERR_SEMANTIC);
+			// 	exit(ERR_SEMANTIC);
+			// }
 
 
 			if (res.data_type == FUNCTION){
@@ -1018,6 +1027,11 @@ int stat(){
 			res = parse_expr(localMap, ilist);
 			result = res.result;
 
+			// if (!res.bool_result){
+			// 	instruction_exit(ERR_SEMANTIC);
+			// 	return ERR_SEMANTIC;
+			// }
+
 			if(result != SUCCESS){
 				instruction_exit(result);
 				return result;
@@ -1167,6 +1181,11 @@ int stat(){
 
 			res = parse_expr(localMap, ilist);
 			result = res.result;
+
+			// if (!res.bool_result){
+			// 	instruction_exit(ERR_SEMANTIC);
+			// 	return ERR_SEMANTIC;
+			// }
 
 			instr_type = INSTRUCT_WHILE_STATS;
 			insert_item(ilist, &instr_type, &instr1, &instr2, &instr3);
