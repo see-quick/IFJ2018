@@ -124,6 +124,35 @@ int indexerOfPreceTable (int indexer, LocalMap* lMap)
     return type;
 }
 
+bool move(tList *list, bool is_bool){
+    if (is_bool){
+        instr_type = INSTRUCT_MOVE;
+            if (token == LEX_NUMBER){
+                instr2.type = I;
+                instr2.value.i = atoi(gToken.data.str);
+            }
+            else if (token == LEX_REAL_NUMBER){
+                instr2.type = F;
+                instr2.value.f = atof(gToken.data.str);
+            }
+            else if (token == LEX_STRING) {
+                instr2.type = S;
+                instr2.value.s = gToken.data.str;
+            }
+            else if (token == LEX_ID){
+                if (is_LF){instr2.type = LF;} else {instr2.type = GF;}
+                instr2.value.s = gToken.data.str;
+            }
+
+            instr1.type = GF;
+            instr1.value.s = "$result\0";
+
+            insert_item(list, &instr_type, &instr1, &instr2, &instr3);
+    }
+
+    return false;
+}
+
 /**
  * Funkcia, ktora je primarne urcena na debugovanie, premiena cisla tokenov na znaky aby vypis bol rychlejsie pochopitelny
  * @param token aktualny token
@@ -156,7 +185,8 @@ char* convert_to_char(int token){
 
 // @varName pravidlo id = <sth>
 // @lMap je lokalni Mapa
-expr_return parse_expr(LocalMap* lMap, tList* list){
+expr_return parse_expr(LocalMap* lMap, tList* list, bool is_bool){
+
     /* INICIALIZACIA STRUKTUR */
 //    tItem* tempItemForPositionOne; /* GLOBALNY ITEM pre stack pri pravidle E -> i */
 //    tItem* tempItemForPositionThree; /* GLOBALNY ITEM pre stack pri pravidlach E -> E + E, E -> E - E a podobne. */
@@ -198,6 +228,7 @@ expr_return parse_expr(LocalMap* lMap, tList* list){
             dataIDF.value.i = atoi(gToken.data.str);
             resultOfPrece.uniqueID = &gToken.data;
             dataIDF.isVariable = false;
+            is_bool = move(list, is_bool);
         }
         else if (token == LEX_REAL_NUMBER){
             dataIDF.type = FLOAT;
@@ -206,6 +237,7 @@ expr_return parse_expr(LocalMap* lMap, tList* list){
             dataIDF.isVariable = false;
             instr2.type = F;
             instr2.value.f = dataIDF.value.f;
+            is_bool = move(list, is_bool);
         }
         else if (token == LEX_STRING){
             dataIDF.type = STRING;
@@ -214,6 +246,7 @@ expr_return parse_expr(LocalMap* lMap, tList* list){
             dataIDF.isVariable = false;
             instr2.type = S;
             instr2.value.s = gToken.data.str;
+            is_bool = move(list, is_bool);
         }
         else if(token == LEX_ID || token == LEX_ID_F || token == KW_LENGTH || token == KW_CHR || token == KW_ORD || token == KW_SUBSTR ){
             if(global_map_contain(gMap, gToken.data.str)){
@@ -230,6 +263,7 @@ expr_return parse_expr(LocalMap* lMap, tList* list){
                 dataIDF.nameOfTheVariable = gToken.data.str;
                 dataIDF.isVariable = true;
                 resultOfPrece.uniqueID = &gToken.data;
+                is_bool = move(list, is_bool);
             }
             // ak sa premenna nachadza v lokalnej mape tak
             else if(local_map_contain(lMap, gToken.data.str)){
@@ -237,10 +271,11 @@ expr_return parse_expr(LocalMap* lMap, tList* list){
                 dataIDF.nameOfTheVariable = gToken.data.str;
                 dataIDF.isVariable = true;
                 resultOfPrece.uniqueID = &gToken.data;
+                is_bool = move(list, is_bool);
             }
             else{
                 // premenna nebola najdena v localnej mape a tym padom sa jedna o semanticku chybu
-                fprintf(stderr, "Promenna %s neni definovana, radek %d\n", gToken.data.str, gToken.row);
+                //fprintf(stderr, "Promenna %s neni definovana, radek %d\n", gToken.data.str, gToken.row);
                 resultOfPrece.result = SEM_ERR;
                 return resultOfPrece;
             }
@@ -332,12 +367,12 @@ expr_return parse_expr(LocalMap* lMap, tList* list){
                                      isThirdVariable = false;
                                  } else if ((stack->arrayOfItems[stack->finderOfParenthesis + 1].type == STRING) &&
                                             (stack->arrayOfItems[stack->finderOfParenthesis + 3].type != STRING)) {
-                                    fprintf(stderr, "Semanticka chyba typové kompatibility v aritmetických vyrazech, radek %d\n", gToken.row);
+                                    //fprintf(stderr, "Semanticka chyba typové kompatibility v aritmetických vyrazech, radek %d\n", gToken.row);
                                     resultOfPrece.result = ERR_INCOMPATIBLE_TYPE;
                                     return resultOfPrece;
                                  } else if ((stack->arrayOfItems[stack->finderOfParenthesis + 1].type != STRING) &&
                                             (stack->arrayOfItems[stack->finderOfParenthesis + 3].type == STRING)) {
-                                    fprintf(stderr, "Semanticka chyba typové kompatibility v aritmetických vyrazech, radek %d\n", gToken.row);
+                                    //fprintf(stderr, "Semanticka chyba typové kompatibility v aritmetických vyrazech, radek %d\n", gToken.row);
                                     resultOfPrece.result = ERR_INCOMPATIBLE_TYPE;
                                     return resultOfPrece;
                                  }
@@ -485,7 +520,7 @@ expr_return parse_expr(LocalMap* lMap, tList* list){
                                      isThirdVariable = false;
                                  }
                                  else {
-                                    fprintf(stderr, "Semanticka chyba typové kompatibility v aritmetických vyrazech, radek %d\n", gToken.row);
+                                    //fprintf(stderr, "Semanticka chyba typové kompatibility v aritmetických vyrazech, radek %d\n", gToken.row);
                                     resultOfPrece.result = ERR_INCOMPATIBLE_TYPE;
                                     return resultOfPrece;
                                  }
@@ -504,7 +539,7 @@ expr_return parse_expr(LocalMap* lMap, tList* list){
                                 if ((stack->arrayOfItems[stack->finderOfParenthesis + 1].type == STRING) ||
                                     (stack->arrayOfItems[stack->finderOfParenthesis + 3].type == STRING)) {
 
-                                    fprintf(stderr, "Semanticka chyba typové kompatibility v aritmetických vyrazech, radek %d\n", gToken.row);
+                                    //fprintf(stderr, "Semanticka chyba typové kompatibility v aritmetických vyrazech, radek %d\n", gToken.row);
                                     resultOfPrece.result = ERR_INCOMPATIBLE_TYPE;
                                     return resultOfPrece;
 
@@ -648,7 +683,7 @@ expr_return parse_expr(LocalMap* lMap, tList* list){
                                     insert_item(list, &instr_type, &instr1, &instr2, &instr3);
                                     // generovanie  SUB %s@%s %s@%s %s@%s
                                 } else {
-                                    fprintf(stderr, "Semanticka chyba typové kompatibility v aritmetických vyrazech, radek %d\n", gToken.row);
+                                    //fprintf(stderr, "Semanticka chyba typové kompatibility v aritmetických vyrazech, radek %d\n", gToken.row);
                                     resultOfPrece.result = ERR_INCOMPATIBLE_TYPE;
                                     return resultOfPrece;
                                 }
@@ -667,7 +702,7 @@ expr_return parse_expr(LocalMap* lMap, tList* list){
                                 if ((stack->arrayOfItems[stack->finderOfParenthesis + 1].type == STRING) ||
                                     (stack->arrayOfItems[stack->finderOfParenthesis + 3].type == STRING)) {
 
-                                    fprintf(stderr, "Semanticka chyba typové kompatibility v aritmetických vyrazech, radek %d\n", gToken.row);
+                                    //fprintf(stderr, "Semanticka chyba typové kompatibility v aritmetických vyrazech, radek %d\n", gToken.row);
                                     resultOfPrece.result = ERR_INCOMPATIBLE_TYPE;
                                     return resultOfPrece;
 
@@ -811,7 +846,7 @@ expr_return parse_expr(LocalMap* lMap, tList* list){
                                     insert_item(list, &instr_type, &instr1, &instr2, &instr3);
                                     //generovanie MUL %s@%s %s@%s %s@%s
                                 } else {
-                                    fprintf(stderr, "Semanticka chyba typové kompatibility v aritmetických vyrazech, radek %d\n", gToken.row);
+                                    //fprintf(stderr, "Semanticka chyba typové kompatibility v aritmetických vyrazech, radek %d\n", gToken.row);
                                     resultOfPrece.result = ERR_INCOMPATIBLE_TYPE;
                                     return resultOfPrece;
                                 }
@@ -831,7 +866,7 @@ expr_return parse_expr(LocalMap* lMap, tList* list){
                                 if ((stack->arrayOfItems[stack->finderOfParenthesis + 1].type == STRING) ||
                                     (stack->arrayOfItems[stack->finderOfParenthesis + 3].type == STRING)) {
 
-                                    fprintf(stderr, "Semanticka chyba typové kompatibility v aritmetických vyrazech, radek %d\n", gToken.row);
+                                    //fprintf(stderr, "Semanticka chyba typové kompatibility v aritmetických vyrazech, radek %d\n", gToken.row);
                                     resultOfPrece.result = ERR_INCOMPATIBLE_TYPE;
                                     return resultOfPrece;
 
@@ -854,7 +889,7 @@ expr_return parse_expr(LocalMap* lMap, tList* list){
                                     instr2.type = GF;
                                     instr2.value.s = "$result\0";       // generovanie UNIQUE // generate non Term -> Unikatny nazov
                                     if (instr3.value.i == 0){
-                                        fprintf(stderr, "Deleni nulou, radek cislo %d\n",gToken.row);
+                                        //fprintf(stderr, "Deleni nulou, radek cislo %d\n",gToken.row);
                                         resultOfPrece.result = ERR_DIVISION;
                                         return resultOfPrece;
                                     }
@@ -897,7 +932,7 @@ expr_return parse_expr(LocalMap* lMap, tList* list){
                                         else{ instr3.type = F;
                                             instr3.value.f = stack->arrayOfItems[stack->finderOfParenthesis + 3].value.f;
                                             if (instr3.value.f == 0.0){
-                                                fprintf(stderr, "Deleni nulou, radek cislo %d\n",gToken.row);
+                                                //fprintf(stderr, "Deleni nulou, radek cislo %d\n",gToken.row);
                                                 resultOfPrece.result = ERR_DIVISION;
                                                 return resultOfPrece;
                                             }
@@ -933,7 +968,7 @@ expr_return parse_expr(LocalMap* lMap, tList* list){
                                     else { instr2.type = I;
                                         instr2.value.i = stack->arrayOfItems[stack->finderOfParenthesis + 3].value.i;
                                         if (instr2.value.i == 0){
-                                            fprintf(stderr, "Deleni nulou, radek cislo %d\n",gToken.row);
+                                            //fprintf(stderr, "Deleni nulou, radek cislo %d\n",gToken.row);
                                             resultOfPrece.result = ERR_DIVISION;
                                             return resultOfPrece;
                                         }
@@ -989,7 +1024,7 @@ expr_return parse_expr(LocalMap* lMap, tList* list){
                                     instr2.value.s = "$result\0";
 
                                     if (instr3.value.f == 0.0){
-                                        fprintf(stderr, "Deleni nulou, radek cislo %d\n",gToken.row);
+                                        //fprintf(stderr, "Deleni nulou, radek cislo %d\n",gToken.row);
                                         resultOfPrece.result = ERR_DIVISION;
                                         return resultOfPrece;
                                     }
@@ -1001,7 +1036,7 @@ expr_return parse_expr(LocalMap* lMap, tList* list){
 
 
                                 } else {   //printf("semanticky error BOOL \n");
-                                    fprintf(stderr, "Semanticka chyba typové kompatibility v aritmetických vyrazech, radek %d\n", gToken.row);
+                                    //fprintf(stderr, "Semanticka chyba typové kompatibility v aritmetických vyrazech, radek %d\n", gToken.row);
                                     resultOfPrece.result = ERR_INCOMPATIBLE_TYPE;
                                     return resultOfPrece;
                                 }
@@ -1177,7 +1212,7 @@ expr_return parse_expr(LocalMap* lMap, tList* list){
                                     insert_item(list, &instr_type, &instr1, &instr2, &instr3);
                                     // generovanie LT %s@%s %s@%s %s@%s
                                 } else {
-                                    fprintf(stderr, "Semanticka chyba typové kompatibility v aritmetických vyrazech, radek %d\n", gToken.row);
+                                    //fprintf(stderr, "Semanticka chyba typové kompatibility v aritmetických vyrazech, radek %d\n", gToken.row);
                                     resultOfPrece.result = ERR_INCOMPATIBLE_TYPE;
                                     return resultOfPrece;
                                 }
@@ -1354,7 +1389,7 @@ expr_return parse_expr(LocalMap* lMap, tList* list){
                                     insert_item(list, &instr_type, &instr1, &instr2, &instr3);
                                     // generovanie GT %s@%s %s@%s %s@%s
                                 } else {
-                                    fprintf(stderr, "Semanticka chyba typové kompatibility v aritmetických vyrazech, radek %d\n", gToken.row);
+                                    //fprintf(stderr, "Semanticka chyba typové kompatibility v aritmetických vyrazech, radek %d\n", gToken.row);
                                     resultOfPrece.result = ERR_INCOMPATIBLE_TYPE;
                                     return resultOfPrece;
                                 }
@@ -1590,7 +1625,7 @@ expr_return parse_expr(LocalMap* lMap, tList* list){
                                     // generovanie LTS %s@%s %s@%s %s@%s
                                     isThirdVariable = false;
                                 } else {
-                                    fprintf(stderr, "Semanticka chyba typové kompatibility v aritmetických vyrazech, radek %d\n", gToken.row);
+                                    //fprintf(stderr, "Semanticka chyba typové kompatibility v aritmetických vyrazech, radek %d\n", gToken.row);
                                     resultOfPrece.result = ERR_INCOMPATIBLE_TYPE;
                                     return resultOfPrece;
                                 }
@@ -1823,7 +1858,7 @@ expr_return parse_expr(LocalMap* lMap, tList* list){
                                     // generovanie OR %s@%s %s@%s %s@%s
                                     isThirdVariable = false;
                                 } else {
-                                    fprintf(stderr, "Semanticka chyba typové kompatibility v aritmetických vyrazech, radek %d\n", gToken.row);
+                                    //fprintf(stderr, "Semanticka chyba typové kompatibility v aritmetických vyrazech, radek %d\n", gToken.row);
                                     resultOfPrece.result = ERR_INCOMPATIBLE_TYPE;
                                     return resultOfPrece;
                                 }
@@ -1999,7 +2034,7 @@ expr_return parse_expr(LocalMap* lMap, tList* list){
                                     // generovanie EQ %s@%s %s@%s %s@%s
                                     isThirdVariable = false;
                                 } else {
-                                    fprintf(stderr, "Semanticka chyba typové kompatibility v aritmetických vyrazech, radek %d\n", gToken.row);
+                                    //fprintf(stderr, "Semanticka chyba typové kompatibility v aritmetických vyrazech, radek %d\n", gToken.row);
                                     resultOfPrece.result = ERR_INCOMPATIBLE_TYPE;
                                     return resultOfPrece;
                                 }
@@ -2192,7 +2227,7 @@ expr_return parse_expr(LocalMap* lMap, tList* list){
                                     // generovanie EQ %s@%s %s@%s %s@%s
 
                                 } else {
-                                    fprintf(stderr, "Semanticka chyba typové kompatibility v aritmetických vyrazech, radek %d\n", gToken.row);
+                                    //fprintf(stderr, "Semanticka chyba typové kompatibility v aritmetických vyrazech, radek %d\n", gToken.row);
                                     resultOfPrece.result = ERR_INCOMPATIBLE_TYPE;
                                     return resultOfPrece;
                                 }
