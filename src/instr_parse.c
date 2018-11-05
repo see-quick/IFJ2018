@@ -19,7 +19,7 @@
 
 int while_count = 0;
 int if_count = 0;
-extern int argCount;
+int arg_count;
 
 /**
  * Ulahcenie vypisu podla typu instrukcie
@@ -509,8 +509,8 @@ void parse_instructions(tList *instr_list)  {
 
       case INSTRUCT_PRINT:
           // while pocet parametru ... zatim vypisu jen jeden parametr
-          //printf("Terms count %d\n", argCount);
-          for (int i=1; i <= argCount; i++){
+          arg_count = act_instr->data.address1.value.i;
+          for (int i=1; i <= arg_count; i++){
               printf("WRITE TF@$_param%d\n", i);
           }
       break;

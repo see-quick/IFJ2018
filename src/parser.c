@@ -148,7 +148,6 @@ int term(void){
 			// if LEX_ID -> zkontrolovat zda je promenna definovana
 			// pokud je to LEX_ID, LEX_NUMBER, LEX_REAL, LEX_STRING , podle typu vytvorit vnitrni promennou s hodnotou argumentu
 
-
 			instr_type = INSTRUCT_DEFVAR;
 			instr1.type = TF;
 			instr1.value.s = generate_param("$_param", argCount);
@@ -230,7 +229,6 @@ int term_list2(bool zavorka){
 				return result;
 			}
 
-			// +1 argument
 			argCount++;
 
 			//nacteno z param()
@@ -276,7 +274,6 @@ int term_list(bool zavorka){
 			instr1.type = TF;
 			instr1.value.s = generate_param("$_param", argCount);
 
-	
 
 			insert_item(ilist, &instr_type, &instr1, &instr2, &instr3);
 			instr_type = INSTRUCT_MOVE;
@@ -343,6 +340,7 @@ int term_list(bool zavorka){
 		case LEX_EOF:
 			if (!zavorka){return SUCCESS;}
 			else{ //fprintf(stderr, "Syntakticka chyba, ocekavana ')' na radlu %d\n", gToken.row);  instruction_exit(SYN_ERR);
+			instruction_exit(SYN_ERR);
 			return SYN_ERR; }
 		break;
 
@@ -438,6 +436,8 @@ int sth(){
 						if (result == SUCCESS){
 							move_value(res);
 						}
+						// to muze byt funkce
+						
 						else {
 							instruction_exit(result);
 							return result;
@@ -455,7 +455,9 @@ int sth(){
 				}
 				else{
 						// je funkce					
-						is_LF = true;
+						//is_LF = true;
+
+						function_name = gToken.data.str;
 
         	    		token = getToken();
 						if(!error_lex()){
@@ -495,7 +497,7 @@ int sth(){
 								return INT_ERR;
 							}
 
-							is_LF = false; // refresh promenne
+							// is_LF = false; // refresh promenne
 						}
 						else {
 							switch(token){
@@ -560,7 +562,7 @@ int sth(){
 										return INT_ERR;
 									}
 
-									is_LF = false; // refresh promenne
+									// is_LF = false; // refresh promenne
 
 									return SUCCESS;
 
@@ -605,17 +607,7 @@ int sth(){
 									instr_type = INSTRUCT_POPFRAME;
 									insert_item(ilist, &instr_type, &instr1, &instr2, &instr3);
 
-
-									token = getToken();
-									if(!error_lex()){
-										instruction_exit(ERROR_LEX);
-										return ERROR_LEX;
-									} else if (!error_int()){
-										instruction_exit(INT_ERR);
-										return INT_ERR;
-									}
-
-									is_LF = false; // refresh promenne
+									// is_LF = false; // refresh promenne
 
 									return SUCCESS;
 
@@ -680,7 +672,7 @@ int sth(){
 			if (res.data_type == FUNCTION){
 				// volani funkce 
 						tmp = global_map_get_pointer_to_value(gMap, gToken.data.str);
-						is_LF = true;
+						// is_LF = true;
 
         	    		token = getToken();
 						if(!error_lex()){
@@ -921,6 +913,8 @@ int stat(){
 
 		case KW_PRINT:
 
+			argCount = 0;
+
 			token = getToken();
 			
 			if(!error_lex()){
@@ -960,6 +954,12 @@ int stat(){
 						return INT_ERR;
 					}
 
+					instr1.type = I;
+					instr1.value.i = argCount;
+
+					instr_type = INSTRUCT_PRINT;
+					insert_item(ilist, &instr_type, &instr1, &instr2, &instr3);
+
 				break;
 
 				case LEX_ID:
@@ -974,14 +974,11 @@ int stat(){
 						return result;
 					}
 
-					token = getToken();
-					if(!error_lex()){
-						instruction_exit(ERROR_LEX);
-						return ERROR_LEX;
-					} else if (!error_int()){
-						instruction_exit(INT_ERR);
-						return INT_ERR;
-					}
+					instr1.type = I;
+					instr1.value.i = argCount;
+
+					instr_type = INSTRUCT_PRINT;
+					insert_item(ilist, &instr_type, &instr1, &instr2, &instr3);
 
 				break;
 
@@ -990,24 +987,8 @@ int stat(){
 					instruction_exit(SYN_ERR);
 					return SYN_ERR;
 			}
-			
-
-			instr_type = INSTRUCT_PRINT;
-			insert_item(ilist, &instr_type, &instr1, &instr2, &instr3);
-
-			token = getToken();
-			if(!error_lex()){
-				instruction_exit(ERROR_LEX);
-				return ERROR_LEX;
-			} else if (!error_int()){
-				instruction_exit(INT_ERR);
-				return INT_ERR;
-			}
-
 
 		break;
-
-
 
 
 		//<STAT> -> if <EXPR> then eol <ST-LIST> else eol <ST-LIST> end if
@@ -1200,6 +1181,7 @@ int stat(){
 
 			instr_type = INSTRUCT_WHILE_START;
 			insert_item(ilist, &instr_type, &instr1, &instr2, &instr3);
+
 
 			//vyrazova SA, pro precedencni analyzu
 			token = getToken();
