@@ -38,7 +38,6 @@ tInstructionData instr3;
 extern tDataFunction gData;
 
 extern bool is_LF;
-int counterVar = 1;
 int DEBUG = 0;  /* premenna na debugovanie  0 --> pre ziadnej vypis, 1 --> pre vypis */
 
 prece_states prece_table [SIZEOFTABLE][SIZEOFTABLE] = {
@@ -197,8 +196,6 @@ void setFirstAndSecondVariableToGenerate(int instruction_type){
 expr_return parse_expr(LocalMap* lMap, tList* list, bool is_bool){
 
     /* INICIALIZACIA STRUKTUR */
-//    tItem* tempItemForPositionOne; /* GLOBALNY ITEM pre stack pri pravidle E -> i */
-//    tItem* tempItemForPositionThree; /* GLOBALNY ITEM pre stack pri pravidlach E -> E + E, E -> E - E a podobne. */
     expr_return resultOfPrece = {.result=SUCCESS, .bool_result=false};
     tStack* stack = stack_init(100);
     int actTokenIndexToPreceTable = 0;
