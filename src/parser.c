@@ -31,14 +31,15 @@ bool is_LF = false;
 bool zavorka = false;
 char * function_name;
 char * variable_name;
+char *call_name;
 bool in_while = false;
 int while_counter = 0;
+
 /*********************************************************************/
 /*LOKALNI TABULKA SYMBOLU*/
 LocalMap* localMap;
 tDataIDF lData;
 /*********************************************************************/
-
 
 
 
@@ -148,6 +149,8 @@ int term(void){
 			// if LEX_ID -> zkontrolovat zda je promenna definovana
 			// pokud je to LEX_ID, LEX_NUMBER, LEX_REAL, LEX_STRING , podle typu vytvorit vnitrni promennou s hodnotou argumentu
 
+			if ( (result = check_substr_ord_build_in(argCount)) != SUCCESS) return result;
+
 			instr_type = INSTRUCT_DEFVAR;
 			instr1.type = TF;
 			instr1.value.s = generate_param("$_param", argCount);
@@ -200,7 +203,7 @@ int term(void){
 		break;
 
 		default:
-			gData = global_map_get_value(gMap, function_name);
+			gData = global_map_get_value(gMap, call_name);
 			if (argCount != gData.paramCount){
 				instruction_exit(ERR_PARAMS_COUNT);
 				return ERR_PARAMS_COUNT;
@@ -214,6 +217,136 @@ int term(void){
 	}
 
 	return result;
+}
+
+
+int check_length_substr_ord_build_in(){
+	if (  ( (strcmp(call_name, "length")) == 0 )  ||  ( (strcmp(call_name, "substr")) == 0 ) ||  ( (strcmp(call_name, "ord")) == 0 ) ) {
+				if (token != LEX_STRING){
+					if (token != LEX_ID){
+						instruction_exit(ERR_INCOMPATIBLE_TYPE);
+						return ERR_INCOMPATIBLE_TYPE;
+					}
+					else {
+						if (!local_map_contain(localMap, gToken.data.str)){
+							if (is_LF){
+								gData = global_map_get_value(gMap, function_name);
+								if (!local_map_contain(gData.lMap, gToken.data.str)){
+									instruction_exit(SEM_ERR);
+									return SEM_ERR;
+								}
+								else {
+									lData = local_map_get_value(gData.lMap, gToken.data.str);
+									if (lData.type != STRING){
+										instruction_exit(ERR_INCOMPATIBLE_TYPE);
+										return ERR_INCOMPATIBLE_TYPE;
+									}
+								}
+							}
+						}
+						else{
+								lData = local_map_get_value(localMap, gToken.data.str);
+								if (lData.type != STRING){
+									instruction_exit(ERR_INCOMPATIBLE_TYPE);
+									return ERR_INCOMPATIBLE_TYPE;
+								}
+						}
+					}
+				}
+	}
+	return SUCCESS;
+}
+
+
+int check_chr_build_in(){
+	if ((strcmp(call_name, "chr"))==0){
+				if (token != LEX_NUMBER){
+					if (token != LEX_ID){
+						instruction_exit(ERR_INCOMPATIBLE_TYPE);
+						return ERR_INCOMPATIBLE_TYPE;
+					}
+					else {
+						if (!local_map_contain(localMap, gToken.data.str)){
+							if (is_LF){
+								gData = global_map_get_value(gMap, function_name);
+								if (!local_map_contain(gData.lMap, gToken.data.str)){
+									instruction_exit(SEM_ERR);
+									return SEM_ERR;
+								}
+								else {
+									lData = local_map_get_value(gData.lMap, gToken.data.str);
+									if (lData.type != INTEGER){
+										instruction_exit(ERR_INCOMPATIBLE_TYPE);
+										return ERR_INCOMPATIBLE_TYPE;
+									}
+								}
+							}
+						}
+						else{
+								lData = local_map_get_value(localMap, gToken.data.str);
+								if (lData.type != INTEGER){
+									instruction_exit(ERR_INCOMPATIBLE_TYPE);
+									return ERR_INCOMPATIBLE_TYPE;
+								}
+						}
+					}
+				}
+	}
+	return SUCCESS;
+}
+
+
+int check_substr_ord_build_in(int param){
+	switch(param){
+		case 1:
+		case 2:
+			if (param == 2 &&  ( (strcmp(call_name, "ord")) == 0 ) ){
+				instruction_exit(ERR_PARAMS_COUNT);
+				return ERR_PARAMS_COUNT;
+			}
+			else{
+				if (  ( (strcmp(call_name, "substr")) == 0 ) ||  ( (strcmp(call_name, "ord")) == 0 ) ) {
+					if (token != LEX_NUMBER){
+						if (token != LEX_ID){
+							instruction_exit(ERR_INCOMPATIBLE_TYPE);
+							return ERR_INCOMPATIBLE_TYPE;
+						}
+						else {
+							if (!local_map_contain(localMap, gToken.data.str)){
+								if (is_LF){
+									gData = global_map_get_value(gMap, function_name);
+									if (!local_map_contain(gData.lMap, gToken.data.str)){
+										instruction_exit(SEM_ERR);
+										return SEM_ERR;
+									}
+									else {
+										lData = local_map_get_value(gData.lMap, gToken.data.str);
+										if (lData.type != INTEGER){
+											instruction_exit(ERR_INCOMPATIBLE_TYPE);
+											return ERR_INCOMPATIBLE_TYPE;
+										}
+									}
+								}
+							}
+							else{
+									lData = local_map_get_value(localMap, gToken.data.str);
+									if (lData.type != INTEGER){
+										instruction_exit(ERR_INCOMPATIBLE_TYPE);
+										return ERR_INCOMPATIBLE_TYPE;
+									}
+							}
+						}
+					}
+				}
+			}
+		break;
+
+		case 3:
+			instruction_exit(ERR_PARAMS_COUNT);
+			return ERR_PARAMS_COUNT;
+		break;
+	}
+	return SUCCESS;
 }
 
 int term_list2(bool zavorka){
@@ -280,6 +413,10 @@ int term_list(bool zavorka){
 			// if LEX_ID -> zkontrolovat zda je promenna definovana
 			// pokud je to LEX_ID, LEX_NUMBER, LEX_REAL, LEX_STRING , podle typu vytvorit vnitrni promennou s hodnotou argumentu
 
+
+			if ( (result = check_length_substr_ord_build_in()) != SUCCESS) return result;
+			if ( (result = check_chr_build_in()) != SUCCESS) return result;
+
 			instr_type = INSTRUCT_DEFVAR;
 			instr1.type = TF;
 			instr1.value.s = generate_param("$_param", argCount);
@@ -312,6 +449,13 @@ int term_list(bool zavorka){
 					//fprintf(stderr, "Semanticka chyba, promenna %s neni definovana, radek %d\n", gToken.data.str, gToken.row);
 					instruction_exit(SEM_ERR);
 					return SEM_ERR;
+				}
+				else if (is_LF){
+					gData = global_map_get_value(gMap, function_name);
+					if (!local_map_contain(gData.lMap, gToken.data.str)){
+						instruction_exit(SEM_ERR);
+						return SEM_ERR;
+					}
 				}
 				else {
 					instr2.type = GF; //string
@@ -466,9 +610,9 @@ int sth(){
 				}
 				else{
 						// je funkce					
-						//is_LF = true;
+						//is_LF = true;	
 
-						function_name = gToken.data.str;
+						call_name = gToken.data.str;
 
         	    		token = getToken();
 						if(!error_lex()){
@@ -479,7 +623,7 @@ int sth(){
 							return INT_ERR;
 						}
 
-						if ( (token == LEX_EOL || token == LEX_EOF) && tmp->paramCount == 0 ){
+						if ( (token == LEX_EOL || token == LEX_EOF) && tmp->paramCount == 0  ){
 							// pro dalsi volani funkce
 							argCount = 0;
 
@@ -491,7 +635,7 @@ int sth(){
 
 							instr_type = INSTRUCT_CALL;
 							instr1.type = FCE;
-							instr1.value.s = function_name;
+							instr1.value.s = call_name;
 
 							insert_item(ilist, &instr_type, &instr1, &instr2, &instr3);
 
@@ -554,7 +698,7 @@ int sth(){
 
 									instr_type = INSTRUCT_CALL;
 									instr1.type = FCE;
-									instr1.value.s = function_name;
+									instr1.value.s = call_name;
 
 									insert_item(ilist, &instr_type, &instr1, &instr2, &instr3);
 
@@ -609,7 +753,7 @@ int sth(){
 
 									instr_type = INSTRUCT_CALL;
 									instr1.type = FCE;
-									instr1.value.s = function_name;
+									instr1.value.s = call_name;
 
 									insert_item(ilist, &instr_type, &instr1, &instr2, &instr3);
 
@@ -766,7 +910,7 @@ int sth(){
 
 						instr_type = INSTRUCT_CALL;
 						instr1.type = FCE;
-						instr1.value.s = function_name;
+						instr1.value.s = call_name;
 
 						insert_item(ilist, &instr_type, &instr1, &instr2, &instr3);
 
@@ -1860,6 +2004,7 @@ int parse(GlobalMap* globalMap, tList *list) {
 
 	function_name = (char *) malloc( sizeof(char));
 	variable_name = (char *) malloc( sizeof(char));
+	call_name = (char *)malloc(sizeof(char));
 
 
 	if(initToken() == INT_ERR){
