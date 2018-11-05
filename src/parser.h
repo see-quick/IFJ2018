@@ -25,6 +25,7 @@
 
 GlobalMap* gMap;		     // globalni tabulka symbolu
 
+
 int error_lex(void);
 int error_int(void);
 
@@ -52,8 +53,8 @@ int pm_list2();
 int term_list(bool);
 int term_list2(bool);
 int func();
-int parse_expression(void);
 void insert_build_in_functions();
+void instruction_exit(int);
 
 #endif
 

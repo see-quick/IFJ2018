@@ -30,8 +30,9 @@
 int strInit (tString *s)
 {
   s->length = 0;
-  if ((s->str = (char *) calloc(SIZE, sizeof(char))) == NULL)
+  if ((s->str = (char *) calloc(SIZE, sizeof(char))) == NULL){
     return INT_ERR;
+  }
   s->memory = SIZE;
 
   return SUCCESS;
@@ -83,7 +84,11 @@ tString strCreate (char *array)
 
 int strClear (tString *s)
 {
-   s->str[0] = '\0';
+  if (s->str){
+    free(s->str);
+  }
+   //s->str[0] = '\0';
+   s->memory = 0;
    s->length = 0;
 
   return SUCCESS;

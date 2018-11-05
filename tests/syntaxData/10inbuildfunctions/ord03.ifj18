@@ -1,4 +1,0 @@
-# Complex ord(s,i) calling
-
-stri = "Hello"
-myvar = ord(stri, length(stri) - 2)

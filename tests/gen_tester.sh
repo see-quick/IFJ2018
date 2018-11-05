@@ -20,6 +20,7 @@ usage() {
   echo  "For proper functionality you have to be logged as sudo or root !!!"
   echo  "Run program with bash gen_tester.sh -s for silent run -> interpret errors will be displayed"
   echo  "Run program with bash gen_tester.sh -n and no output files will be generated"
+  echo  "Run program with bash gen_tester.sh -e to run only test for generation code from prece.c"
   exit 1
 }
 
@@ -108,21 +109,30 @@ function testRunner() {
   done
 }
 
-#TESTS FOR testData
-testDIR="testData"
-testRunner "$testDIR"
+#TESTS FOR code_gen in prece.c for @Maros
+if [[ "$1" == "-e" ]];then
+  testDIR="preceGen"
+  filegen="-n"
+  testRunner "$testDIR"
+else
+  #TESTS FOR testData
+  testDIR="testData"
+  testRunner "$testDIR"
 
-#TESTS FOR syntaxData
-testDIR="syntaxData"
-testRunner "$testDIR"
+  #TESTS FOR syntaxData
+  testDIR="syntaxData"
+  testRunner "$testDIR"
 
-#TESTS FOR semanticData
-testDIR="semanticData"
-testRunner "$testDIR"
+  #TESTS FOR semanticData
+  testDIR="semanticData"
+  testRunner "$testDIR"
 
-#TESTS FOR expressionsData
-testDIR="expressionsData"
-testRunner "$testDIR"
+  #TESTS FOR expressionsData
+  testDIR="expressionsData"
+  testRunner "$testDIR"
+
+fi
+
 
 
 #tests succession

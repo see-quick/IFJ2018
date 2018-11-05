@@ -9,7 +9,6 @@ extern int solved;
  
 typedef struct tDLElem {                 
 		char * data;
-		int is_important;
         struct tDLElem *lptr;          /* ukazatel na předchozí prvek seznamu */
         struct tDLElem *rptr;        /* ukazatel na následující prvek seznamu */
 } *tDLElemPtr;
