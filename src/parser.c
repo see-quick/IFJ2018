@@ -954,6 +954,12 @@ int stat(){
 						return INT_ERR;
 					}
 
+					if (argCount == 0){
+						instruction_exit(ERR_PARAMS_COUNT);
+						return ERR_PARAMS_COUNT;
+					}
+
+
 					instr1.type = I;
 					instr1.value.i = argCount;
 
