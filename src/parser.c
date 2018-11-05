@@ -203,10 +203,16 @@ int term(void){
 		break;
 
 		default:
-			gData = global_map_get_value(gMap, call_name);
-			if (argCount != gData.paramCount){
-				instruction_exit(ERR_PARAMS_COUNT);
-				return ERR_PARAMS_COUNT;
+			if (global_map_contain(gMap, call_name)){
+				gData = global_map_get_value(gMap, call_name);
+				if (argCount != gData.paramCount){
+					instruction_exit(ERR_PARAMS_COUNT);
+					return ERR_PARAMS_COUNT;
+				}
+				else {
+					instruction_exit(SYN_ERR);
+					return SYN_ERR;
+				}
 			}
 			else {
 					//jiny token = chyba!
@@ -279,6 +285,13 @@ int check_chr_build_in(){
 										instruction_exit(ERR_INCOMPATIBLE_TYPE);
 										return ERR_INCOMPATIBLE_TYPE;
 									}
+									else {
+										int i = atoi(gToken.data.str);
+										if (i >= 299){
+											instruction_exit(ERR_SEMANTIC);
+											return ERR_SEMANTIC;
+										}
+									}
 								}
 							}
 						}
@@ -288,7 +301,20 @@ int check_chr_build_in(){
 									instruction_exit(ERR_INCOMPATIBLE_TYPE);
 									return ERR_INCOMPATIBLE_TYPE;
 								}
+								else {
+										int i = atoi(gToken.data.str);
+										if (i >= 299){
+											instruction_exit(ERR_SEMANTIC);
+											return ERR_SEMANTIC;
+										}
+								}
 						}
+					}
+				} else {
+					int i = atoi(gToken.data.str);
+					if (i >= 299){
+						instruction_exit(ERR_SEMANTIC);
+						return ERR_SEMANTIC;
 					}
 				}
 	}
@@ -1199,8 +1225,14 @@ int stat(){
 
 				append_list(ilist, while_list);
 				
-				instruction_exit(ERR_SEMANTIC);
-				return ERR_SEMANTIC;
+				if (result != SUCCESS){
+					instruction_exit(result);
+					return result;
+				}
+				else {
+					instruction_exit(ERR_SEMANTIC);
+					return ERR_SEMANTIC;
+				}
 			}
 
 			if(result != SUCCESS){
@@ -1387,8 +1419,14 @@ int stat(){
 
 				append_list(ilist, while_list);
 				
-				instruction_exit(ERR_SEMANTIC);
-				return ERR_SEMANTIC;
+				if (result != SUCCESS){
+					instruction_exit(result);
+					return result;
+				}
+				else {
+					instruction_exit(ERR_SEMANTIC);
+					return ERR_SEMANTIC;
+				}
 			}
 
 			instr_type = INSTRUCT_WHILE_STATS;
@@ -1485,7 +1523,6 @@ int stat(){
 			return result;
 		break;
 
-
 		default:
 			//fprintf(stderr, "Ocekavano 'while' 'id' 'if' na radku %d \n", gToken.row); // dopsat
 			instruction_exit(SYN_ERR);
@@ -1571,6 +1608,23 @@ int st_list(){
 
 
       break;
+
+
+      // ignoring EOL....
+
+      case LEX_EOL:
+      		token = getToken();
+      		if(!error_lex()){
+				instruction_exit(ERROR_LEX);
+				return ERROR_LEX;
+			} else if (!error_int()){
+				instruction_exit(INT_ERR);
+				return INT_ERR;
+			}
+
+		
+			return st_list();
+      	break;
 
 	}
 
