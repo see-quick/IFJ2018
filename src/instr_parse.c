@@ -14,7 +14,9 @@
 */
 #include "instr_parse.h"
 #include "list.h"
-
+#include <string.h>
+#include <stdio.h>
+#include <ctype.h>
 
 
 int while_count = 0;
@@ -74,7 +76,23 @@ void print_symb(tInstructionData instr_operand)  {
     printf("%d",instr_operand.value.i);
   }
   else if (instr_operand.type == F) printf("%a",instr_operand.value.f);
-  else { printf("%s",instr_operand.value.s); }
+  else
+  {
+    //handle '\n' and others
+    if(strcmp(instr_operand.value.s, "\n") == 0)
+    {
+      //printf("here\n" );
+      char * escape = "\\x49"; //x0A
+      char * new_data;
+      new_data = malloc(strlen(instr_operand.value.s)+1+2);
+      strcpy(new_data, escape);
+      strcat(new_data, instr_operand.value.s);
+
+      strcpy(instr_operand.value.s, new_data);
+      free(new_data);
+    }
+     printf("%s",instr_operand.value.s);
+  }
 }
 
 /*
