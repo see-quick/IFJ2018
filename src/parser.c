@@ -340,6 +340,7 @@ int term_list(bool zavorka){
 		case LEX_EOF:
 			if (!zavorka){return SUCCESS;}
 			else{ //fprintf(stderr, "Syntakticka chyba, ocekavana ')' na radlu %d\n", gToken.row);  instruction_exit(SYN_ERR);
+
 			instruction_exit(SYN_ERR);
 			return SYN_ERR; }
 		break;
@@ -912,7 +913,6 @@ int stat(){
 		break;
 
 		case KW_PRINT:
-
 			argCount = 0;
 
 			token = getToken();
@@ -980,6 +980,11 @@ int stat(){
 						return result;
 					}
 
+					if (argCount == 0){
+						instruction_exit(ERR_PARAMS_COUNT);
+						return ERR_PARAMS_COUNT;
+					}
+
 					instr1.type = I;
 					instr1.value.i = argCount;
 
@@ -990,9 +995,10 @@ int stat(){
 
 				default:
 					//fprintf(stderr, "Syntakticka chyba, ocekavano '(',terminal na radku %d\n", gToken.row );
-					instruction_exit(SYN_ERR);
-					return SYN_ERR;
+					instruction_exit(ERR_PARAMS_COUNT);
+					return ERR_PARAMS_COUNT;
 			}
+
 
 		break;
 
