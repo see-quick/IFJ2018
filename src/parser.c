@@ -200,10 +200,17 @@ int term(void){
 		break;
 
 		default:
-			//jiny token = chyba!
-			//fprintf(stderr, "Ocekavano 'identifikator' 'konstanta' na radku %d \n", gToken.row);
-			instruction_exit(SYN_ERR);
-			return SYN_ERR;
+			gData = global_map_get_value(gMap, function_name);
+			if (argCount != gData.paramCount){
+				instruction_exit(ERR_PARAMS_COUNT);
+				return ERR_PARAMS_COUNT;
+			}
+			else {
+					//jiny token = chyba!
+					//fprintf(stderr, "Ocekavano 'identifikator' 'konstanta' na radku %d \n", gToken.row);
+					instruction_exit(SYN_ERR);
+					return SYN_ERR;
+			}
 	}
 
 	return result;
@@ -233,12 +240,14 @@ int term_list2(bool zavorka){
 
 			//nacteno z param()
 			return term_list2(zavorka);
+
 		break;
 
 		case LEX_R_BRACKET:
 			if (zavorka){return SUCCESS;}
 			else { //fprintf(stderr, "Syntakticka chyba, neocekavana ')' na radku %d\n", gToken.row);  instruction_exit(SYN_ERR);
-			 return SYN_ERR;}
+			instruction_exit(SYN_ERR);
+			return SYN_ERR;}
 			
 		break;
 
@@ -246,14 +255,15 @@ int term_list2(bool zavorka){
 		case LEX_EOF:
 			if (!zavorka){return SUCCESS;}
 			else{ //fprintf(stderr, "Syntakticka chyba, ocekavana ')' na radku %d\n", gToken.row); instruction_exit(SYN_ERR);
+			instruction_exit(SYN_ERR);
 			return SYN_ERR; }
 		break;
 
 		default:
-			//cokoliv jineho = chyba
-			//fprintf(stderr, "Ocekavano ',' 'identifikator' 'konstanta' ')' na radku %d \n", gToken.row);
-			instruction_exit(SYN_ERR);
-			return SYN_ERR;
+				//cokoliv jineho = chyba
+				//fprintf(stderr, "Ocekavano ',' 'identifikator' 'konstanta' ')' na radku %d \n", gToken.row);
+				instruction_exit(SYN_ERR);
+				return SYN_ERR;
 	}
 }
 
@@ -298,7 +308,7 @@ int term_list(bool zavorka){
 				insert_item(ilist, &instr_type, &instr1, &instr2, &instr3);
 			}
 			else if (token == LEX_ID){
-				if ((local_map_get_pointer_to_key(localMap, gToken.data.str)) == NULL){
+				if (!local_map_contain(localMap, gToken.data.str)){
 					//fprintf(stderr, "Semanticka chyba, promenna %s neni definovana, radek %d\n", gToken.data.str, gToken.row);
 					instruction_exit(SEM_ERR);
 					return SEM_ERR;
@@ -637,6 +647,7 @@ int sth(){
 		//pokud neni token LEX_ID_F, prozenem to precedencni SA
 		default:
 
+
 			instr_type = INSTRUCT_MOVE;
 			if (token == LEX_NUMBER){
 				instr2.type = I;
@@ -873,7 +884,7 @@ int stat(){
 
 
 					// nazev promenne ziskame z list pro tokeny pomoci funkce DLCOPYFISRT
-					local_map_put(localMap, DLCopyFirst(&tlist), lData);
+					local_map_put(localMap, variable_name, lData);
 		
 
 					// generovani instrukce pro definice promenne s typem nil a hodnotou nil
@@ -883,7 +894,7 @@ int stat(){
 						instr1.type = GF;
 					}
 
-					instr1.value.s = DLCopyFirst(&tlist); // nazev promenne
+					instr1.value.s = variable_name; // nazev promenne
 					if (in_while) insert_item(variables_list, &instr_type, &instr1, &instr2, &instr3);
 					else {insert_item(ilist, &instr_type, &instr1, &instr2, &instr3);}
 				
@@ -901,6 +912,7 @@ int stat(){
 				instruction_exit(INT_ERR);
 				return INT_ERR;
 			}
+
 
 			// volani pravidla sth()
 			result = sth(localMap);
@@ -1448,7 +1460,8 @@ int pm_list2(){
 				lData.defined = 1;
 				lData.value.nil = true;
 				lData.type = 500; // typ nil - NONE
-				local_map_put(localMap, gToken.data.str, lData);
+				gData = global_map_get_value(gMap, function_name);
+				local_map_put(gData.lMap, gToken.data.str, lData);
 			}
 
 			// + jeden parametr
@@ -1501,12 +1514,11 @@ int pm_list(){
 			lData.defined = 1;
 			lData.value.nil = true;
 			lData.type = 500; // typ nil - NONE
-			local_map_put(localMap, gToken.data.str, lData);
+			gData = global_map_get_value(gMap, function_name);
+			local_map_put(gData.lMap, gToken.data.str, lData);
 		}
 
 		paramCount++;
-
-		lData = local_map_get_value(localMap, gToken.data.str);
 
 		token = getToken();
 
