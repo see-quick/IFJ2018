@@ -428,10 +428,10 @@ int sth(){
 						res = parse_expr(localMap, ilist, false);
 						result = res.result;
 
-						// if (res.bool_result){
-						// 	instruction_exit(ERR_SEMANTIC);
-						// 	return ERR_SEMANTIC;
-						// }
+						if (res.bool_result){
+							instruction_exit(ERR_SEMANTIC);
+							return ERR_SEMANTIC;
+						}
 
 						if (result == SUCCESS){
 							move_value(res);
@@ -663,10 +663,10 @@ int sth(){
 			res = parse_expr(localMap, ilist, false);
 			result = res.result;
 
-			// if (res.bool_result){
-			// 	instructiot_exit(ERR_SEMANTIC);
-			// 	exit(ERR_SEMANTIC);
-			// }
+			if (res.bool_result){
+				instruction_exit(ERR_SEMANTIC);
+				return ERR_SEMANTIC;
+			}
 
 
 			if (res.data_type == FUNCTION){
@@ -1005,8 +1005,6 @@ int stat(){
 				ilist = while_list;
 			}
 
-
-
 			//nacteni a predani do vyrazove SA
 			token = getToken();
 			if(!error_lex()){
@@ -1020,10 +1018,22 @@ int stat(){
 			res = parse_expr(localMap, ilist, true);
 			result = res.result;
 
-			// if (!res.bool_result){
-			// 	instruction_exit(ERR_SEMANTIC);
-			// 	return ERR_SEMANTIC;
-			// }
+			if (!res.bool_result){
+				ilist = tmp_list;
+
+				reverse(&(variables_list->first));
+      			set_active(variables_list);
+
+      			append_list(ilist, variables_list);
+
+				reverse(&(while_list->first));
+      			set_active(while_list);
+
+				append_list(ilist, while_list);
+				
+				instruction_exit(ERR_SEMANTIC);
+				return ERR_SEMANTIC;
+			}
 
 			if(result != SUCCESS){
 				instruction_exit(result);
@@ -1196,10 +1206,22 @@ int stat(){
 			res = parse_expr(localMap, ilist, true);
 			result = res.result;
 
-			// if (!res.bool_result){
-			// 	instruction_exit(ERR_SEMANTIC);
-			// 	return ERR_SEMANTIC;
-			// }
+			if (!res.bool_result){
+				ilist = tmp_list;
+
+				reverse(&(variables_list->first));
+      			set_active(variables_list);
+
+      			append_list(ilist, variables_list);
+
+				reverse(&(while_list->first));
+      			set_active(while_list);
+
+				append_list(ilist, while_list);
+				
+				instruction_exit(ERR_SEMANTIC);
+				return ERR_SEMANTIC;
+			}
 
 			instr_type = INSTRUCT_WHILE_STATS;
 			insert_item(ilist, &instr_type, &instr1, &instr2, &instr3);
