@@ -38,6 +38,11 @@ int checkTokenType(int);
 int parse(GlobalMap* , tList *);
 
 
+int check_substr_ord_build_in(int param);
+int check_chr_build_in();
+int check_length_substr_ord_build_in();
+
+
 /**
 ** Pocatecni stav pruchodu
 ** Dale nasleduje zacatek programu <prog> - <main_p> EOF

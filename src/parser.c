@@ -31,14 +31,15 @@ bool is_LF = false;
 bool zavorka = false;
 char * function_name;
 char * variable_name;
+char *call_name;
 bool in_while = false;
 int while_counter = 0;
+
 /*********************************************************************/
 /*LOKALNI TABULKA SYMBOLU*/
 LocalMap* localMap;
 tDataIDF lData;
 /*********************************************************************/
-
 
 
 
@@ -72,20 +73,31 @@ tInstructionData instr3;
 
 void insert_build_in_functions(){
 	gData.paramCount = 1;
+	gData.returnType = INTEGER;
     global_map_put(gMap, "length", gData);
 
     gData.paramCount = 3;
+    gData.returnType = STRING;
     global_map_put(gMap, "substr", gData);
 
     gData.paramCount = 2;
+    gData.returnType = INTEGER;
     global_map_put(gMap, "ord", gData);
 
     gData.paramCount = 1;
+    gData.returnType = STRING;
     global_map_put(gMap, "chr", gData);
 
     gData.paramCount = 0;
+    gData.returnType = STRING;
     global_map_put(gMap, "inputs", gData);
+
+    gData.paramCount = 0;
+    gData.returnType = INTEGER;
     global_map_put(gMap, "inputi", gData);
+
+    gData.paramCount = 0;
+    gData.returnType = FLOAT;
     global_map_put(gMap, "inputf", gData);
 }
 
@@ -148,14 +160,16 @@ int term(void){
 			// if LEX_ID -> zkontrolovat zda je promenna definovana
 			// pokud je to LEX_ID, LEX_NUMBER, LEX_REAL, LEX_STRING , podle typu vytvorit vnitrni promennou s hodnotou argumentu
 
+			if ( (result = check_substr_ord_build_in(argCount)) != SUCCESS) return result;
+
 			instr_type = INSTRUCT_DEFVAR;
 			instr1.type = TF;
-			instr1.value.s = generate_param("$_param", argCount);
+			instr1.value.s = generate_param("%", argCount);
 
 			insert_item(ilist, &instr_type, &instr1, &instr2, &instr3);
 			instr_type = INSTRUCT_MOVE;
 			instr1.type = TF;
-			instr1.value.s = generate_param("$_param", argCount);
+			instr1.value.s = generate_param("%", argCount);
 
 
 			if (token == LEX_NUMBER){
@@ -200,13 +214,176 @@ int term(void){
 		break;
 
 		default:
-			//jiny token = chyba!
-			//fprintf(stderr, "Ocekavano 'identifikator' 'konstanta' na radku %d \n", gToken.row);
-			instruction_exit(SYN_ERR);
-			return SYN_ERR;
+			if (global_map_contain(gMap, call_name)){
+				gData = global_map_get_value(gMap, call_name);
+				if (argCount != gData.paramCount){
+					instruction_exit(ERR_PARAMS_COUNT);
+					return ERR_PARAMS_COUNT;
+				}
+				else {
+					instruction_exit(SYN_ERR);
+					return SYN_ERR;
+				}
+			}
+			else {
+					//jiny token = chyba!
+					//fprintf(stderr, "Ocekavano 'identifikator' 'konstanta' na radku %d \n", gToken.row);
+					instruction_exit(SYN_ERR);
+					return SYN_ERR;
+			}
 	}
 
 	return result;
+}
+
+
+int check_length_substr_ord_build_in(){
+	if (  ( (strcmp(call_name, "length")) == 0 )  ||  ( (strcmp(call_name, "substr")) == 0 ) ||  ( (strcmp(call_name, "ord")) == 0 ) ) {
+				if (token != LEX_STRING){
+					if (token != LEX_ID){
+						instruction_exit(ERR_INCOMPATIBLE_TYPE);
+						return ERR_INCOMPATIBLE_TYPE;
+					}
+					else {
+						if (!local_map_contain(localMap, gToken.data.str)){
+							if (is_LF){
+								gData = global_map_get_value(gMap, function_name);
+								if (!local_map_contain(gData.lMap, gToken.data.str)){
+									instruction_exit(SEM_ERR);
+									return SEM_ERR;
+								}
+								else {
+									lData = local_map_get_value(gData.lMap, gToken.data.str);
+									if (lData.type != STRING){
+										instruction_exit(ERR_INCOMPATIBLE_TYPE);
+										return ERR_INCOMPATIBLE_TYPE;
+									}
+								}
+							}
+						}
+						else{
+								lData = local_map_get_value(localMap, gToken.data.str);
+								if (lData.type != STRING){
+									instruction_exit(ERR_INCOMPATIBLE_TYPE);
+									return ERR_INCOMPATIBLE_TYPE;
+								}
+						}
+					}
+				}
+	}
+	return SUCCESS;
+}
+
+
+int check_chr_build_in(){
+	if ((strcmp(call_name, "chr"))==0){
+				if (token != LEX_NUMBER){
+					if (token != LEX_ID){
+						instruction_exit(ERR_INCOMPATIBLE_TYPE);
+						return ERR_INCOMPATIBLE_TYPE;
+					}
+					else {
+						if (!local_map_contain(localMap, gToken.data.str)){
+							if (is_LF){
+								gData = global_map_get_value(gMap, function_name);
+								if (!local_map_contain(gData.lMap, gToken.data.str)){
+									instruction_exit(SEM_ERR);
+									return SEM_ERR;
+								}
+								else {
+									lData = local_map_get_value(gData.lMap, gToken.data.str);
+									if (lData.type != INTEGER){
+										instruction_exit(ERR_INCOMPATIBLE_TYPE);
+										return ERR_INCOMPATIBLE_TYPE;
+									}
+									else {
+										int i = atoi(gToken.data.str);
+										if (i >= 299){
+											instruction_exit(ERR_SEMANTIC);
+											return ERR_SEMANTIC;
+										}
+									}
+								}
+							}
+						}
+						else{
+								lData = local_map_get_value(localMap, gToken.data.str);
+								if (lData.type != INTEGER){
+									instruction_exit(ERR_INCOMPATIBLE_TYPE);
+									return ERR_INCOMPATIBLE_TYPE;
+								}
+								else {
+										int i = atoi(gToken.data.str);
+										if (i >= 299){
+											instruction_exit(ERR_SEMANTIC);
+											return ERR_SEMANTIC;
+										}
+								}
+						}
+					}
+				} else {
+					int i = atoi(gToken.data.str);
+					if (i >= 299){
+						instruction_exit(ERR_SEMANTIC);
+						return ERR_SEMANTIC;
+					}
+				}
+	}
+	return SUCCESS;
+}
+
+
+int check_substr_ord_build_in(int param){
+	switch(param){
+		case 1:
+		case 2:
+			if (param == 2 &&  ( (strcmp(call_name, "ord")) == 0 ) ){
+				instruction_exit(ERR_PARAMS_COUNT);
+				return ERR_PARAMS_COUNT;
+			}
+			else{
+				if (  ( (strcmp(call_name, "substr")) == 0 ) ||  ( (strcmp(call_name, "ord")) == 0 ) ) {
+					if (token != LEX_NUMBER){
+						if (token != LEX_ID){
+							instruction_exit(ERR_INCOMPATIBLE_TYPE);
+							return ERR_INCOMPATIBLE_TYPE;
+						}
+						else {
+							if (!local_map_contain(localMap, gToken.data.str)){
+								if (is_LF){
+									gData = global_map_get_value(gMap, function_name);
+									if (!local_map_contain(gData.lMap, gToken.data.str)){
+										instruction_exit(SEM_ERR);
+										return SEM_ERR;
+									}
+									else {
+										lData = local_map_get_value(gData.lMap, gToken.data.str);
+										if (lData.type != INTEGER){
+											instruction_exit(ERR_INCOMPATIBLE_TYPE);
+											return ERR_INCOMPATIBLE_TYPE;
+										}
+									}
+								}
+							}
+							else{
+									lData = local_map_get_value(localMap, gToken.data.str);
+									if (lData.type != INTEGER){
+										instruction_exit(ERR_INCOMPATIBLE_TYPE);
+										return ERR_INCOMPATIBLE_TYPE;
+									}
+							}
+						}
+					}
+				}
+			}
+		break;
+
+		case 3:
+			instruction_exit(ERR_PARAMS_COUNT);
+			return ERR_PARAMS_COUNT;
+		break;
+	}
+	return SUCCESS;
 }
 
 int term_list2(bool zavorka){
@@ -217,6 +394,7 @@ int term_list2(bool zavorka){
 		case LEX_COMMA:
 			token = getToken();
 			if(!error_lex()){
+				instruction_exit(ERROR_LEX);
 				return ERROR_LEX;
 			} else if (!error_int()){
 				instruction_exit(INT_ERR);
@@ -233,12 +411,14 @@ int term_list2(bool zavorka){
 
 			//nacteno z param()
 			return term_list2(zavorka);
+
 		break;
 
 		case LEX_R_BRACKET:
 			if (zavorka){return SUCCESS;}
 			else { //fprintf(stderr, "Syntakticka chyba, neocekavana ')' na radku %d\n", gToken.row);  instruction_exit(SYN_ERR);
-			 return SYN_ERR;}
+			instruction_exit(SYN_ERR);
+			return SYN_ERR;}
 			
 		break;
 
@@ -246,14 +426,15 @@ int term_list2(bool zavorka){
 		case LEX_EOF:
 			if (!zavorka){return SUCCESS;}
 			else{ //fprintf(stderr, "Syntakticka chyba, ocekavana ')' na radku %d\n", gToken.row); instruction_exit(SYN_ERR);
+			instruction_exit(SYN_ERR);
 			return SYN_ERR; }
 		break;
 
 		default:
-			//cokoliv jineho = chyba
-			//fprintf(stderr, "Ocekavano ',' 'identifikator' 'konstanta' ')' na radku %d \n", gToken.row);
-			instruction_exit(SYN_ERR);
-			return SYN_ERR;
+				//cokoliv jineho = chyba
+				//fprintf(stderr, "Ocekavano ',' 'identifikator' 'konstanta' ')' na radku %d \n", gToken.row);
+				instruction_exit(SYN_ERR);
+				return SYN_ERR;
 	}
 }
 
@@ -270,15 +451,19 @@ int term_list(bool zavorka){
 			// if LEX_ID -> zkontrolovat zda je promenna definovana
 			// pokud je to LEX_ID, LEX_NUMBER, LEX_REAL, LEX_STRING , podle typu vytvorit vnitrni promennou s hodnotou argumentu
 
+
+			if ( (result = check_length_substr_ord_build_in()) != SUCCESS) return result;
+			if ( (result = check_chr_build_in()) != SUCCESS) return result;
+
 			instr_type = INSTRUCT_DEFVAR;
 			instr1.type = TF;
-			instr1.value.s = generate_param("$_param", argCount);
+			instr1.value.s = generate_param("%", argCount);
 
 
 			insert_item(ilist, &instr_type, &instr1, &instr2, &instr3);
 			instr_type = INSTRUCT_MOVE;
 			instr1.type = TF;
-			instr1.value.s = generate_param("$_param", argCount);
+			instr1.value.s = generate_param("%", argCount);
 
 
 			if (token == LEX_NUMBER){
@@ -298,10 +483,17 @@ int term_list(bool zavorka){
 				insert_item(ilist, &instr_type, &instr1, &instr2, &instr3);
 			}
 			else if (token == LEX_ID){
-				if ((local_map_get_pointer_to_key(localMap, gToken.data.str)) == NULL){
+				if (!local_map_contain(localMap, gToken.data.str)){
 					//fprintf(stderr, "Semanticka chyba, promenna %s neni definovana, radek %d\n", gToken.data.str, gToken.row);
 					instruction_exit(SEM_ERR);
 					return SEM_ERR;
+				}
+				else if (is_LF){
+					gData = global_map_get_value(gMap, function_name);
+					if (!local_map_contain(gData.lMap, gToken.data.str)){
+						instruction_exit(SEM_ERR);
+						return SEM_ERR;
+					}
 				}
 				else {
 					instr2.type = GF; //string
@@ -340,6 +532,7 @@ int term_list(bool zavorka){
 		case LEX_EOF:
 			if (!zavorka){return SUCCESS;}
 			else{ //fprintf(stderr, "Syntakticka chyba, ocekavana ')' na radlu %d\n", gToken.row);  instruction_exit(SYN_ERR);
+
 			instruction_exit(SYN_ERR);
 			return SYN_ERR; }
 		break;
@@ -379,12 +572,63 @@ int move_value(expr_return res){
 		local_map_put(localMap, variable_name, lData);
 	}
 
-	if (is_LF) { instr1.type = LF; } else {instr1.type = GF;}
+	instr1.type = LF;
 	instr2.type = GF;
 	instr1.value.s = variable_name;
 	instr2.value.s = "$result";
 	insert_item(ilist, &instr_type, &instr1, &instr2, &instr3);
 	return SUCCESS;
+}
+
+int check_input(){
+	if ( (strcmp(call_name, "inputi") == 0 ) ){
+
+		// TODO
+		if (local_map_contain(localMap, variable_name)) {
+			instr1.type = LF;}
+		else {
+			instr1.type = LF;
+		}
+
+		lData.type = INTEGER;
+		local_map_put(localMap, variable_name, lData);
+	 
+	 	instr1.value.s = variable_name;
+		instr_type = INSTRUCT_INPUT_I;
+		insert_item(ilist, &instr_type, &instr1, &instr2, &instr3);
+
+		// prirazeni typu promenne
+	}
+	else if ( (strcmp(call_name, "inputf") == 0 ) ) {
+
+		// TODO
+		if (local_map_contain(localMap, variable_name)) { instr1.type = LF;}
+		else {instr1.type = LF;}
+
+		lData.type = FLOAT;
+		local_map_put(localMap, variable_name, lData);
+
+		instr1.value.s = variable_name;
+		instr_type = INSTRUCT_INPUT_F;
+		insert_item(ilist, &instr_type, &instr1, &instr2, &instr3);
+	}
+	else if ( (strcmp(call_name, "inputs") == 0 ) ) {
+		// TODO
+		if (local_map_contain(localMap, variable_name)) { instr1.type = LF;}
+		else {instr1.type = LF;}
+
+		lData.type = STRING;
+		local_map_put(localMap, variable_name, lData);
+
+		instr1.value.s = variable_name;
+		instr_type = INSTRUCT_INPUT_S;
+		insert_item(ilist, &instr_type, &instr1, &instr2, &instr3);
+	}
+	else {
+		return 0;
+	}
+
+	return 1;
 }
 
 int sth(){
@@ -419,7 +663,7 @@ int sth(){
 						instr_type = INSTRUCT_MOVE;
 						instr1.type = GF;
 						instr1.value.s = "$result\0";
-						if (is_LF){ instr2.type = LF; } else {instr2.type = GF;}
+						instr2.type = LF;
 						instr2.value.s = gToken.data.str;
 						insert_item(ilist, &instr_type, &instr1, &instr2, &instr3);
 
@@ -428,10 +672,10 @@ int sth(){
 						res = parse_expr(localMap, ilist, false);
 						result = res.result;
 
-						// if (res.bool_result){
-						// 	instruction_exit(ERR_SEMANTIC);
-						// 	return ERR_SEMANTIC;
-						// }
+						if (res.bool_result){
+							instruction_exit(ERR_SEMANTIC);
+							return ERR_SEMANTIC;
+						}
 
 						if (result == SUCCESS){
 							move_value(res);
@@ -455,9 +699,7 @@ int sth(){
 				}
 				else{
 						// je funkce					
-						//is_LF = true;
-
-						function_name = gToken.data.str;
+						call_name = gToken.data.str;
 
         	    		token = getToken();
 						if(!error_lex()){
@@ -468,36 +710,48 @@ int sth(){
 							return INT_ERR;
 						}
 
-						if ( (token == LEX_EOL || token == LEX_EOF) && tmp->paramCount == 0 ){
+						if ( (token == LEX_EOL || token == LEX_EOF) && tmp->paramCount == 0  ){
 							// pro dalsi volani funkce
 							argCount = 0;
 
-							instr_type = INSTRUCT_PUSHFRAME;
-							instr1.type = EMPTY;
-							insert_item(ilist, &instr_type, &instr1, &instr2, &instr3);
+							result = check_input();
+							if (!result) {
+								// instr_type = INSTRUCT_PUSHFRAME;
+								// instr1.type = EMPTY;
+								// insert_item(ilist, &instr_type, &instr1, &instr2, &instr3);
 
-							// instrukce pro volani funkce
+								// instrukce pro volani funkce
 
-							instr_type = INSTRUCT_CALL;
-							instr1.type = FCE;
-							instr1.value.s = function_name;
+								instr_type = INSTRUCT_CALL;
+								instr1.type = FCE;
+								instr1.value.s = call_name;
 
-							insert_item(ilist, &instr_type, &instr1, &instr2, &instr3);
+								insert_item(ilist, &instr_type, &instr1, &instr2, &instr3);
 
-							// POPFRAME
+								instr_type = INSTRUCT_MOVE;
+								instr1.type = GF;
+								instr1.value.s = variable_name;
+								instr2.type = TF;
+								instr2.value.s = "%retval";
+								insert_item(ilist, &instr_type, &instr1, &instr2, &instr3);
 
-							instr_type = INSTRUCT_POPFRAME;
-							insert_item(ilist, &instr_type, &instr1, &instr2, &instr3);
-							token = getToken();
-							if(!error_lex()){
-								instruction_exit(ERROR_LEX);
-								return ERROR_LEX;
-							} else if (!error_int()){
-								instruction_exit(INT_ERR);
-								return INT_ERR;
+
+								// dynamick prirazeni promenne typu navratove hodnoty
+								gData = global_map_get_value(gMap, call_name);
+								lData.type = gData.returnType;
+								local_map_put(localMap, variable_name, lData);
+
+								// TODO
+
+
+								// POPFRAME
+
+								// instr_type = INSTRUCT_POPFRAME;
+								// insert_item(ilist, &instr_type, &instr1, &instr2, &instr3);
 							}
 
-							// is_LF = false; // refresh promenne
+
+							return SUCCESS;
 						}
 						else {
 							switch(token){
@@ -535,24 +789,37 @@ int sth(){
 									// pro dalsi volani funkce
 									argCount = 0;
 
-									instr_type = INSTRUCT_PUSHFRAME;
-									instr1.type = EMPTY;
-									insert_item(ilist, &instr_type, &instr1, &instr2, &instr3);
+									result = check_input();
+									if (!result){
+											// instr_type = INSTRUCT_PUSHFRAME;
+											// instr1.type = EMPTY;
+											// insert_item(ilist, &instr_type, &instr1, &instr2, &instr3);
 
-									// instrukce pro volani funkce
+											// instrukce pro volani funkce
 
-									instr_type = INSTRUCT_CALL;
-									instr1.type = FCE;
-									instr1.value.s = function_name;
+											instr_type = INSTRUCT_CALL;
+											instr1.type = FCE;
+											instr1.value.s = call_name;
 
-									insert_item(ilist, &instr_type, &instr1, &instr2, &instr3);
+											insert_item(ilist, &instr_type, &instr1, &instr2, &instr3);
 
-									// POPFRAME
+											gData = global_map_get_value(gMap, call_name);
+											lData.type = gData.returnType;
+											local_map_put(localMap, variable_name, lData);
 
-									instr_type = INSTRUCT_POPFRAME;
-									insert_item(ilist, &instr_type, &instr1, &instr2, &instr3);
+											instr_type = INSTRUCT_MOVE;
+											instr1.type = GF;
+											instr1.value.s = variable_name;
+											instr2.type = TF;
+											instr2.value.s = "%retval";
+											insert_item(ilist, &instr_type, &instr1, &instr2, &instr3);
 
 
+											// POPFRAME
+
+											// instr_type = INSTRUCT_POPFRAME;
+											// insert_item(ilist, &instr_type, &instr1, &instr2, &instr3);
+									}
 									token = getToken();
 									if(!error_lex()){
 										instruction_exit(ERROR_LEX);
@@ -561,8 +828,6 @@ int sth(){
 										instruction_exit(INT_ERR);
 										return INT_ERR;
 									}
-
-									// is_LF = false; // refresh promenne
 
 									return SUCCESS;
 
@@ -590,26 +855,34 @@ int sth(){
 									argCount = 0;
 
 
-									instr_type = INSTRUCT_PUSHFRAME;
-									instr1.type = EMPTY;
-									insert_item(ilist, &instr_type, &instr1, &instr2, &instr3);
+									// instr_type = INSTRUCT_PUSHFRAME;
+									// instr1.type = EMPTY;
+									// insert_item(ilist, &instr_type, &instr1, &instr2, &instr3);
 
 									// instrukce pro volani funkce
 
 									instr_type = INSTRUCT_CALL;
 									instr1.type = FCE;
-									instr1.value.s = function_name;
+									instr1.value.s = call_name;
 
 									insert_item(ilist, &instr_type, &instr1, &instr2, &instr3);
+
+									gData = global_map_get_value(gMap, call_name);
+									lData.type = gData.returnType;
+									local_map_put(localMap, variable_name, lData);
+
+									instr_type = INSTRUCT_MOVE;
+									instr1.type = GF;
+									instr1.value.s = variable_name;
+									instr2.type = TF;
+									instr2.value.s = "%retval";
+									insert_item(ilist, &instr_type, &instr1, &instr2, &instr3);
+
 
 									// POPFRAME
 
-									instr_type = INSTRUCT_POPFRAME;
-									insert_item(ilist, &instr_type, &instr1, &instr2, &instr3);
-
-									// is_LF = false; // refresh promenne
-
-									return SUCCESS;
+									// instr_type = INSTRUCT_POPFRAME;
+									// insert_item(ilist, &instr_type, &instr1, &instr2, &instr3);
 
 
 									return SUCCESS;
@@ -636,6 +909,7 @@ int sth(){
 		//pokud neni token LEX_ID_F, prozenem to precedencni SA
 		default:
 
+
 			instr_type = INSTRUCT_MOVE;
 			if (token == LEX_NUMBER){
 				instr2.type = I;
@@ -650,7 +924,7 @@ int sth(){
 				instr2.value.s = gToken.data.str;
 			}
 			else if (token == LEX_ID){
-				if (is_LF){instr2.type = LF;} else {instr2.type = GF;}
+				instr2.type = LF;
 				instr2.value.s = gToken.data.str;
 			}
 
@@ -663,16 +937,15 @@ int sth(){
 			res = parse_expr(localMap, ilist, false);
 			result = res.result;
 
-			// if (res.bool_result){
-			// 	instructiot_exit(ERR_SEMANTIC);
-			// 	exit(ERR_SEMANTIC);
-			// }
+			if (res.bool_result){
+				instruction_exit(ERR_SEMANTIC);
+				return ERR_SEMANTIC;
+			}
 
 
 			if (res.data_type == FUNCTION){
 				// volani funkce 
 						tmp = global_map_get_pointer_to_value(gMap, gToken.data.str);
-						// is_LF = true;
 
         	    		token = getToken();
 						if(!error_lex()){
@@ -746,22 +1019,22 @@ int sth(){
 						argCount = 0;
 
 
-						instr_type = INSTRUCT_PUSHFRAME;
-						instr1.type = EMPTY;
-						insert_item(ilist, &instr_type, &instr1, &instr2, &instr3);
+						// instr_type = INSTRUCT_PUSHFRAME;
+						// instr1.type = EMPTY;
+						// insert_item(ilist, &instr_type, &instr1, &instr2, &instr3);
 
 						// instrukce pro volani funkce
 
 						instr_type = INSTRUCT_CALL;
 						instr1.type = FCE;
-						instr1.value.s = function_name;
+						instr1.value.s = call_name;
 
 						insert_item(ilist, &instr_type, &instr1, &instr2, &instr3);
 
 						// POPFRAME
 
-						instr_type = INSTRUCT_POPFRAME;
-						insert_item(ilist, &instr_type, &instr1, &instr2, &instr3);
+						// instr_type = INSTRUCT_POPFRAME;
+						// insert_item(ilist, &instr_type, &instr1, &instr2, &instr3);
 
 
 						token = getToken();
@@ -787,7 +1060,7 @@ int sth(){
 							return sth();
 						}
 
-						is_LF = false; // refresh promenne
+						is_LF = false;
 
 			}
 
@@ -844,7 +1117,7 @@ int stat(){
 
 			if (is_LF){
 				gData = global_map_get_value(gMap, function_name);
-				if (!local_map_contain(gData.lMap, variable_name)){
+				if (!local_map_contain(gData.lMap, variable_name) && !(local_map_contain(localMap, variable_name))){
 					lData.defined = 1;
 					lData.value.nil = true;
 					lData.type = 500;
@@ -852,15 +1125,11 @@ int stat(){
 					local_map_put(gData.lMap, variable_name, lData);
 
 					instr_type = INSTRUCT_DEFVAR;
-					if (is_LF) {instr1.type = LF;}
-					else{
-						instr1.type = GF;
-					}
+					instr1.type = LF;
 
 					instr1.value.s = variable_name; // nazev promenne
 					if (in_while) insert_item(variables_list, &instr_type, &instr1, &instr2, &instr3);
 					else {insert_item(ilist, &instr_type, &instr1, &instr2, &instr3);}
-
 				}
 			}
 			else {
@@ -872,24 +1141,20 @@ int stat(){
 
 
 					// nazev promenne ziskame z list pro tokeny pomoci funkce DLCOPYFISRT
-					local_map_put(localMap, DLCopyFirst(&tlist), lData);
+					local_map_put(localMap, variable_name, lData);
 		
 
 					// generovani instrukce pro definice promenne s typem nil a hodnotou nil
 					instr_type = INSTRUCT_DEFVAR;
-					if (is_LF) {instr1.type = LF;}
-					else{
-						instr1.type = GF;
-					}
+					instr1.type = LF;
 
-					instr1.value.s = DLCopyFirst(&tlist); // nazev promenne
+					instr1.value.s = variable_name; // nazev promenne
 					if (in_while) insert_item(variables_list, &instr_type, &instr1, &instr2, &instr3);
 					else {insert_item(ilist, &instr_type, &instr1, &instr2, &instr3);}
 				
 				}
 			}
 			// jinak promenna je v lokalni mape, nebudeme ukladat promennou s typem none
-
 			
 			// nacteni dalsiho tokenu , musi byt  bud' identifikator nebo vyraz nebo funkce
 			token = getToken();
@@ -900,6 +1165,7 @@ int stat(){
 				instruction_exit(INT_ERR);
 				return INT_ERR;
 			}
+
 
 			// volani pravidla sth()
 			result = sth(localMap);
@@ -912,7 +1178,6 @@ int stat(){
 		break;
 
 		case KW_PRINT:
-
 			argCount = 0;
 
 			token = getToken();
@@ -954,6 +1219,12 @@ int stat(){
 						return INT_ERR;
 					}
 
+					if (argCount == 0){
+						instruction_exit(ERR_PARAMS_COUNT);
+						return ERR_PARAMS_COUNT;
+					}
+
+
 					instr1.type = I;
 					instr1.value.i = argCount;
 
@@ -974,6 +1245,11 @@ int stat(){
 						return result;
 					}
 
+					if (argCount == 0){
+						instruction_exit(ERR_PARAMS_COUNT);
+						return ERR_PARAMS_COUNT;
+					}
+
 					instr1.type = I;
 					instr1.value.i = argCount;
 
@@ -984,9 +1260,10 @@ int stat(){
 
 				default:
 					//fprintf(stderr, "Syntakticka chyba, ocekavano '(',terminal na radku %d\n", gToken.row );
-					instruction_exit(SYN_ERR);
-					return SYN_ERR;
+					instruction_exit(ERR_PARAMS_COUNT);
+					return ERR_PARAMS_COUNT;
 			}
+
 
 		break;
 
@@ -1005,8 +1282,6 @@ int stat(){
 				ilist = while_list;
 			}
 
-
-
 			//nacteni a predani do vyrazove SA
 			token = getToken();
 			if(!error_lex()){
@@ -1020,10 +1295,28 @@ int stat(){
 			res = parse_expr(localMap, ilist, true);
 			result = res.result;
 
-			// if (!res.bool_result){
-			// 	instruction_exit(ERR_SEMANTIC);
-			// 	return ERR_SEMANTIC;
-			// }
+			if (!res.bool_result){
+				ilist = tmp_list;
+
+				reverse(&(variables_list->first));
+      			set_active(variables_list);
+
+      			append_list(ilist, variables_list);
+
+				reverse(&(while_list->first));
+      			set_active(while_list);
+
+				append_list(ilist, while_list);
+				
+				if (result != SUCCESS){
+					instruction_exit(result);
+					return result;
+				}
+				else {
+					instruction_exit(ERR_SEMANTIC);
+					return ERR_SEMANTIC;
+				}
+			}
 
 			if(result != SUCCESS){
 				instruction_exit(result);
@@ -1196,10 +1489,28 @@ int stat(){
 			res = parse_expr(localMap, ilist, true);
 			result = res.result;
 
-			// if (!res.bool_result){
-			// 	instruction_exit(ERR_SEMANTIC);
-			// 	return ERR_SEMANTIC;
-			// }
+			if (!res.bool_result){
+				ilist = tmp_list;
+
+				reverse(&(variables_list->first));
+      			set_active(variables_list);
+
+      			append_list(ilist, variables_list);
+
+				reverse(&(while_list->first));
+      			set_active(while_list);
+
+				append_list(ilist, while_list);
+				
+				if (result != SUCCESS){
+					instruction_exit(result);
+					return result;
+				}
+				else {
+					instruction_exit(ERR_SEMANTIC);
+					return ERR_SEMANTIC;
+				}
+			}
 
 			instr_type = INSTRUCT_WHILE_STATS;
 			insert_item(ilist, &instr_type, &instr1, &instr2, &instr3);
@@ -1295,7 +1606,6 @@ int stat(){
 			return result;
 		break;
 
-
 		default:
 			//fprintf(stderr, "Ocekavano 'while' 'id' 'if' na radku %d \n", gToken.row); // dopsat
 			instruction_exit(SYN_ERR);
@@ -1323,13 +1633,13 @@ int st_list(){
 				return result;
 			}
 
-
 			// token nacteny z stat() muze byt dalsi statment nebo LEX_EOL/LEX_EOF
 
 			if(checkTokenType(LEX_EOF)){
 				return SUCCESS;
 			}
 			else{
+
 				token = getToken();
 			
 				if(!error_lex()){
@@ -1382,6 +1692,23 @@ int st_list(){
 
       break;
 
+
+      // ignoring EOL....
+
+      case LEX_EOL:
+      		token = getToken();
+      		if(!error_lex()){
+				instruction_exit(ERROR_LEX);
+				return ERROR_LEX;
+			} else if (!error_int()){
+				instruction_exit(INT_ERR);
+				return INT_ERR;
+			}
+
+		
+			return st_list();
+      	break;
+
 	}
 
 	return result;
@@ -1414,8 +1741,21 @@ int pm_list2(){
 				lData.defined = 1;
 				lData.value.nil = true;
 				lData.type = 500; // typ nil - NONE
-				local_map_put(localMap, gToken.data.str, lData);
+				gData = global_map_get_value(gMap, function_name);
+				local_map_put(gData.lMap, gToken.data.str, lData);
 			}
+
+			instr_type = INSTRUCT_DEFVAR;
+			instr1.type = LF;
+			instr1.value.s = generate_param("$param", paramCount);
+			insert_item(ilist,&instr_type, &instr1, &instr2, &instr3 );
+
+			instr_type = INSTRUCT_MOVE;
+			instr1.type = LF;
+			instr1.value.s = generate_param("$param", paramCount);
+			instr2.type = LF;
+			instr2.value.s = generate_param("%", argCount);
+			insert_item(ilist,&instr_type, &instr1, &instr2, &instr3 );
 
 			// + jeden parametr
 			paramCount++;
@@ -1467,12 +1807,24 @@ int pm_list(){
 			lData.defined = 1;
 			lData.value.nil = true;
 			lData.type = 500; // typ nil - NONE
-			local_map_put(localMap, gToken.data.str, lData);
+			gData = global_map_get_value(gMap, function_name);
+			local_map_put(gData.lMap, gToken.data.str, lData);
 		}
 
-		paramCount++;
 
-		lData = local_map_get_value(localMap, gToken.data.str);
+		instr_type = INSTRUCT_DEFVAR;
+		instr1.type = LF;
+		instr1.value.s = generate_param("$param", paramCount);
+		insert_item(ilist,&instr_type, &instr1, &instr2, &instr3 );
+
+		instr_type = INSTRUCT_MOVE;
+		instr1.type = LF;
+		instr1.value.s = generate_param("$param", paramCount);
+		instr2.type = LF;
+		instr2.value.s = generate_param("%", argCount);
+		insert_item(ilist,&instr_type, &instr1, &instr2, &instr3 );
+
+		paramCount++;
 
 		token = getToken();
 
@@ -1544,6 +1896,10 @@ int func(){
 
 	insert_item(ilist, &instr_type, &instr1, &instr2, &instr3);
 
+	instr_type = INSTRUCT_PUSHFRAME;
+	instr1.type = EMPTY;
+	insert_item(ilist, &instr_type, &instr1, &instr2, &instr3);
+
 	function_name = gToken.data.str;
 	//printf("Function name is %s\n", function_name);
 
@@ -1556,8 +1912,8 @@ int func(){
 	instr_type = INSTRUCT_MOVE;
 	instr1.type = LF;
 	instr1.value.s = "%retval";
-	instr2.type = F;
-	instr2.value.f = 0.0;
+	instr2.type = N;
+	instr2.value.s = "nil";
 
 	insert_item(ilist, &instr_type, &instr1, &instr2, &instr3);
 
@@ -1669,12 +2025,24 @@ int func(){
 
 	// konec funkce
 
-	instr_type = INSTRUCT_LABEL;
-	instr1.type = EMPTY;
+	// instr_type = INSTRUCT_LABEL;
+	// instr1.type = EMPTY;
 
-	// vymyslet nejakou promennou pro ukonceni funkce, treba $foo$end
-	instr1.value.s = "$end";
+	// // vymyslet nejakou promennou pro ukonceni funkce, treba $foo$end
+	// instr1.value.s = "$end";
+	// insert_item(ilist, &instr_type, &instr1, &instr2, &instr3);
+
+	instr_type = INSTRUCT_MOVE;
+	instr1.type = LF;
+	instr1.value.s = "%retval";
+	instr2.type = F;
+	instr2.value.f = 0.0;
+
 	insert_item(ilist, &instr_type, &instr1, &instr2, &instr3);
+
+	instr_type = INSTRUCT_POPFRAME;
+	insert_item(ilist, &instr_type, &instr1, &instr2, &instr3);
+
 
 	// return retval of function
 	instr_type = INSTRUCT_RETURN;
@@ -1814,6 +2182,7 @@ int parse(GlobalMap* globalMap, tList *list) {
 
 	function_name = (char *) malloc( sizeof(char));
 	variable_name = (char *) malloc( sizeof(char));
+	call_name = (char *)malloc(sizeof(char));
 
 
 	if(initToken() == INT_ERR){
@@ -1846,6 +2215,9 @@ int parse(GlobalMap* globalMap, tList *list) {
 		insert_item(ilist, &instr_type, &instr1, &instr2, &instr3);
 		// vytvoreni docasneho ramce pro funkce
 		instr_type =  INSTRUCT_CREATEFREAME;
+		insert_item(ilist, &instr_type, &instr1, &instr2, &instr3);
+
+		instr_type =  INSTRUCT_PUSHFRAME;
 		insert_item(ilist, &instr_type, &instr1, &instr2, &instr3);
 		// instr_type = INSTRUCT_LENGTH;
 		// insert_item(ilist, &instr_type, &instr1, &instr2, &instr3);

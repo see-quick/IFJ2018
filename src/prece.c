@@ -139,7 +139,7 @@ bool move(tList *list, bool is_bool){
                 instr2.value.s = gToken.data.str;
             }
             else if (token == LEX_ID){
-                if (is_LF){instr2.type = LF;} else {instr2.type = GF;}
+                instr2.type = LF;
                 instr2.value.s = gToken.data.str;
             }
 
@@ -208,6 +208,7 @@ expr_return parse_expr(LocalMap* lMap, tList* list, bool is_bool){
     if(DEBUG)stack_print_prece(stack);
     if(DEBUG)stack_print(stack);
     setEmptyDataIDF(dataIDF);                   // nastavenie default hodnot
+
     do{
         stack->finderOfParenthesis = stack->top; // vyrovnanie top so finderom
         //v pripade ze je na vrchole zasobniku non terminal E pozerame sa o 1 miesto nizsie
@@ -223,7 +224,7 @@ expr_return parse_expr(LocalMap* lMap, tList* list, bool is_bool){
         // akonahle sa vo fucnkii indexerOfPreceTable nenajde ziadny znak tak vyhadzujem syntaticku chybu
         if(actTokenIndexToPreceTable == eSYNTERROR) {
             resultOfPrece.result = SYN_ERR;
-            instruction_exit(SYN_ERR);
+            //instruction_exit(SYN_ERR);
             return resultOfPrece;
         }
         // SEMANTICKA AKCE
@@ -264,14 +265,6 @@ expr_return parse_expr(LocalMap* lMap, tList* list, bool is_bool){
                 return resultOfPrece;       // predavam riadenie parseru
                 // je to funckia
             }
-            else if (is_LF){
-                gData = global_map_get_value(gMap, function_name);
-                dataIDF = local_map_get_value(gData.lMap, gToken.data.str);
-                dataIDF.nameOfTheVariable = gToken.data.str;
-                dataIDF.isVariable = true;
-                resultOfPrece.uniqueID = &gToken.data;
-                is_bool = move(list, is_bool);
-            }
             // ak sa premenna nachadza v lokalnej mape tak
             else if(local_map_contain(lMap, gToken.data.str)){
                 dataIDF = local_map_get_value(lMap, gToken.data.str);
@@ -280,11 +273,25 @@ expr_return parse_expr(LocalMap* lMap, tList* list, bool is_bool){
                 resultOfPrece.uniqueID = &gToken.data;
                 is_bool = move(list, is_bool);
             }
+            else if (is_LF){
+                gData = global_map_get_value(gMap, function_name);
+                if (!local_map_contain(gData.lMap, gToken.data.str)){
+                    resultOfPrece.result = SEM_ERR;
+                    return resultOfPrece;
+                }
+                else {
+                    dataIDF = local_map_get_value(gData.lMap, gToken.data.str);
+                    dataIDF.nameOfTheVariable = gToken.data.str;
+                    dataIDF.isVariable = true;
+                    resultOfPrece.uniqueID = &gToken.data;
+                    is_bool = move(list, is_bool);
+                }
+            }
             else{
                 // premenna nebola najdena v localnej mape a tym padom sa jedna o semanticku chybu
                 //fprintf(stderr, "Promenna %s neni definovana, radek %d\n", gToken.data.str, gToken.row);
                 resultOfPrece.result = SEM_ERR;
-                instruction_exit(SEM_ERR);
+                //instruction_exit(SEM_ERR);
                 return resultOfPrece;
             }
             dataIDF.defined = true;
@@ -356,7 +363,7 @@ expr_return parse_expr(LocalMap* lMap, tList* list, bool is_bool){
                                      else{ isThirdVariable = false; }
                                      // v pripade ze sa je o prve spracovanie tak nechavame
                                      if (isThirdVariable == true ){
-                                         if (is_LF) { instr3.type = LF;} else {instr3.type = GF;}
+                                         instr3.type = LF;
                                          instr3.value.s = stack->arrayOfItems[stack->finderOfParenthesis + 3].nameOfTheVariable;
                                      }
                                      else{ instr3.type = S;
@@ -370,14 +377,14 @@ expr_return parse_expr(LocalMap* lMap, tList* list, bool is_bool){
                                  } else if ((stack->arrayOfItems[stack->finderOfParenthesis + 1].type == STRING) &&
                                             (stack->arrayOfItems[stack->finderOfParenthesis + 3].type != STRING)) {
                                     //fprintf(stderr, "Semanticka chyba typové kompatibility v aritmetických vyrazech, radek %d\n", gToken.row);
-                                     instruction_exit(ERR_INCOMPATIBLE_TYPE);
+                                     //instruction_exit(ERR_INCOMPATIBLE_TYPE);
                                     resultOfPrece.result = ERR_INCOMPATIBLE_TYPE;
                                     resultOfPrece.bool_result = false;
                                     return resultOfPrece;
                                  } else if ((stack->arrayOfItems[stack->finderOfParenthesis + 1].type != STRING) &&
                                             (stack->arrayOfItems[stack->finderOfParenthesis + 3].type == STRING)) {
                                     //fprintf(stderr, "Semanticka chyba typové kompatibility v aritmetických vyrazech, radek %d\n", gToken.row);
-                                    instruction_exit(ERR_INCOMPATIBLE_TYPE);
+                                    //instruction_exit(ERR_INCOMPATIBLE_TYPE);
                                     resultOfPrece.result = ERR_INCOMPATIBLE_TYPE;
                                     resultOfPrece.bool_result = false;
                                     return resultOfPrece;
@@ -389,7 +396,7 @@ expr_return parse_expr(LocalMap* lMap, tList* list, bool is_bool){
                                      else{ isThirdVariable = false; }
 
                                      if (isThirdVariable == true ){
-                                        if (is_LF) { instr3.type = LF;} else {instr3.type = GF;}
+                                        instr3.type = LF;
                                         instr3.value.s = stack->arrayOfItems[stack->finderOfParenthesis + 3].nameOfTheVariable;
                                      }
                                      else { instr3.type = I;
@@ -411,7 +418,7 @@ expr_return parse_expr(LocalMap* lMap, tList* list, bool is_bool){
                                      // v pripade ze sa je o prve spracovanie tak nechavame
 
                                      if (isFirstVariable){
-                                         if (is_LF) { instr2.type = LF;} else { instr2.type = GF;}
+                                         instr2.type = LF;
                                          instr2.value.s = stack->arrayOfItems[stack->finderOfParenthesis + 1].nameOfTheVariable;
                                      }
                                      else { instr2.type = I;
@@ -428,7 +435,7 @@ expr_return parse_expr(LocalMap* lMap, tList* list, bool is_bool){
                                      }
                                      else {
                                          if (isThirdVariable == true ){
-                                             if (is_LF) { instr3.type = LF;} else {instr3.type = GF;}
+                                             instr3.type = LF;
                                              instr3.value.s = stack->arrayOfItems[stack->finderOfParenthesis + 3].nameOfTheVariable;
                                          }
                                          else{ instr3.type = F;
@@ -456,7 +463,7 @@ expr_return parse_expr(LocalMap* lMap, tList* list, bool is_bool){
 
                                      // v pripade ze sa je o prve spracovanie tak nechavame
                                      if (isThirdVariable){
-                                         if (is_LF) { instr2.type = LF;} else { instr2.type = GF;}
+                                         instr2.type = LF;
                                          instr2.value.s = stack->arrayOfItems[stack->finderOfParenthesis + 3].nameOfTheVariable;
                                      }
                                      else { instr2.type = I;
@@ -472,7 +479,7 @@ expr_return parse_expr(LocalMap* lMap, tList* list, bool is_bool){
                                      }
                                      else {
                                          if (isFirstVariable == true ){
-                                             if (is_LF) { instr3.type = LF;} else {instr3.type = GF;}
+                                             instr3.type = LF;
                                              instr3.value.s = stack->arrayOfItems[stack->finderOfParenthesis + 1].nameOfTheVariable;
                                          }
                                          else{ instr3.type = F;
@@ -496,7 +503,7 @@ expr_return parse_expr(LocalMap* lMap, tList* list, bool is_bool){
                                      else{ isThirdVariable = false; }
                                      // v pripade ze sa je o prve spracovanie tak nechavame
                                      if (isThirdVariable == true ){
-                                         if (is_LF) { instr3.type = LF;} else {instr3.type = GF;}
+                                         instr3.type = LF;
                                          instr3.value.s = stack->arrayOfItems[stack->finderOfParenthesis + 3].nameOfTheVariable;
                                      }
                                      else{ instr3.type = F;
@@ -513,14 +520,14 @@ expr_return parse_expr(LocalMap* lMap, tList* list, bool is_bool){
                                     //fprintf(stderr, "Semanticka chyba typové kompatibility v aritmetických vyrazech, radek %d\n", gToken.row);
                                     resultOfPrece.result = ERR_INCOMPATIBLE_TYPE;
                                      resultOfPrece.bool_result = false;
-                                    instruction_exit(ERR_INCOMPATIBLE_TYPE);
+                                    //instruction_exit(ERR_INCOMPATIBLE_TYPE);
                                     return resultOfPrece;
                                  }
 
                              } else {
                                  resultOfPrece.result = SYN_ERR;
                                  resultOfPrece.bool_result = false;
-                                 instruction_exit(SYN_ERR);
+                                 //instruction_exit(SYN_ERR);
                                  return resultOfPrece;
                              }
                             resultOfPrece.bool_result = false;
@@ -537,7 +544,7 @@ expr_return parse_expr(LocalMap* lMap, tList* list, bool is_bool){
                                     //fprintf(stderr, "Semanticka chyba typové kompatibility v aritmetických vyrazech, radek %d\n", gToken.row);
                                     resultOfPrece.result = ERR_INCOMPATIBLE_TYPE;
                                     resultOfPrece.bool_result = false;
-                                    instruction_exit(ERR_INCOMPATIBLE_TYPE);
+                                    //instruction_exit(ERR_INCOMPATIBLE_TYPE);
                                     return resultOfPrece;
 
                                 } else if ((stack->arrayOfItems[stack->finderOfParenthesis + 1].type == INTEGER) &&
@@ -547,7 +554,7 @@ expr_return parse_expr(LocalMap* lMap, tList* list, bool is_bool){
                                     else{ isThirdVariable = false; }
 
                                     if (isThirdVariable == true ){
-                                        if (is_LF) { instr3.type = LF;} else {instr3.type = GF;}
+                                        instr3.type = LF;
                                         instr3.value.s = stack->arrayOfItems[stack->finderOfParenthesis + 3].nameOfTheVariable;
                                     }
                                     else { instr3.type = I;
@@ -569,7 +576,7 @@ expr_return parse_expr(LocalMap* lMap, tList* list, bool is_bool){
                                     // v pripade ze sa je o prve spracovanie tak nechavame
 
                                     if (isFirstVariable){
-                                        if (is_LF) { instr2.type = LF;} else { instr2.type = GF;}
+                                        instr2.type = LF;
                                         instr2.value.s = stack->arrayOfItems[stack->finderOfParenthesis + 1].nameOfTheVariable;
                                     }
                                     else { instr2.type = I;
@@ -586,7 +593,7 @@ expr_return parse_expr(LocalMap* lMap, tList* list, bool is_bool){
                                     }
                                     else {
                                         if (isThirdVariable == true ){
-                                            if (is_LF) { instr3.type = LF;} else {instr3.type = GF;}
+                                            instr3.type = LF;
                                             instr3.value.s = stack->arrayOfItems[stack->finderOfParenthesis + 3].nameOfTheVariable;
                                         }
                                         else{ instr3.type = F;
@@ -613,7 +620,7 @@ expr_return parse_expr(LocalMap* lMap, tList* list, bool is_bool){
 
                                     // v pripade ze sa je o prve spracovanie tak nechavame
                                     if (isThirdVariable){
-                                        if (is_LF) { instr2.type = LF;} else { instr2.type = GF;}
+                                        instr2.type = LF;
                                         instr2.value.s = stack->arrayOfItems[stack->finderOfParenthesis + 3].nameOfTheVariable;
                                     }
                                     else { instr2.type = I;
@@ -629,7 +636,7 @@ expr_return parse_expr(LocalMap* lMap, tList* list, bool is_bool){
                                     }
                                     else {
                                         if (isFirstVariable == true ){
-                                            if (is_LF) { instr3.type = LF;} else {instr3.type = GF;}
+                                            instr3.type = LF;
                                             instr3.value.s = stack->arrayOfItems[stack->finderOfParenthesis + 1].nameOfTheVariable;
                                         }
                                         else{ instr3.type = F;
@@ -652,7 +659,7 @@ expr_return parse_expr(LocalMap* lMap, tList* list, bool is_bool){
                                     else{ isThirdVariable = false; }
                                     // v pripade ze sa je o prve spracovanie tak nechavame
                                     if (isThirdVariable == true ){
-                                        if (is_LF) { instr3.type = LF;} else {instr3.type = GF;}
+                                        instr3.type = LF;
                                         instr3.value.s = stack->arrayOfItems[stack->finderOfParenthesis + 3].nameOfTheVariable;
                                     }
                                     else{ instr3.type = F;
@@ -667,13 +674,13 @@ expr_return parse_expr(LocalMap* lMap, tList* list, bool is_bool){
                                     //fprintf(stderr, "Semanticka chyba typové kompatibility v aritmetických vyrazech, radek %d\n", gToken.row);
                                     resultOfPrece.result = ERR_INCOMPATIBLE_TYPE;
                                     resultOfPrece.bool_result = false;
-                                    instruction_exit(ERR_INCOMPATIBLE_TYPE);
+                                    //instruction_exit(ERR_INCOMPATIBLE_TYPE);
                                     return resultOfPrece;
                                 }
                             } else {
                                 resultOfPrece.result = SYN_ERR;
                                 resultOfPrece.bool_result = false;
-                                instruction_exit(SYN_ERR);
+                                //instruction_exit(SYN_ERR);
                                 return resultOfPrece;
                             }
                             resultOfPrece.bool_result = false;
@@ -699,7 +706,7 @@ expr_return parse_expr(LocalMap* lMap, tList* list, bool is_bool){
                                     else{ isThirdVariable = false; }
 
                                     if (isThirdVariable == true ){
-                                        if (is_LF) { instr3.type = LF;} else {instr3.type = GF;}
+                                        instr3.type = LF;
                                         instr3.value.s = stack->arrayOfItems[stack->finderOfParenthesis + 3].nameOfTheVariable;
                                     }
                                     else { instr3.type = I;
@@ -721,7 +728,7 @@ expr_return parse_expr(LocalMap* lMap, tList* list, bool is_bool){
                                     // v pripade ze sa je o prve spracovanie tak nechavame
 
                                     if (isFirstVariable){
-                                        if (is_LF) { instr2.type = LF;} else { instr2.type = GF;}
+                                        instr2.type = LF;
                                         instr2.value.s = stack->arrayOfItems[stack->finderOfParenthesis + 1].nameOfTheVariable;
                                     }
                                     else { instr2.type = I;
@@ -738,7 +745,7 @@ expr_return parse_expr(LocalMap* lMap, tList* list, bool is_bool){
                                     }
                                     else {
                                         if (isThirdVariable == true ){
-                                            if (is_LF) { instr3.type = LF;} else {instr3.type = GF;}
+                                            instr3.type = LF;
                                             instr3.value.s = stack->arrayOfItems[stack->finderOfParenthesis + 3].nameOfTheVariable;
                                         }
                                         else{ instr3.type = F;
@@ -765,7 +772,7 @@ expr_return parse_expr(LocalMap* lMap, tList* list, bool is_bool){
 
                                     // v pripade ze sa je o prve spracovanie tak nechavame
                                     if (isThirdVariable){
-                                        if (is_LF) { instr2.type = LF;} else { instr2.type = GF;}
+                                        instr2.type = LF;
                                         instr2.value.s = stack->arrayOfItems[stack->finderOfParenthesis + 3].nameOfTheVariable;
                                     }
                                     else { instr2.type = I;
@@ -781,7 +788,7 @@ expr_return parse_expr(LocalMap* lMap, tList* list, bool is_bool){
                                     }
                                     else {
                                         if (isFirstVariable == true ){
-                                            if (is_LF) { instr3.type = LF;} else {instr3.type = GF;}
+                                            instr3.type = LF;
                                             instr3.value.s = stack->arrayOfItems[stack->finderOfParenthesis + 1].nameOfTheVariable;
                                         }
                                         else{ instr3.type = F;
@@ -805,7 +812,7 @@ expr_return parse_expr(LocalMap* lMap, tList* list, bool is_bool){
                                     else{ isThirdVariable = false; }
                                     // v pripade ze sa je o prve spracovanie tak nechavame
                                     if (isThirdVariable == true ){
-                                        if (is_LF) { instr3.type = LF;} else {instr3.type = GF;}
+                                        instr3.type = LF;
                                         instr3.value.s = stack->arrayOfItems[stack->finderOfParenthesis + 3].nameOfTheVariable;
                                     }
                                     else{ instr3.type = F;
@@ -820,14 +827,14 @@ expr_return parse_expr(LocalMap* lMap, tList* list, bool is_bool){
                                     //fprintf(stderr, "Semanticka chyba typové kompatibility v aritmetických vyrazech, radek %d\n", gToken.row);
                                     resultOfPrece.result = ERR_INCOMPATIBLE_TYPE;
                                     resultOfPrece.bool_result = false;
-                                    instruction_exit(ERR_INCOMPATIBLE_TYPE);
+                                    //instruction_exit(ERR_INCOMPATIBLE_TYPE);
                                     return resultOfPrece;
                                 }
 
                             } else {
                                 resultOfPrece.result = SYN_ERR;
                                 resultOfPrece.bool_result = false;
-                                instruction_exit(SYN_ERR);
+                                //instruction_exit(SYN_ERR);
                                 return resultOfPrece;
                             }
                             resultOfPrece.bool_result = false;
@@ -845,7 +852,7 @@ expr_return parse_expr(LocalMap* lMap, tList* list, bool is_bool){
                                     //fprintf(stderr, "Semanticka chyba typové kompatibility v aritmetických vyrazech, radek %d\n", gToken.row);
                                     resultOfPrece.result = ERR_INCOMPATIBLE_TYPE;
                                     resultOfPrece.bool_result = false;
-                                    instruction_exit(ERR_INCOMPATIBLE_TYPE);
+                                    //instruction_exit(ERR_INCOMPATIBLE_TYPE);
                                     return resultOfPrece;
 
                                 } else if ((stack->arrayOfItems[stack->finderOfParenthesis + 1].type == INTEGER) &&
@@ -854,7 +861,7 @@ expr_return parse_expr(LocalMap* lMap, tList* list, bool is_bool){
                                     else{ isThirdVariable = false; }
 
                                     if (isThirdVariable == true ){
-                                        if (is_LF) { instr3.type = LF;} else {instr3.type = GF;}
+                                        instr3.type = LF;
                                         instr3.value.s = stack->arrayOfItems[stack->finderOfParenthesis + 3].nameOfTheVariable;
                                     }
                                     else { instr3.type = I;
@@ -866,7 +873,7 @@ expr_return parse_expr(LocalMap* lMap, tList* list, bool is_bool){
                                         //fprintf(stderr, "Deleni nulou, radek cislo %d\n",gToken.row);
                                         resultOfPrece.result = ERR_DIVISION;
                                         resultOfPrece.bool_result = false;
-                                        instruction_exit(ERR_DIVISION);
+                                        //instruction_exit(ERR_DIVISION);
                                         return resultOfPrece;
                                     }
                                     else{
@@ -885,7 +892,7 @@ expr_return parse_expr(LocalMap* lMap, tList* list, bool is_bool){
                                     // v pripade ze sa je o prve spracovanie tak nechavame
 
                                     if (isFirstVariable){
-                                        if (is_LF) { instr2.type = LF;} else { instr2.type = GF;}
+                                        instr2.type = LF;
                                         instr2.value.s = stack->arrayOfItems[stack->finderOfParenthesis + 1].nameOfTheVariable;
                                     }
                                     else { instr2.type = I;
@@ -902,7 +909,7 @@ expr_return parse_expr(LocalMap* lMap, tList* list, bool is_bool){
                                     }
                                     else {
                                         if (isThirdVariable == true ){
-                                            if (is_LF) { instr3.type = LF;} else {instr3.type = GF;}
+                                            instr3.type = LF;
                                             instr3.value.s = stack->arrayOfItems[stack->finderOfParenthesis + 3].nameOfTheVariable;
                                         }
                                         else{ instr3.type = F;
@@ -911,7 +918,7 @@ expr_return parse_expr(LocalMap* lMap, tList* list, bool is_bool){
                                                 //fprintf(stderr, "Deleni nulou, radek cislo %d\n",gToken.row);
                                                 resultOfPrece.result = ERR_DIVISION;
                                                 resultOfPrece.bool_result = false;
-                                                instruction_exit(ERR_DIVISION);
+                                                //instruction_exit(ERR_DIVISION);
                                                 return resultOfPrece;
                                             }
                                         }
@@ -936,7 +943,7 @@ expr_return parse_expr(LocalMap* lMap, tList* list, bool is_bool){
 
                                     // v pripade ze sa je o prve spracovanie tak nechavame
                                     if (isThirdVariable){
-                                        if (is_LF) { instr2.type = LF;} else { instr2.type = GF;}
+                                        instr2.type = LF;
                                         instr2.value.s = stack->arrayOfItems[stack->finderOfParenthesis + 3].nameOfTheVariable;
                                     }
                                     else { instr2.type = I;
@@ -945,7 +952,7 @@ expr_return parse_expr(LocalMap* lMap, tList* list, bool is_bool){
                                             //fprintf(stderr, "Deleni nulou, radek cislo %d\n",gToken.row);
                                             resultOfPrece.result = ERR_DIVISION;
                                             resultOfPrece.bool_result = false;
-                                            instruction_exit(ERR_DIVISION);
+                                            //instruction_exit(ERR_DIVISION);
                                             return resultOfPrece;
                                         }
                                     }
@@ -959,7 +966,7 @@ expr_return parse_expr(LocalMap* lMap, tList* list, bool is_bool){
                                     }
                                     else {
                                         if (isFirstVariable == true ){
-                                            if (is_LF) { instr3.type = LF;} else {instr3.type = GF;}
+                                            instr3.type = LF;
                                             instr3.value.s = stack->arrayOfItems[stack->finderOfParenthesis + 1].nameOfTheVariable;
                                         }
                                         else{ instr3.type = F;
@@ -982,7 +989,7 @@ expr_return parse_expr(LocalMap* lMap, tList* list, bool is_bool){
                                     else{ isThirdVariable = false; }
                                     // v pripade ze sa je o prve spracovanie tak nechavame
                                     if (isThirdVariable == true ){
-                                        if (is_LF) { instr3.type = LF;} else {instr3.type = GF;}
+                                        instr3.type = LF;
                                         instr3.value.s = stack->arrayOfItems[stack->finderOfParenthesis + 3].nameOfTheVariable;
                                     }
                                     else{ instr3.type = F;
@@ -995,7 +1002,7 @@ expr_return parse_expr(LocalMap* lMap, tList* list, bool is_bool){
                                         //fprintf(stderr, "Deleni nulou, radek cislo %d\n",gToken.row);
                                         resultOfPrece.result = ERR_DIVISION;
                                         resultOfPrece.bool_result = false;
-                                        instruction_exit(ERR_DIVISION);
+                                        //instruction_exit(ERR_DIVISION);
                                         return resultOfPrece;
                                     }
                                     else{
@@ -1009,13 +1016,13 @@ expr_return parse_expr(LocalMap* lMap, tList* list, bool is_bool){
                                     //fprintf(stderr, "Semanticka chyba typové kompatibility v aritmetických vyrazech, radek %d\n", gToken.row);
                                     resultOfPrece.result = ERR_INCOMPATIBLE_TYPE;
                                     resultOfPrece.bool_result = false;
-                                    instruction_exit(ERR_INCOMPATIBLE_TYPE);
+                                    //instruction_exit(ERR_INCOMPATIBLE_TYPE);
                                     return resultOfPrece;
                                 }
                             } else {
                                 resultOfPrece.result = SYN_ERR;
                                 resultOfPrece.bool_result = false;
-                                instruction_exit(SYN_ERR);
+                                //instruction_exit(SYN_ERR);
                                 return resultOfPrece;
                             }
                             resultOfPrece.bool_result = false;
@@ -1034,7 +1041,7 @@ expr_return parse_expr(LocalMap* lMap, tList* list, bool is_bool){
                                     else{ isThirdVariable = false; }
 
                                     if (isThirdVariable == true ){
-                                        if (is_LF) { instr3.type = LF;} else {instr3.type = GF;}
+                                        instr3.type = LF;
                                         instr3.value.s = stack->arrayOfItems[stack->finderOfParenthesis + 3].nameOfTheVariable;
                                     }
                                     else { instr3.type = S;
@@ -1051,7 +1058,7 @@ expr_return parse_expr(LocalMap* lMap, tList* list, bool is_bool){
                                     else{ isThirdVariable = false; }
 
                                     if (isThirdVariable == true ){
-                                        if (is_LF) { instr3.type = LF;} else {instr3.type = GF;}
+                                        instr3.type = LF;
                                         instr3.value.s = stack->arrayOfItems[stack->finderOfParenthesis + 3].nameOfTheVariable;
                                     }
                                     else { instr3.type = I;
@@ -1072,7 +1079,7 @@ expr_return parse_expr(LocalMap* lMap, tList* list, bool is_bool){
                                     // v pripade ze sa je o prve spracovanie tak nechavame
 
                                     if (isFirstVariable){
-                                        if (is_LF) { instr2.type = LF;} else { instr2.type = GF;}
+                                        instr2.type = LF;
                                         instr2.value.s = stack->arrayOfItems[stack->finderOfParenthesis + 3].nameOfTheVariable;
                                     }
                                     else { instr2.type = F;
@@ -1089,7 +1096,7 @@ expr_return parse_expr(LocalMap* lMap, tList* list, bool is_bool){
                                     }
                                     else {
                                         if (isThirdVariable == true ){
-                                            if (is_LF) { instr3.type = LF;} else {instr3.type = GF;}
+                                            instr3.type = LF;
                                             instr3.value.s = stack->arrayOfItems[stack->finderOfParenthesis + 1].nameOfTheVariable;
                                         }
                                         else{ instr3.type = I;
@@ -1116,7 +1123,7 @@ expr_return parse_expr(LocalMap* lMap, tList* list, bool is_bool){
 
                                     // v pripade ze sa je o prve spracovanie tak nechavame
                                     if (isThirdVariable){
-                                        if (is_LF) { instr2.type = LF;} else { instr2.type = GF;}
+                                        instr2.type = LF;
                                         instr2.value.s = stack->arrayOfItems[stack->finderOfParenthesis + 1].nameOfTheVariable;
                                     }
                                     else { instr2.type = F;
@@ -1132,7 +1139,7 @@ expr_return parse_expr(LocalMap* lMap, tList* list, bool is_bool){
                                     }
                                     else {
                                         if (isFirstVariable == true ){
-                                            if (is_LF) { instr3.type = LF;} else {instr3.type = GF;}
+                                            instr3.type = LF;
                                             instr3.value.s = stack->arrayOfItems[stack->finderOfParenthesis + 3].nameOfTheVariable;
                                         }
                                         else{ instr3.type = I;
@@ -1155,7 +1162,7 @@ expr_return parse_expr(LocalMap* lMap, tList* list, bool is_bool){
                                     else{ isThirdVariable = false; }
                                     // v pripade ze sa je o prve spracovanie tak nechavame
                                     if (isThirdVariable == true ){
-                                        if (is_LF) { instr3.type = LF;} else {instr3.type = GF;}
+                                        instr3.type = LF;
                                         instr3.value.s = stack->arrayOfItems[stack->finderOfParenthesis + 3].nameOfTheVariable;
                                     }
                                     else{ instr3.type = F;
@@ -1170,13 +1177,13 @@ expr_return parse_expr(LocalMap* lMap, tList* list, bool is_bool){
                                     //fprintf(stderr, "Semanticka chyba typové kompatibility v aritmetických vyrazech, radek %d\n", gToken.row);
                                     resultOfPrece.result = ERR_INCOMPATIBLE_TYPE;
                                     resultOfPrece.bool_result = true;
-                                    instruction_exit(ERR_INCOMPATIBLE_TYPE);
+                                    //instruction_exit(ERR_INCOMPATIBLE_TYPE);
                                     return resultOfPrece;
                                 }
                             } else {
                                 resultOfPrece.result = SYN_ERR;
                                 resultOfPrece.bool_result = true;
-                                instruction_exit(SYN_ERR);
+                                //instruction_exit(SYN_ERR);
                                 return resultOfPrece;
                             }
                             resultOfPrece.bool_result = true;
@@ -1195,7 +1202,7 @@ expr_return parse_expr(LocalMap* lMap, tList* list, bool is_bool){
                                     else{ isThirdVariable = false; }
 
                                     if (isThirdVariable == true ){
-                                        if (is_LF) { instr3.type = LF;} else {instr3.type = GF;}
+                                        instr3.type = LF;
                                         instr3.value.s = stack->arrayOfItems[stack->finderOfParenthesis + 3].nameOfTheVariable;
                                     }
                                     else { instr3.type = S;
@@ -1212,7 +1219,7 @@ expr_return parse_expr(LocalMap* lMap, tList* list, bool is_bool){
                                     else{ isThirdVariable = false; }
 
                                     if (isThirdVariable == true ){
-                                        if (is_LF) { instr3.type = LF;} else {instr3.type = GF;}
+                                        instr3.type = LF;
                                         instr3.value.s = stack->arrayOfItems[stack->finderOfParenthesis + 3].nameOfTheVariable;
                                     }
                                     else { instr3.type = I;
@@ -1234,7 +1241,7 @@ expr_return parse_expr(LocalMap* lMap, tList* list, bool is_bool){
                                     // v pripade ze sa je o prve spracovanie tak nechavame
 
                                     if (isFirstVariable){
-                                        if (is_LF) { instr2.type = LF;} else { instr2.type = GF;}
+                                        instr2.type = LF;
                                         instr2.value.s = stack->arrayOfItems[stack->finderOfParenthesis + 3].nameOfTheVariable;
                                     }
                                     else { instr2.type = F;
@@ -1251,7 +1258,7 @@ expr_return parse_expr(LocalMap* lMap, tList* list, bool is_bool){
                                     }
                                     else {
                                         if (isThirdVariable == true ){
-                                            if (is_LF) { instr3.type = LF;} else {instr3.type = GF;}
+                                            instr3.type = LF;
                                             instr3.value.s = stack->arrayOfItems[stack->finderOfParenthesis + 1].nameOfTheVariable;
                                         }
                                         else{ instr3.type = I;
@@ -1278,7 +1285,7 @@ expr_return parse_expr(LocalMap* lMap, tList* list, bool is_bool){
 
                                     // v pripade ze sa je o prve spracovanie tak nechavame
                                     if (isThirdVariable){
-                                        if (is_LF) { instr2.type = LF;} else { instr2.type = GF;}
+                                        instr2.type = LF;
                                         instr2.value.s = stack->arrayOfItems[stack->finderOfParenthesis + 1].nameOfTheVariable;
                                     }
                                     else { instr2.type = F;
@@ -1294,7 +1301,7 @@ expr_return parse_expr(LocalMap* lMap, tList* list, bool is_bool){
                                     }
                                     else {
                                         if (isFirstVariable == true ){
-                                            if (is_LF) { instr3.type = LF;} else {instr3.type = GF;}
+                                            instr3.type = LF;
                                             instr3.value.s = stack->arrayOfItems[stack->finderOfParenthesis + 3].nameOfTheVariable;
                                         }
                                         else{ instr3.type = I;
@@ -1317,7 +1324,7 @@ expr_return parse_expr(LocalMap* lMap, tList* list, bool is_bool){
                                     else{ isThirdVariable = false; }
                                     // v pripade ze sa je o prve spracovanie tak nechavame
                                     if (isThirdVariable == true ){
-                                        if (is_LF) { instr3.type = LF;} else {instr3.type = GF;}
+                                        instr3.type = LF;
                                         instr3.value.s = stack->arrayOfItems[stack->finderOfParenthesis + 3].nameOfTheVariable;
                                     }
                                     else{ instr3.type = F;
@@ -1332,13 +1339,13 @@ expr_return parse_expr(LocalMap* lMap, tList* list, bool is_bool){
                                     //fprintf(stderr, "Semanticka chyba typové kompatibility v aritmetických vyrazech, radek %d\n", gToken.row);
                                     resultOfPrece.result = ERR_INCOMPATIBLE_TYPE;
                                     resultOfPrece.bool_result = true;
-                                    instruction_exit(ERR_INCOMPATIBLE_TYPE);
+                                    //instruction_exit(ERR_INCOMPATIBLE_TYPE);
                                     return resultOfPrece;
                                 }
                             } else {
                                 resultOfPrece.result = SYN_ERR;
                                 resultOfPrece.bool_result = true;
-                                instruction_exit(SYN_ERR);
+                                //instruction_exit(SYN_ERR);
                                 return resultOfPrece;
                             }
                             resultOfPrece.bool_result = true;
@@ -1359,7 +1366,7 @@ expr_return parse_expr(LocalMap* lMap, tList* list, bool is_bool){
                                     else{ isThirdVariable = false; }
 
                                     if (isThirdVariable == true ){
-                                        if (is_LF) { instr3.type = LF;} else {instr3.type = GF;}
+                                        instr3.type = LF;
                                         instr3.value.s = stack->arrayOfItems[stack->finderOfParenthesis + 3].nameOfTheVariable;
                                     }
                                     else { instr3.type = S;
@@ -1392,7 +1399,7 @@ expr_return parse_expr(LocalMap* lMap, tList* list, bool is_bool){
                                     else{ isThirdVariable = false; }
 
                                     if (isThirdVariable == true ){
-                                        if (is_LF) { instr3.type = LF;} else {instr3.type = GF;}
+                                        instr3.type = LF;
                                         instr3.value.s = stack->arrayOfItems[stack->finderOfParenthesis + 3].nameOfTheVariable;
                                     }
                                     else { instr3.type = I;
@@ -1429,7 +1436,7 @@ expr_return parse_expr(LocalMap* lMap, tList* list, bool is_bool){
                                     // v pripade ze sa je o prve spracovanie tak nechavame
 
                                     if (isFirstVariable){
-                                        if (is_LF) { instr2.type = LF;} else { instr2.type = GF;}
+                                        instr2.type = LF;
                                         instr2.value.s = stack->arrayOfItems[stack->finderOfParenthesis + 3].nameOfTheVariable;
                                     }
                                     else { instr2.type = F;
@@ -1446,7 +1453,7 @@ expr_return parse_expr(LocalMap* lMap, tList* list, bool is_bool){
                                     }
                                     else {
                                         if (isThirdVariable == true ){
-                                            if (is_LF) { instr3.type = LF;} else {instr3.type = GF;}
+                                            instr3.type = LF;
                                             instr3.value.s = stack->arrayOfItems[stack->finderOfParenthesis + 1].nameOfTheVariable;
                                         }
                                         else{ instr3.type = I;
@@ -1488,7 +1495,7 @@ expr_return parse_expr(LocalMap* lMap, tList* list, bool is_bool){
 
                                     // v pripade ze sa je o prve spracovanie tak nechavame
                                     if (isThirdVariable){
-                                        if (is_LF) { instr2.type = LF;} else { instr2.type = GF;}
+                                        instr2.type = LF;
                                         instr2.value.s = stack->arrayOfItems[stack->finderOfParenthesis + 1].nameOfTheVariable;
                                     }
                                     else { instr2.type = F;
@@ -1504,7 +1511,7 @@ expr_return parse_expr(LocalMap* lMap, tList* list, bool is_bool){
                                     }
                                     else {
                                         if (isFirstVariable == true ){
-                                            if (is_LF) { instr3.type = LF;} else {instr3.type = GF;}
+                                            instr3.type = LF;
                                             instr3.value.s = stack->arrayOfItems[stack->finderOfParenthesis + 3].nameOfTheVariable;
                                         }
                                         else{ instr3.type = I;
@@ -1543,7 +1550,7 @@ expr_return parse_expr(LocalMap* lMap, tList* list, bool is_bool){
                                     else{ isThirdVariable = false; }
                                     // v pripade ze sa je o prve spracovanie tak nechavame
                                     if (isThirdVariable == true ){
-                                        if (is_LF) { instr3.type = LF;} else {instr3.type = GF;}
+                                        instr3.type = LF;
                                         instr3.value.s = stack->arrayOfItems[stack->finderOfParenthesis + 3].nameOfTheVariable;
                                     }
                                     else{ instr3.type = F;
@@ -1572,13 +1579,13 @@ expr_return parse_expr(LocalMap* lMap, tList* list, bool is_bool){
                                     //fprintf(stderr, "Semanticka chyba typové kompatibility v aritmetických vyrazech, radek %d\n", gToken.row);
                                     resultOfPrece.result = ERR_INCOMPATIBLE_TYPE;
                                     resultOfPrece.bool_result = true;
-                                    instruction_exit(ERR_INCOMPATIBLE_TYPE);
+                                    //instruction_exit(ERR_INCOMPATIBLE_TYPE);
                                     return resultOfPrece;
                                 }
                             } else {
                                 resultOfPrece.result = SYN_ERR;
                                 resultOfPrece.bool_result = true;
-                                instruction_exit(SYN_ERR);
+                                //instruction_exit(SYN_ERR);
                                 return resultOfPrece;
                             }
                             resultOfPrece.bool_result = true;
@@ -1597,7 +1604,7 @@ expr_return parse_expr(LocalMap* lMap, tList* list, bool is_bool){
                                     else{ isThirdVariable = false; }
 
                                     if (isThirdVariable == true ){
-                                        if (is_LF) { instr3.type = LF;} else {instr3.type = GF;}
+                                        instr3.type = LF;
                                         instr3.value.s = stack->arrayOfItems[stack->finderOfParenthesis + 3].nameOfTheVariable;
                                     }
                                     else { instr3.type = S;
@@ -1632,7 +1639,7 @@ expr_return parse_expr(LocalMap* lMap, tList* list, bool is_bool){
                                     else{ isThirdVariable = false; }
 
                                     if (isThirdVariable == true ){
-                                        if (is_LF) { instr3.type = LF;} else {instr3.type = GF;}
+                                        instr3.type = LF;
                                         instr3.value.s = stack->arrayOfItems[stack->finderOfParenthesis + 3].nameOfTheVariable;
                                     }
                                     else { instr3.type = I;
@@ -1667,7 +1674,7 @@ expr_return parse_expr(LocalMap* lMap, tList* list, bool is_bool){
                                     // v pripade ze sa je o prve spracovanie tak nechavame
 
                                     if (isFirstVariable){
-                                        if (is_LF) { instr2.type = LF;} else { instr2.type = GF;}
+                                        instr2.type = LF;
                                         instr2.value.s = stack->arrayOfItems[stack->finderOfParenthesis + 3].nameOfTheVariable;
                                     }
                                     else { instr2.type = F;
@@ -1684,7 +1691,7 @@ expr_return parse_expr(LocalMap* lMap, tList* list, bool is_bool){
                                     }
                                     else {
                                         if (isThirdVariable == true ){
-                                            if (is_LF) { instr3.type = LF;} else {instr3.type = GF;}
+                                            instr3.type = LF;
                                             instr3.value.s = stack->arrayOfItems[stack->finderOfParenthesis + 1].nameOfTheVariable;
                                         }
                                         else{ instr3.type = I;
@@ -1725,7 +1732,7 @@ expr_return parse_expr(LocalMap* lMap, tList* list, bool is_bool){
 
                                     // v pripade ze sa je o prve spracovanie tak nechavame
                                     if (isThirdVariable){
-                                        if (is_LF) { instr2.type = LF;} else { instr2.type = GF;}
+                                        instr2.type = LF;
                                         instr2.value.s = stack->arrayOfItems[stack->finderOfParenthesis + 1].nameOfTheVariable;
                                     }
                                     else { instr2.type = F;
@@ -1741,7 +1748,7 @@ expr_return parse_expr(LocalMap* lMap, tList* list, bool is_bool){
                                     }
                                     else {
                                         if (isFirstVariable == true ){
-                                            if (is_LF) { instr3.type = LF;} else {instr3.type = GF;}
+                                            instr3.type = LF;
                                             instr3.value.s = stack->arrayOfItems[stack->finderOfParenthesis + 3].nameOfTheVariable;
                                         }
                                         else{ instr3.type = I;
@@ -1779,7 +1786,7 @@ expr_return parse_expr(LocalMap* lMap, tList* list, bool is_bool){
                                     else{ isThirdVariable = false; }
                                     // v pripade ze sa je o prve spracovanie tak nechavame
                                     if (isThirdVariable == true ){
-                                        if (is_LF) { instr3.type = LF;} else {instr3.type = GF;}
+                                        instr3.type = LF;
                                         instr3.value.s = stack->arrayOfItems[stack->finderOfParenthesis + 3].nameOfTheVariable;
                                     }
                                     else{ instr3.type = F;
@@ -1810,13 +1817,13 @@ expr_return parse_expr(LocalMap* lMap, tList* list, bool is_bool){
                                     //fprintf(stderr, "Semanticka chyba typové kompatibility v aritmetických vyrazech, radek %d\n", gToken.row);
                                     resultOfPrece.result = ERR_INCOMPATIBLE_TYPE;
                                     resultOfPrece.bool_result = true;
-                                    instruction_exit(ERR_INCOMPATIBLE_TYPE);
+                                    //instruction_exit(ERR_INCOMPATIBLE_TYPE);
                                     return resultOfPrece;
                                 }
                             } else {
                                 resultOfPrece.result = SYN_ERR;
                                 resultOfPrece.bool_result = true;
-                                instruction_exit(SYN_ERR);
+                                //instruction_exit(SYN_ERR);
                                 return resultOfPrece;
                             }
                             resultOfPrece.bool_result = true;
@@ -1834,7 +1841,7 @@ expr_return parse_expr(LocalMap* lMap, tList* list, bool is_bool){
                                     else{ isThirdVariable = false; }
 
                                     if (isThirdVariable == true ){
-                                        if (is_LF) { instr3.type = LF;} else {instr3.type = GF;}
+                                        instr3.type = LF;
                                         instr3.value.s = stack->arrayOfItems[stack->finderOfParenthesis + 3].nameOfTheVariable;
                                     }
                                     else { instr3.type = S;
@@ -1851,7 +1858,7 @@ expr_return parse_expr(LocalMap* lMap, tList* list, bool is_bool){
                                     else{ isThirdVariable = false; }
 
                                     if (isThirdVariable == true ){
-                                        if (is_LF) { instr3.type = LF;} else {instr3.type = GF;}
+                                        instr3.type = LF;
                                         instr3.value.s = stack->arrayOfItems[stack->finderOfParenthesis + 3].nameOfTheVariable;
                                     }
                                     else { instr3.type = I;
@@ -1873,7 +1880,7 @@ expr_return parse_expr(LocalMap* lMap, tList* list, bool is_bool){
                                     // v pripade ze sa je o prve spracovanie tak nechavame
 
                                     if (isFirstVariable){
-                                        if (is_LF) { instr2.type = LF;} else { instr2.type = GF;}
+                                        instr2.type = LF;
                                         instr2.value.s = stack->arrayOfItems[stack->finderOfParenthesis + 3].nameOfTheVariable;
                                     }
                                     else { instr2.type = F;
@@ -1890,7 +1897,7 @@ expr_return parse_expr(LocalMap* lMap, tList* list, bool is_bool){
                                     }
                                     else {
                                         if (isThirdVariable == true ){
-                                            if (is_LF) { instr3.type = LF;} else {instr3.type = GF;}
+                                            instr3.type = LF;
                                             instr3.value.s = stack->arrayOfItems[stack->finderOfParenthesis + 1].nameOfTheVariable;
                                         }
                                         else{ instr3.type = I;
@@ -1917,7 +1924,7 @@ expr_return parse_expr(LocalMap* lMap, tList* list, bool is_bool){
 
                                     // v pripade ze sa je o prve spracovanie tak nechavame
                                     if (isThirdVariable){
-                                        if (is_LF) { instr2.type = LF;} else { instr2.type = GF;}
+                                        instr2.type = LF;
                                         instr2.value.s = stack->arrayOfItems[stack->finderOfParenthesis + 1].nameOfTheVariable;
                                     }
                                     else { instr2.type = F;
@@ -1933,7 +1940,7 @@ expr_return parse_expr(LocalMap* lMap, tList* list, bool is_bool){
                                     }
                                     else {
                                         if (isFirstVariable == true ){
-                                            if (is_LF) { instr3.type = LF;} else {instr3.type = GF;}
+                                            instr3.type = LF;
                                             instr3.value.s = stack->arrayOfItems[stack->finderOfParenthesis + 3].nameOfTheVariable;
                                         }
                                         else{ instr3.type = I;
@@ -1955,7 +1962,7 @@ expr_return parse_expr(LocalMap* lMap, tList* list, bool is_bool){
                                     else{ isThirdVariable = false; }
                                     // v pripade ze sa je o prve spracovanie tak nechavame
                                     if (isThirdVariable == true ){
-                                        if (is_LF) { instr3.type = LF;} else {instr3.type = GF;}
+                                        instr3.type = LF;
                                         instr3.value.s = stack->arrayOfItems[stack->finderOfParenthesis + 3].nameOfTheVariable;
                                     }
                                     else{ instr3.type = F;
@@ -1971,13 +1978,13 @@ expr_return parse_expr(LocalMap* lMap, tList* list, bool is_bool){
                                     //fprintf(stderr, "Semanticka chyba typové kompatibility v aritmetických vyrazech, radek %d\n", gToken.row);
                                     resultOfPrece.result = ERR_INCOMPATIBLE_TYPE;
                                     resultOfPrece.bool_result = true;
-                                    instruction_exit(ERR_INCOMPATIBLE_TYPE);
+                                    //instruction_exit(ERR_INCOMPATIBLE_TYPE);
                                     return resultOfPrece;
                                 }
                             } else {
                                 resultOfPrece.result = SYN_ERR;
                                 resultOfPrece.bool_result = true;
-                                instruction_exit(SYN_ERR);
+                                //instruction_exit(SYN_ERR);
                                 return resultOfPrece;
                             }
                             resultOfPrece.bool_result = true;
@@ -1995,7 +2002,7 @@ expr_return parse_expr(LocalMap* lMap, tList* list, bool is_bool){
                                     else{ isThirdVariable = false; }
 
                                     if (isThirdVariable == true ){
-                                        if (is_LF) { instr3.type = LF;} else {instr3.type = GF;}
+                                        instr3.type = LF;
                                         instr3.value.s = stack->arrayOfItems[stack->finderOfParenthesis + 3].nameOfTheVariable;
                                     }
                                     else { instr3.type = S;
@@ -2015,7 +2022,7 @@ expr_return parse_expr(LocalMap* lMap, tList* list, bool is_bool){
                                     else{ isThirdVariable = false; }
 
                                     if (isThirdVariable == true ){
-                                        if (is_LF) { instr3.type = LF;} else {instr3.type = GF;}
+                                        instr3.type = LF;
                                         instr3.value.s = stack->arrayOfItems[stack->finderOfParenthesis + 3].nameOfTheVariable;
                                     }
                                     else { instr3.type = I;
@@ -2040,7 +2047,7 @@ expr_return parse_expr(LocalMap* lMap, tList* list, bool is_bool){
                                     // v pripade ze sa je o prve spracovanie tak nechavame
 
                                     if (isFirstVariable){
-                                        if (is_LF) { instr2.type = LF;} else { instr2.type = GF;}
+                                        instr2.type = LF;
                                         instr2.value.s = stack->arrayOfItems[stack->finderOfParenthesis + 3].nameOfTheVariable;
                                     }
                                     else { instr2.type = F;
@@ -2057,7 +2064,7 @@ expr_return parse_expr(LocalMap* lMap, tList* list, bool is_bool){
                                     }
                                     else {
                                         if (isThirdVariable == true ){
-                                            if (is_LF) { instr3.type = LF;} else {instr3.type = GF;}
+                                            instr3.type = LF;
                                             instr3.value.s = stack->arrayOfItems[stack->finderOfParenthesis + 1].nameOfTheVariable;
                                         }
                                         else{ instr3.type = I;
@@ -2089,7 +2096,7 @@ expr_return parse_expr(LocalMap* lMap, tList* list, bool is_bool){
 
                                     // v pripade ze sa je o prve spracovanie tak nechavame
                                     if (isThirdVariable){
-                                        if (is_LF) { instr2.type = LF;} else { instr2.type = GF;}
+                                        instr2.type = LF;
                                         instr2.value.s = stack->arrayOfItems[stack->finderOfParenthesis + 1].nameOfTheVariable;
                                     }
                                     else { instr2.type = F;
@@ -2105,7 +2112,7 @@ expr_return parse_expr(LocalMap* lMap, tList* list, bool is_bool){
                                     }
                                     else {
                                         if (isFirstVariable == true ){
-                                            if (is_LF) { instr3.type = LF;} else {instr3.type = GF;}
+                                            instr3.type = LF;
                                             instr3.value.s = stack->arrayOfItems[stack->finderOfParenthesis + 3].nameOfTheVariable;
                                         }
                                         else{ instr3.type = I;
@@ -2130,7 +2137,7 @@ expr_return parse_expr(LocalMap* lMap, tList* list, bool is_bool){
                                     else{ isThirdVariable = false; }
                                     // v pripade ze sa je o prve spracovanie tak nechavame
                                     if (isThirdVariable == true ){
-                                        if (is_LF) { instr3.type = LF;} else {instr3.type = GF;}
+                                        instr3.type = LF;
                                         instr3.value.s = stack->arrayOfItems[stack->finderOfParenthesis + 3].nameOfTheVariable;
                                     }
                                     else{ instr3.type = F;
@@ -2149,13 +2156,13 @@ expr_return parse_expr(LocalMap* lMap, tList* list, bool is_bool){
                                     //fprintf(stderr, "Semanticka chyba typové kompatibility v aritmetických vyrazech, radek %d\n", gToken.row);
                                     resultOfPrece.result = ERR_INCOMPATIBLE_TYPE;
                                     resultOfPrece.bool_result = true;
-                                    instruction_exit(ERR_INCOMPATIBLE_TYPE);
+                                    //instruction_exit(ERR_INCOMPATIBLE_TYPE);
                                     return resultOfPrece;
                                 }
                             } else {
                                 resultOfPrece.result = SYN_ERR;
                                 resultOfPrece.bool_result = true;
-                                instruction_exit(SYN_ERR);
+                                //instruction_exit(SYN_ERR);
 
                                 return resultOfPrece;
                             }
@@ -2169,7 +2176,7 @@ expr_return parse_expr(LocalMap* lMap, tList* list, bool is_bool){
                         default:
                             resultOfPrece.result = SYN_ERR;
                             resultOfPrece.bool_result = false;
-                            instruction_exit(SYN_ERR);
+                            //instruction_exit(SYN_ERR);
                             return resultOfPrece;
                     }
                 }
@@ -2179,7 +2186,7 @@ expr_return parse_expr(LocalMap* lMap, tList* list, bool is_bool){
                     /* v pripade ak prijde vyraz a = then  v preklade $$ medzi nimi nebude nic ziaden nontermian(E) tak to vychodi syntakticku chybu */
                     if(stack->top == 0){
                         resultOfPrece.result = SYN_ERR;
-                        instruction_exit(SYN_ERR);
+                        //instruction_exit(SYN_ERR);
                         return resultOfPrece;
                     }
                     if(DEBUG)printf("STATE: $E$ -> EVERYTHING OK\n");

@@ -74,10 +74,10 @@ typedef struct LocalMap{
 typedef struct DataFunction {
     Types type;                     // typ parametrov
     Types returnType;               // navratova hodnota
-    int positionOfParameter;        // pozicia parametrov  //TODO: toto bude fungovat iba pre 0 a 1 argument, implementovat to ako list(v GTS bude typ a hodnota daneho parametru), LTS(key -> nazov premmenej, value -> typ, hodnota(v pripade arguemntov NONE(prazdna)))
+    //int positionOfParameter;        // pozicia parametrov  //TODO: toto bude fungovat iba pre 0 a 1 argument, implementovat to ako list(v GTS bude typ a hodnota daneho parametru), LTS(key -> nazov premmenej, value -> typ, hodnota(v pripade arguemntov NONE(prazdna)))
     bool defined;                   // zda bola funckcia definovana
     int paramCount;                 // pocet parametrov vo funckii
-    tString functionParametersNames;
+    //tString functionParametersNames;
     LocalMap* lMap;
 } tDataFunction;
 

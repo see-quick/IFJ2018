@@ -27,7 +27,7 @@
 
 // sémantická chyba typové kompatibility v aritmetických, řetězcových a relačních výrazech
 #define  ERR_INCOMPATIBLE_TYPE     4
-#define  ERR_PARAMS_COUNT           5
+#define  ERR_PARAMS_COUNT          5
 #define  ERR_SEMANTIC              6   // ostatní sémantické chyby
 
 #define  ERR_DIVISION              9

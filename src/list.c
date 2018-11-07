@@ -185,6 +185,33 @@ int temporary_exists(tList *instr_list)  {
   return exists;
 }
 
+/*
+ *  Prejde cely list a hlada ci uz zadana premenna bola deklarovana
+ *  @param instr_list list instrukcii
+ *  @param variable_name meno premennej
+ *  @return vracia 1(true) ak dana premenna existuje inak 0
+ */
+int variable_exists(tList *instr_list, char * variable_name)
+{
+  tNode *list_head = instr_list->first;
+  int exists = 0; // 0 == false
+
+  while(list_head)  {
+    if(list_head->data.type == INSTRUCT_DEFVAR)
+    {
+      if(strcmp(list_head->data.address1.value.s, variable_name) == 0)
+      {
+        exists = 1;
+        break;
+      }
+    }
+    else exists = 0;
+
+    list_head = list_head->next;
+  }
+
+  return exists;
+}
 /**
  * Zistuje co sme naplnili do unionu instrukcie a printuje to
  * @param order first/second/third instruction operand

@@ -35,14 +35,16 @@ int main(int argc, char const *argv[]) {
   instr2.type = LF;
   instr2.value.s = "var";
   instr3.type = F;
-  instr3.value.d = -3.2;
+  instr3.value.f = -3.2;
 
   instr4.type = I;
   instr4.value.i = 40;
   instr5.type = F;
-  instr5.value.d = 20.798;
+  instr5.value.f = 20.798;
   instr6.type = GF;
   instr6.value.s = "tmp";
+
+
 
   instr_type = INSTRUCT_ADD;
 
@@ -74,6 +76,23 @@ int main(int argc, char const *argv[]) {
   printf("\n\n\n");
   reverse(&(list->first));  //reverse listu
   print_list_elements(list);
+
+  instr_type = INSTRUCT_DEFVAR;
+  instr1.type = GF;
+  instr1.value.s = "variable";
+  instr2.type = EMPTY;
+  instr2.value.s = "";
+  instr3.type = EMPTY;
+  instr3.value.f = 0;
+
+  insert_item(list, &instr_type, &instr1, &instr2, &instr3);
+
+  char * name = "variable";
+  if(variable_exists(list, name))
+  {
+    printf("YES\n");
+  }
+  else printf("NO\n");
 
   dispose_list(list);
 
