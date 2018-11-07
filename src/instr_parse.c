@@ -483,19 +483,19 @@ void parse_instructions(tList *instr_list)  {
 
 
       case INSTRUCT_INPUT_S:
-           printf("LABEL inputs\n");
-           printf("READ GF@$$var_string string\n");
-           printf("RETURN\n");
+           printf("READ GF@%s string\n", act_instr->data.address1.value.s);
+           printf("WRITE %s@", instruct_type(act_instr->data.address1.type));
+           printf("%s\n", act_instr->data.address1.value.s);
       break;
       case INSTRUCT_INPUT_I:
-           printf("LABEL inputi\n");
-           printf("READ GF@$$var_integer int\n");
-           printf("RETURN\n");
+           printf("READ GF@%s int\n", act_instr->data.address1.value.s);
+           printf("WRITE %s@", instruct_type(act_instr->data.address1.type));
+           printf("%s\n", act_instr->data.address1.value.s);
       break;
       case INSTRUCT_INPUT_F:
-           printf("LABEL inputf\n");
-           printf("READ GF@$$var_double float\n");
-           printf("RETURN\n");
+           printf("READ GF@%s float\n", act_instr->data.address1.value.s);
+           printf("WRITE %s@", instruct_type(act_instr->data.address1.type));
+           printf("%s\n", act_instr->data.address1.value.s);
       break;
 
       case INSTRUCT_CHR:
