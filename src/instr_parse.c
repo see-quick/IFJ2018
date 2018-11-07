@@ -78,19 +78,19 @@ void print_symb(tInstructionData instr_operand)  {
   else if (instr_operand.type == F) printf("%a",instr_operand.value.f);
   else
   {
-    //handle '\n' and others
-    if(strcmp(instr_operand.value.s, "\n") == 0)
-    {
-      //printf("here\n" );
-      char * escape = "\\x49"; //x0A
-      char * new_data;
-      new_data = malloc(strlen(instr_operand.value.s)+1+2);
-      strcpy(new_data, escape);
-      strcat(new_data, instr_operand.value.s);
+    // //handle '\n' and others
+    // if(strcmp(instr_operand.value.s, "\n") == 0)
+    // {
+    //   //printf("here\n" );
+    //   char * escape = "\\x49"; //x0A
+    //   char * new_data;
+    //   new_data = malloc(strlen(instr_operand.value.s)+1+2);
+    //   strcpy(new_data, escape);
+    //   strcat(new_data, instr_operand.value.s);
 
-      strcpy(instr_operand.value.s, new_data);
-      free(new_data);
-    }
+    //   strcpy(instr_operand.value.s, new_data);
+    //   free(new_data);
+    // }
      printf("%s",instr_operand.value.s);
   }
 }
@@ -483,19 +483,19 @@ void parse_instructions(tList *instr_list)  {
 
 
       case INSTRUCT_INPUT_S:
-           printf("LABEL inputs\n");
-           printf("READ GF@$$var_string string\n");
-           printf("RETURN\n");
+           printf("READ GF@%s string\n", act_instr->data.address1.value.s);
+           printf("WRITE %s@", instruct_type(act_instr->data.address1.type));
+           printf("%s\n", act_instr->data.address1.value.s);
       break;
       case INSTRUCT_INPUT_I:
-           printf("LABEL inputi\n");
-           printf("READ GF@$$var_integer int\n");
-           printf("RETURN\n");
+           printf("READ GF@%s int\n", act_instr->data.address1.value.s);
+           printf("WRITE %s@", instruct_type(act_instr->data.address1.type));
+           printf("%s\n", act_instr->data.address1.value.s);
       break;
       case INSTRUCT_INPUT_F:
-           printf("LABEL inputf\n");
-           printf("READ GF@$$var_double float\n");
-           printf("RETURN\n");
+           printf("READ GF@%s float\n", act_instr->data.address1.value.s);
+           printf("WRITE %s@", instruct_type(act_instr->data.address1.type));
+           printf("%s\n", act_instr->data.address1.value.s);
       break;
 
       case INSTRUCT_CHR:
@@ -590,7 +590,7 @@ void parse_instructions(tList *instr_list)  {
       break;
 
       case INSTRUCT_ENDIF:
-          printf("LABEL if_label%d_end\n", if_count);
+          printf("LABEL if_label%d_end\n", if_count--);
       break;
 
 

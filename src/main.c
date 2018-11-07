@@ -27,6 +27,7 @@
 
 extern char * function_name;
 extern char * variable_name;
+extern char * call_name;
 extern tList * while_list;
 extern tList * variables_list;
 
@@ -59,6 +60,7 @@ int main(int argc, char** argv) {
 
 
   free(function_name);
+  free(call_name);
   free(variable_name);
 
   return result;  
