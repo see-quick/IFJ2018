@@ -195,7 +195,7 @@ int term(void){
 					return SEM_ERR;
 				}
 				else {
-					instr2.type = GF; //string
+					instr2.type = LF; //string
 					instr2.value.s = gToken.data.str;
 					insert_item(ilist, &instr_type, &instr1, &instr2, &instr3);
 				}
@@ -496,7 +496,7 @@ int term_list(bool zavorka){
 					}
 				}
 				else {
-					instr2.type = GF; //string
+					instr2.type = LF; //string
 					instr2.value.s = gToken.data.str;
 					insert_item(ilist, &instr_type, &instr1, &instr2, &instr3);
 				}
@@ -729,7 +729,7 @@ int sth(){
 								insert_item(ilist, &instr_type, &instr1, &instr2, &instr3);
 
 								instr_type = INSTRUCT_MOVE;
-								instr1.type = GF;
+								instr1.type = LF;
 								instr1.value.s = variable_name;
 								instr2.type = TF;
 								instr2.value.s = "%retval";
@@ -808,7 +808,7 @@ int sth(){
 											local_map_put(localMap, variable_name, lData);
 
 											instr_type = INSTRUCT_MOVE;
-											instr1.type = GF;
+											instr1.type = LF;
 											instr1.value.s = variable_name;
 											instr2.type = TF;
 											instr2.value.s = "%retval";
@@ -872,7 +872,7 @@ int sth(){
 									local_map_put(localMap, variable_name, lData);
 
 									instr_type = INSTRUCT_MOVE;
-									instr1.type = GF;
+									instr1.type = LF;
 									instr1.value.s = variable_name;
 									instr2.type = TF;
 									instr2.value.s = "%retval";
