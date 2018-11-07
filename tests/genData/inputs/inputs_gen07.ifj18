@@ -1,0 +1,5 @@
+# inputs test
+
+a = "test"
+a = inputs
+print a

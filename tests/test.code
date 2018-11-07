@@ -1,0 +1,22 @@
+.IFJcode18
+JUMP $$main
+LABEL $$main
+DEFVAR GF@$$var_integer
+MOVE GF@$$var_integer int@0
+DEFVAR GF@$$var_double
+MOVE GF@$$var_double float@0x0p+0
+DEFVAR GF@$$var_string
+MOVE GF@$$var_string string@
+DEFVAR GF@$$EXPR1
+MOVE GF@$$EXPR1 int@0
+DEFVAR GF@$$EXPR2
+MOVE GF@$$EXPR2 int@0
+DEFVAR GF@$result
+CREATEFRAME
+DEFVAR GF@a
+MOVE GF@$result int@5
+MOVE GF@a GF@$result
+PUSHFRAME
+CALL inputi
+POPFRAME
+EXIT int@2

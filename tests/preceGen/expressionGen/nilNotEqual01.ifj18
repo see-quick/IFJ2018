@@ -1,0 +1,8 @@
+a = a
+b = b
+
+if a != b then
+	a = b
+else
+	b = a
+end
