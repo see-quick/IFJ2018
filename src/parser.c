@@ -73,20 +73,31 @@ tInstructionData instr3;
 
 void insert_build_in_functions(){
 	gData.paramCount = 1;
+	gData.returnType = INTEGER;
     global_map_put(gMap, "length", gData);
 
     gData.paramCount = 3;
+    gData.returnType = STRING;
     global_map_put(gMap, "substr", gData);
 
     gData.paramCount = 2;
+    gData.returnType = INTEGER;
     global_map_put(gMap, "ord", gData);
 
     gData.paramCount = 1;
+    gData.returnType = STRING;
     global_map_put(gMap, "chr", gData);
 
     gData.paramCount = 0;
+    gData.returnType = STRING;
     global_map_put(gMap, "inputs", gData);
+
+    gData.paramCount = 0;
+    gData.returnType = INTEGER;
     global_map_put(gMap, "inputi", gData);
+
+    gData.paramCount = 0;
+    gData.returnType = FLOAT;
     global_map_put(gMap, "inputf", gData);
 }
 
@@ -571,16 +582,27 @@ int move_value(expr_return res){
 
 int check_input(){
 	if ( (strcmp(call_name, "inputi") == 0 ) ){
-		if (local_map_contain(localMap, variable_name)) { instr1.type = GF;}
-		else {instr1.type = LF;}
+		if (local_map_contain(localMap, variable_name)) {
+			instr1.type = GF;}
+		else {
+			instr1.type = LF;
+		}
+
+		lData.type = INTEGER;
+		local_map_put(localMap, variable_name, lData);
 	 
 	 	instr1.value.s = variable_name;
 		instr_type = INSTRUCT_INPUT_I;
 		insert_item(ilist, &instr_type, &instr1, &instr2, &instr3);
+
+		// prirazeni typu promenne
 	}
 	else if ( (strcmp(call_name, "inputf") == 0 ) ) {
 		if (local_map_contain(localMap, variable_name)) { instr1.type = GF;}
 		else {instr1.type = LF;}
+
+		lData.type = FLOAT;
+		local_map_put(localMap, variable_name, lData);
 
 		instr1.value.s = variable_name;
 		instr_type = INSTRUCT_INPUT_F;
@@ -589,6 +611,9 @@ int check_input(){
 	else if ( (strcmp(call_name, "inputs") == 0 ) ) {
 		if (local_map_contain(localMap, variable_name)) { instr1.type = GF;}
 		else {instr1.type = LF;}
+
+		lData.type = STRING;
+		local_map_put(localMap, variable_name, lData);
 
 		instr1.value.s = variable_name;
 		instr_type = INSTRUCT_INPUT_S;
@@ -708,6 +733,13 @@ int sth(){
 								insert_item(ilist, &instr_type, &instr1, &instr2, &instr3);
 
 
+								// dynamick prirazeni promenne typu navratove hodnoty
+								gData = global_map_get_value(gMap, call_name);
+								lData.type = gData.returnType;
+								local_map_put(localMap, variable_name, lData);
+
+								// TODO
+
 
 								// POPFRAME
 
@@ -767,6 +799,10 @@ int sth(){
 											instr1.value.s = call_name;
 
 											insert_item(ilist, &instr_type, &instr1, &instr2, &instr3);
+
+											gData = global_map_get_value(gMap, call_name);
+											lData.type = gData.returnType;
+											local_map_put(localMap, variable_name, lData);
 
 											instr_type = INSTRUCT_MOVE;
 											instr1.type = GF;
@@ -828,6 +864,10 @@ int sth(){
 
 									insert_item(ilist, &instr_type, &instr1, &instr2, &instr3);
 
+									gData = global_map_get_value(gMap, call_name);
+									lData.type = gData.returnType;
+									local_map_put(localMap, variable_name, lData);
+
 									instr_type = INSTRUCT_MOVE;
 									instr1.type = GF;
 									instr1.value.s = variable_name;
@@ -840,8 +880,6 @@ int sth(){
 
 									// instr_type = INSTRUCT_POPFRAME;
 									// insert_item(ilist, &instr_type, &instr1, &instr2, &instr3);
-
-									// is_LF = false; // refresh promenne
 
 
 									return SUCCESS;
