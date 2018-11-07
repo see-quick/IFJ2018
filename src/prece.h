@@ -54,7 +54,6 @@
 
 #define eSYNTERROR 800 // syntax error
 
-
 tDataIDF dataIDF;
 
 

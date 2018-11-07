@@ -572,7 +572,7 @@ int move_value(expr_return res){
 		local_map_put(localMap, variable_name, lData);
 	}
 
-	if (is_LF) { instr1.type = LF; } else {instr1.type = GF;}
+	instr1.type = LF;
 	instr2.type = GF;
 	instr1.value.s = variable_name;
 	instr2.value.s = "$result";
@@ -582,8 +582,10 @@ int move_value(expr_return res){
 
 int check_input(){
 	if ( (strcmp(call_name, "inputi") == 0 ) ){
+
+		// TODO
 		if (local_map_contain(localMap, variable_name)) {
-			instr1.type = GF;}
+			instr1.type = LF;}
 		else {
 			instr1.type = LF;
 		}
@@ -598,7 +600,9 @@ int check_input(){
 		// prirazeni typu promenne
 	}
 	else if ( (strcmp(call_name, "inputf") == 0 ) ) {
-		if (local_map_contain(localMap, variable_name)) { instr1.type = GF;}
+
+		// TODO
+		if (local_map_contain(localMap, variable_name)) { instr1.type = LF;}
 		else {instr1.type = LF;}
 
 		lData.type = FLOAT;
@@ -609,7 +613,8 @@ int check_input(){
 		insert_item(ilist, &instr_type, &instr1, &instr2, &instr3);
 	}
 	else if ( (strcmp(call_name, "inputs") == 0 ) ) {
-		if (local_map_contain(localMap, variable_name)) { instr1.type = GF;}
+		// TODO
+		if (local_map_contain(localMap, variable_name)) { instr1.type = LF;}
 		else {instr1.type = LF;}
 
 		lData.type = STRING;
@@ -658,7 +663,7 @@ int sth(){
 						instr_type = INSTRUCT_MOVE;
 						instr1.type = GF;
 						instr1.value.s = "$result\0";
-						if (is_LF){ instr2.type = LF; } else {instr2.type = GF;}
+						instr2.type = LF;
 						instr2.value.s = gToken.data.str;
 						insert_item(ilist, &instr_type, &instr1, &instr2, &instr3);
 
@@ -694,8 +699,6 @@ int sth(){
 				}
 				else{
 						// je funkce					
-						//is_LF = true;	
-
 						call_name = gToken.data.str;
 
         	    		token = getToken();
@@ -921,7 +924,7 @@ int sth(){
 				instr2.value.s = gToken.data.str;
 			}
 			else if (token == LEX_ID){
-				if (is_LF){instr2.type = LF;} else {instr2.type = GF;}
+				instr2.type = LF;
 				instr2.value.s = gToken.data.str;
 			}
 
@@ -943,7 +946,6 @@ int sth(){
 			if (res.data_type == FUNCTION){
 				// volani funkce 
 						tmp = global_map_get_pointer_to_value(gMap, gToken.data.str);
-						// is_LF = true;
 
         	    		token = getToken();
 						if(!error_lex()){
@@ -1058,7 +1060,7 @@ int sth(){
 							return sth();
 						}
 
-						is_LF = false; // refresh promenne
+						is_LF = false;
 
 			}
 
@@ -1115,7 +1117,7 @@ int stat(){
 
 			if (is_LF){
 				gData = global_map_get_value(gMap, function_name);
-				if (!local_map_contain(gData.lMap, variable_name)){
+				if (!local_map_contain(gData.lMap, variable_name) && !(local_map_contain(localMap, variable_name))){
 					lData.defined = 1;
 					lData.value.nil = true;
 					lData.type = 500;
@@ -1123,15 +1125,11 @@ int stat(){
 					local_map_put(gData.lMap, variable_name, lData);
 
 					instr_type = INSTRUCT_DEFVAR;
-					if (is_LF) {instr1.type = LF;}
-					else{
-						instr1.type = GF;
-					}
+					instr1.type = LF;
 
 					instr1.value.s = variable_name; // nazev promenne
 					if (in_while) insert_item(variables_list, &instr_type, &instr1, &instr2, &instr3);
 					else {insert_item(ilist, &instr_type, &instr1, &instr2, &instr3);}
-
 				}
 			}
 			else {
@@ -1148,10 +1146,7 @@ int stat(){
 
 					// generovani instrukce pro definice promenne s typem nil a hodnotou nil
 					instr_type = INSTRUCT_DEFVAR;
-					if (is_LF) {instr1.type = LF;}
-					else{
-						instr1.type = GF;
-					}
+					instr1.type = LF;
 
 					instr1.value.s = variable_name; // nazev promenne
 					if (in_while) insert_item(variables_list, &instr_type, &instr1, &instr2, &instr3);
@@ -1160,7 +1155,6 @@ int stat(){
 				}
 			}
 			// jinak promenna je v lokalni mape, nebudeme ukladat promennou s typem none
-
 			
 			// nacteni dalsiho tokenu , musi byt  bud' identifikator nebo vyraz nebo funkce
 			token = getToken();
@@ -2221,6 +2215,9 @@ int parse(GlobalMap* globalMap, tList *list) {
 		insert_item(ilist, &instr_type, &instr1, &instr2, &instr3);
 		// vytvoreni docasneho ramce pro funkce
 		instr_type =  INSTRUCT_CREATEFREAME;
+		insert_item(ilist, &instr_type, &instr1, &instr2, &instr3);
+
+		instr_type =  INSTRUCT_PUSHFRAME;
 		insert_item(ilist, &instr_type, &instr1, &instr2, &instr3);
 		// instr_type = INSTRUCT_LENGTH;
 		// insert_item(ilist, &instr_type, &instr1, &instr2, &instr3);
