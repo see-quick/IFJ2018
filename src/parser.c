@@ -568,6 +568,38 @@ int move_value(expr_return res){
 	return SUCCESS;
 }
 
+int check_input(){
+	if ( (strcmp(call_name, "inputi") == 0 ) ){
+		if (local_map_contain(localMap, variable_name)) { instr1.type = GF;}
+		else {instr1.type = LF;}
+	 
+	 	instr1.value.s = variable_name;
+		instr_type = INSTRUCT_INPUT_I;
+		insert_item(ilist, &instr_type, &instr1, &instr2, &instr3);
+	}
+	else if ( (strcmp(call_name, "inputf") == 0 ) ) {
+		if (local_map_contain(localMap, variable_name)) { instr1.type = GF;}
+		else {instr1.type = LF;}
+
+		instr1.value.s = variable_name;
+		instr_type = INSTRUCT_INPUT_F;
+		insert_item(ilist, &instr_type, &instr1, &instr2, &instr3);
+	}
+	else if ( (strcmp(call_name, "inputs") == 0 ) ) {
+		if (local_map_contain(localMap, variable_name)) { instr1.type = GF;}
+		else {instr1.type = LF;}
+
+		instr1.value.s = variable_name;
+		instr_type = INSTRUCT_INPUT_S;
+		insert_item(ilist, &instr_type, &instr1, &instr2, &instr3);
+	}
+	else {
+		return 0;
+	}
+
+	return 1;
+}
+
 int sth(){
 	int result = SUCCESS;
 	expr_return res;
@@ -653,29 +685,32 @@ int sth(){
 							// pro dalsi volani funkce
 							argCount = 0;
 
-							instr_type = INSTRUCT_PUSHFRAME;
-							instr1.type = EMPTY;
-							insert_item(ilist, &instr_type, &instr1, &instr2, &instr3);
+							result = check_input();
+							if (!result) {
+								instr_type = INSTRUCT_PUSHFRAME;
+								instr1.type = EMPTY;
+								insert_item(ilist, &instr_type, &instr1, &instr2, &instr3);
 
-							// instrukce pro volani funkce
+								// instrukce pro volani funkce
 
-							instr_type = INSTRUCT_CALL;
-							instr1.type = FCE;
-							instr1.value.s = call_name;
+								instr_type = INSTRUCT_CALL;
+								instr1.type = FCE;
+								instr1.value.s = call_name;
 
-							insert_item(ilist, &instr_type, &instr1, &instr2, &instr3);
+								insert_item(ilist, &instr_type, &instr1, &instr2, &instr3);
 
-							// POPFRAME
+								// POPFRAME
 
-							instr_type = INSTRUCT_POPFRAME;
-							insert_item(ilist, &instr_type, &instr1, &instr2, &instr3);
-							token = getToken();
-							if(!error_lex()){
-								instruction_exit(ERROR_LEX);
-								return ERROR_LEX;
-							} else if (!error_int()){
-								instruction_exit(INT_ERR);
-								return INT_ERR;
+								instr_type = INSTRUCT_POPFRAME;
+								insert_item(ilist, &instr_type, &instr1, &instr2, &instr3);
+								token = getToken();
+								if(!error_lex()){
+									instruction_exit(ERROR_LEX);
+									return ERROR_LEX;
+								} else if (!error_int()){
+									instruction_exit(INT_ERR);
+									return INT_ERR;
+								}
 							}
 
 							// is_LF = false; // refresh promenne
@@ -716,34 +751,35 @@ int sth(){
 									// pro dalsi volani funkce
 									argCount = 0;
 
-									instr_type = INSTRUCT_PUSHFRAME;
-									instr1.type = EMPTY;
-									insert_item(ilist, &instr_type, &instr1, &instr2, &instr3);
+									result = check_input();
+									if (!result){
+											instr_type = INSTRUCT_PUSHFRAME;
+											instr1.type = EMPTY;
+											insert_item(ilist, &instr_type, &instr1, &instr2, &instr3);
 
-									// instrukce pro volani funkce
+											// instrukce pro volani funkce
 
-									instr_type = INSTRUCT_CALL;
-									instr1.type = FCE;
-									instr1.value.s = call_name;
+											instr_type = INSTRUCT_CALL;
+											instr1.type = FCE;
+											instr1.value.s = call_name;
 
-									insert_item(ilist, &instr_type, &instr1, &instr2, &instr3);
+											insert_item(ilist, &instr_type, &instr1, &instr2, &instr3);
 
-									// POPFRAME
+											// POPFRAME
 
-									instr_type = INSTRUCT_POPFRAME;
-									insert_item(ilist, &instr_type, &instr1, &instr2, &instr3);
+											instr_type = INSTRUCT_POPFRAME;
+											insert_item(ilist, &instr_type, &instr1, &instr2, &instr3);
 
 
-									token = getToken();
-									if(!error_lex()){
-										instruction_exit(ERROR_LEX);
-										return ERROR_LEX;
-									} else if (!error_int()){
-										instruction_exit(INT_ERR);
-										return INT_ERR;
+											token = getToken();
+											if(!error_lex()){
+												instruction_exit(ERROR_LEX);
+												return ERROR_LEX;
+											} else if (!error_int()){
+												instruction_exit(INT_ERR);
+												return INT_ERR;
+											}
 									}
-
-									// is_LF = false; // refresh promenne
 
 									return SUCCESS;
 
