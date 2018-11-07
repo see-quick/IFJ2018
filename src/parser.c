@@ -33,6 +33,7 @@ char * function_name;
 char * variable_name;
 char *call_name;
 bool in_while = false;
+bool in_function = false;
 int while_counter = 0;
 
 /*********************************************************************/
@@ -722,6 +723,9 @@ int sth(){
 
 								// instrukce pro volani funkce
 
+								instr_type = INSTRUCT_CREATEFREAME;
+								insert_item(ilist, &instr_type, &instr1, &instr2, &instr3);
+
 								instr_type = INSTRUCT_CALL;
 								instr1.type = FCE;
 								instr1.value.s = call_name;
@@ -764,6 +768,9 @@ int sth(){
 										instruction_exit(INT_ERR);
 										return INT_ERR;
 									}
+
+									instr_type = INSTRUCT_CREATEFREAME;
+									insert_item(ilist, &instr_type, &instr1, &instr2, &instr3);
 
 									//volane term_list()
 									zavorka = true;
@@ -837,6 +844,9 @@ int sth(){
 								case LEX_NUMBER:
 								case LEX_REAL_NUMBER:
 								case LEX_STRING:
+
+									instr_type = INSTRUCT_CREATEFREAME;
+									insert_item(ilist, &instr_type, &instr1, &instr2, &instr3);
 
 									//volane term_list()
 									zavorka = false;
@@ -970,6 +980,9 @@ int sth(){
 										return INT_ERR;
 									}
 
+									instr_type = INSTRUCT_CREATEFREAME;
+									insert_item(ilist, &instr_type, &instr1, &instr2, &instr3);
+
 									//volane term_list()
 									zavorka = true;
 									result = term_list(zavorka);
@@ -1023,7 +1036,6 @@ int sth(){
 						// instr1.type = EMPTY;
 						// insert_item(ilist, &instr_type, &instr1, &instr2, &instr3);
 
-						// instrukce pro volani funkce
 
 						instr_type = INSTRUCT_CALL;
 						instr1.type = FCE;
@@ -2212,6 +2224,9 @@ int parse(GlobalMap* globalMap, tList *list) {
 
 	if(result == SUCCESS){
 		instr_type = INSTRUCT_HEAD;
+		insert_item(ilist, &instr_type, &instr1, &instr2, &instr3);
+
+		instr_type = INSTRUCT_LABEL_MAIN;
 		insert_item(ilist, &instr_type, &instr1, &instr2, &instr3);
 		// vytvoreni docasneho ramce pro funkce
 		instr_type =  INSTRUCT_CREATEFREAME;

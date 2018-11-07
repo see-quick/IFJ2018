@@ -105,7 +105,8 @@ typedef enum
             INSTRUCT_IF_ELSE = 672,
             INSTRUCT_IF_THEN = 673,
             INSTRUCT_JUMP_ENDIF = 674,
-            INSTRUCT_ENDIF = 675
+            INSTRUCT_ENDIF = 675,
+            INSTRUCT_LABEL_MAIN = 676,
 
 } tInstructionTypes;
 
