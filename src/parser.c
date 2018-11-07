@@ -153,12 +153,12 @@ int term(void){
 
 			instr_type = INSTRUCT_DEFVAR;
 			instr1.type = TF;
-			instr1.value.s = generate_param("$_param", argCount);
+			instr1.value.s = generate_param("%", argCount);
 
 			insert_item(ilist, &instr_type, &instr1, &instr2, &instr3);
 			instr_type = INSTRUCT_MOVE;
 			instr1.type = TF;
-			instr1.value.s = generate_param("$_param", argCount);
+			instr1.value.s = generate_param("%", argCount);
 
 
 			if (token == LEX_NUMBER){
@@ -446,13 +446,13 @@ int term_list(bool zavorka){
 
 			instr_type = INSTRUCT_DEFVAR;
 			instr1.type = TF;
-			instr1.value.s = generate_param("$_param", argCount);
+			instr1.value.s = generate_param("%", argCount);
 
 
 			insert_item(ilist, &instr_type, &instr1, &instr2, &instr3);
 			instr_type = INSTRUCT_MOVE;
 			instr1.type = TF;
-			instr1.value.s = generate_param("$_param", argCount);
+			instr1.value.s = generate_param("%", argCount);
 
 
 			if (token == LEX_NUMBER){
@@ -688,9 +688,9 @@ int sth(){
 
 							result = check_input();
 							if (!result) {
-								instr_type = INSTRUCT_PUSHFRAME;
-								instr1.type = EMPTY;
-								insert_item(ilist, &instr_type, &instr1, &instr2, &instr3);
+								// instr_type = INSTRUCT_PUSHFRAME;
+								// instr1.type = EMPTY;
+								// insert_item(ilist, &instr_type, &instr1, &instr2, &instr3);
 
 								// instrukce pro volani funkce
 
@@ -700,26 +700,23 @@ int sth(){
 
 								insert_item(ilist, &instr_type, &instr1, &instr2, &instr3);
 
+								instr_type = INSTRUCT_MOVE;
+								instr1.type = GF;
+								instr1.value.s = variable_name;
+								instr2.type = TF;
+								instr2.value.s = "%retval";
+								insert_item(ilist, &instr_type, &instr1, &instr2, &instr3);
+
+
+
 								// POPFRAME
 
-								instr_type = INSTRUCT_POPFRAME;
-								insert_item(ilist, &instr_type, &instr1, &instr2, &instr3);
+								// instr_type = INSTRUCT_POPFRAME;
+								// insert_item(ilist, &instr_type, &instr1, &instr2, &instr3);
 							}
 
-							// token = getToken();
-							// if(!error_lex()){
-							// 	instruction_exit(ERROR_LEX);
-							// 	return ERROR_LEX;
-							// } else if (!error_int()){
-							// 	instruction_exit(INT_ERR);
-							// 	return INT_ERR;
-							// }
-
-							// returnToken();
 
 							return SUCCESS;
-
-							// is_LF = false; // refresh promenne
 						}
 						else {
 							switch(token){
@@ -759,9 +756,9 @@ int sth(){
 
 									result = check_input();
 									if (!result){
-											instr_type = INSTRUCT_PUSHFRAME;
-											instr1.type = EMPTY;
-											insert_item(ilist, &instr_type, &instr1, &instr2, &instr3);
+											// instr_type = INSTRUCT_PUSHFRAME;
+											// instr1.type = EMPTY;
+											// insert_item(ilist, &instr_type, &instr1, &instr2, &instr3);
 
 											// instrukce pro volani funkce
 
@@ -771,10 +768,18 @@ int sth(){
 
 											insert_item(ilist, &instr_type, &instr1, &instr2, &instr3);
 
+											instr_type = INSTRUCT_MOVE;
+											instr1.type = GF;
+											instr1.value.s = variable_name;
+											instr2.type = TF;
+											instr2.value.s = "%retval";
+											insert_item(ilist, &instr_type, &instr1, &instr2, &instr3);
+
+
 											// POPFRAME
 
-											instr_type = INSTRUCT_POPFRAME;
-											insert_item(ilist, &instr_type, &instr1, &instr2, &instr3);
+											// instr_type = INSTRUCT_POPFRAME;
+											// insert_item(ilist, &instr_type, &instr1, &instr2, &instr3);
 									}
 									token = getToken();
 									if(!error_lex()){
@@ -811,9 +816,9 @@ int sth(){
 									argCount = 0;
 
 
-									instr_type = INSTRUCT_PUSHFRAME;
-									instr1.type = EMPTY;
-									insert_item(ilist, &instr_type, &instr1, &instr2, &instr3);
+									// instr_type = INSTRUCT_PUSHFRAME;
+									// instr1.type = EMPTY;
+									// insert_item(ilist, &instr_type, &instr1, &instr2, &instr3);
 
 									// instrukce pro volani funkce
 
@@ -823,10 +828,18 @@ int sth(){
 
 									insert_item(ilist, &instr_type, &instr1, &instr2, &instr3);
 
+									instr_type = INSTRUCT_MOVE;
+									instr1.type = GF;
+									instr1.value.s = variable_name;
+									instr2.type = TF;
+									instr2.value.s = "%retval";
+									insert_item(ilist, &instr_type, &instr1, &instr2, &instr3);
+
+
 									// POPFRAME
 
-									instr_type = INSTRUCT_POPFRAME;
-									insert_item(ilist, &instr_type, &instr1, &instr2, &instr3);
+									// instr_type = INSTRUCT_POPFRAME;
+									// insert_item(ilist, &instr_type, &instr1, &instr2, &instr3);
 
 									// is_LF = false; // refresh promenne
 
@@ -966,9 +979,9 @@ int sth(){
 						argCount = 0;
 
 
-						instr_type = INSTRUCT_PUSHFRAME;
-						instr1.type = EMPTY;
-						insert_item(ilist, &instr_type, &instr1, &instr2, &instr3);
+						// instr_type = INSTRUCT_PUSHFRAME;
+						// instr1.type = EMPTY;
+						// insert_item(ilist, &instr_type, &instr1, &instr2, &instr3);
 
 						// instrukce pro volani funkce
 
@@ -980,8 +993,8 @@ int sth(){
 
 						// POPFRAME
 
-						instr_type = INSTRUCT_POPFRAME;
-						insert_item(ilist, &instr_type, &instr1, &instr2, &instr3);
+						// instr_type = INSTRUCT_POPFRAME;
+						// insert_item(ilist, &instr_type, &instr1, &instr2, &instr3);
 
 
 						token = getToken();
@@ -1700,6 +1713,18 @@ int pm_list2(){
 				local_map_put(gData.lMap, gToken.data.str, lData);
 			}
 
+			instr_type = INSTRUCT_DEFVAR;
+			instr1.type = LF;
+			instr1.value.s = generate_param("$param", paramCount);
+			insert_item(ilist,&instr_type, &instr1, &instr2, &instr3 );
+
+			instr_type = INSTRUCT_MOVE;
+			instr1.type = LF;
+			instr1.value.s = generate_param("$param", paramCount);
+			instr2.type = LF;
+			instr2.value.s = generate_param("%", argCount);
+			insert_item(ilist,&instr_type, &instr1, &instr2, &instr3 );
+
 			// + jeden parametr
 			paramCount++;
 
@@ -1753,6 +1778,19 @@ int pm_list(){
 			gData = global_map_get_value(gMap, function_name);
 			local_map_put(gData.lMap, gToken.data.str, lData);
 		}
+
+
+		instr_type = INSTRUCT_DEFVAR;
+		instr1.type = LF;
+		instr1.value.s = generate_param("$param", paramCount);
+		insert_item(ilist,&instr_type, &instr1, &instr2, &instr3 );
+
+		instr_type = INSTRUCT_MOVE;
+		instr1.type = LF;
+		instr1.value.s = generate_param("$param", paramCount);
+		instr2.type = LF;
+		instr2.value.s = generate_param("%", argCount);
+		insert_item(ilist,&instr_type, &instr1, &instr2, &instr3 );
 
 		paramCount++;
 
@@ -1826,6 +1864,10 @@ int func(){
 
 	insert_item(ilist, &instr_type, &instr1, &instr2, &instr3);
 
+	instr_type = INSTRUCT_PUSHFRAME;
+	instr1.type = EMPTY;
+	insert_item(ilist, &instr_type, &instr1, &instr2, &instr3);
+
 	function_name = gToken.data.str;
 	//printf("Function name is %s\n", function_name);
 
@@ -1838,8 +1880,8 @@ int func(){
 	instr_type = INSTRUCT_MOVE;
 	instr1.type = LF;
 	instr1.value.s = "%retval";
-	instr2.type = F;
-	instr2.value.f = 0.0;
+	instr2.type = N;
+	instr2.value.s = "nil";
 
 	insert_item(ilist, &instr_type, &instr1, &instr2, &instr3);
 
@@ -1951,12 +1993,24 @@ int func(){
 
 	// konec funkce
 
-	instr_type = INSTRUCT_LABEL;
-	instr1.type = EMPTY;
+	// instr_type = INSTRUCT_LABEL;
+	// instr1.type = EMPTY;
 
-	// vymyslet nejakou promennou pro ukonceni funkce, treba $foo$end
-	instr1.value.s = "$end";
+	// // vymyslet nejakou promennou pro ukonceni funkce, treba $foo$end
+	// instr1.value.s = "$end";
+	// insert_item(ilist, &instr_type, &instr1, &instr2, &instr3);
+
+	instr_type = INSTRUCT_MOVE;
+	instr1.type = LF;
+	instr1.value.s = "%retval";
+	instr2.type = F;
+	instr2.value.f = 0.0;
+
 	insert_item(ilist, &instr_type, &instr1, &instr2, &instr3);
+
+	instr_type = INSTRUCT_POPFRAME;
+	insert_item(ilist, &instr_type, &instr1, &instr2, &instr3);
+
 
 	// return retval of function
 	instr_type = INSTRUCT_RETURN;
