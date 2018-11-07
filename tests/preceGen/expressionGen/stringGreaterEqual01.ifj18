@@ -1,8 +1,0 @@
-a = "Hello"
-b = "olleh"
-
-if a >= b then
-	a = "yes"
-else
-	a = "no"
-end

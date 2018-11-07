@@ -1,4 +1,0 @@
-# Call print without param
-
-a = 5
-print ()

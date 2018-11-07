@@ -1,6 +1,0 @@
-
-def foo (a)
-	a = 2 + 2 + "ahoj"
-end
-
-b = foo(a)

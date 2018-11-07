@@ -1,8 +1,0 @@
-a = 5
-b = b
-
-if a != b then
-	a = 6
-else
-	b = 6
-end

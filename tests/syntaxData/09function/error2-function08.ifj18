@@ -1,5 +1,0 @@
-#definicia jednoduchej funkcie
-
-foo (a)
- a = 5 
-end

@@ -1,4 +1,0 @@
-# Error in ord param
-
-
-var = ord("hello")

@@ -1,4 +1,0 @@
-# Simple ord(s,i) calling
-
-stri = "Hello"
-myvar = ord(stri, 3)

@@ -1,7 +1,0 @@
-# simple substr
-
-var = "Hello"
-start = 1
-len = 2
-
-mynewstr = substr(var,var,var)

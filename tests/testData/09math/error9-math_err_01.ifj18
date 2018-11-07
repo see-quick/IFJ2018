@@ -1,3 +1,0 @@
-#deleni nulou
-a = 6 / 0
-print "\na je:", a

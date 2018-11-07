@@ -1,5 +1,0 @@
-#definicia jednoduchej funkcie
-
-def foo (a,b+c)
-	a = 5
-end

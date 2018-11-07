@@ -1,6 +1,0 @@
-#volani fce bez vatvorky
-def foo()
-	a = 5
-end
-
-b = foo

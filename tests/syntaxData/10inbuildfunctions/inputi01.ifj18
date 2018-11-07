@@ -1,4 +1,0 @@
-#basic usage inputi
-
-str1 = 15
-str1 = inputi()

@@ -1,4 +1,0 @@
-#basic usage inputf
-
-dec = 5.23
-str2 = inputf()

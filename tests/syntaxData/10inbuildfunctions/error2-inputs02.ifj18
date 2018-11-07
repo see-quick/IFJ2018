@@ -1,4 +1,0 @@
-# Error missing one parenthessis
-
-a = "String"
-a = inputs(

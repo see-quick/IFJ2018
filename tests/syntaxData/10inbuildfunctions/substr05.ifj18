@@ -1,3 +1,0 @@
-# simple substr
-
-mynewstr = substr("HellooooHelloooo",5,5)

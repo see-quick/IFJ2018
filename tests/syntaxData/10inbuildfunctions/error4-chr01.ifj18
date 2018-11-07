@@ -1,3 +1,0 @@
-# chr(i) simple out of interval [0,255]
-
-var = chr(300)

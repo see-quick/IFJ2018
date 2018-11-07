@@ -1,3 +1,0 @@
-#Vyvolanie lexikalneho erroru pri pouzivani retazcov - escape sekvencia prekrocila hodnotu FF
-
-chain = "\x100"
