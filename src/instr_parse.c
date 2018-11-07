@@ -198,7 +198,6 @@ void parse_instructions(tList *instr_list)  {
           printf("DEFVAR GF@$$var_integer\n");
           printf("MOVE GF@$$var_integer int@0\n");
           printf("DEFVAR GF@$$var_double\n");
-          // nejaka chyba??
           printf("MOVE GF@$$var_double float@0x0p+0\n");
           printf("DEFVAR GF@$$var_string\n");
           printf("MOVE GF@$$var_string string@\n");
