@@ -52,6 +52,18 @@ int main(int argc, char** argv) {
   instr_type = INSTRUCT_HEAD;
   insert_item(pom_list, &instr_type, &instr1, &instr2, &instr3);
 
+  // instr_type = INSTRUCT_LABEL;
+  // instr1.value.s = "a";
+  // insert_item(pom_list, &instr_type, &instr1, &instr2, &instr3);
+
+  // instr_type = INSTRUCT_EXIT;
+  // instr1.type = I;
+  // instr1.value.i = SEM_ERR;
+  // insert_item(pom_list, &instr_type, &instr1, &instr2, &instr3);
+
+  // instr_type = INSTRUCT_RETURN;
+  // insert_item(pom_list, &instr_type, &instr1, &instr2, &instr3);
+
   reverse(&(pom_list->first));
   set_active(pom_list);
   parse_instructions(pom_list);      

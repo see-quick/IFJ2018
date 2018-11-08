@@ -92,15 +92,18 @@ void insert_build_in_functions(){
     global_map_put(gMap, "chr", gData);
 
     gData.paramCount = 0;
-    gData.returnType = STRING;
+    gData.returnType = NONE;
+    //gData.returnType = STRING;
     global_map_put(gMap, "inputs", gData);
 
     gData.paramCount = 0;
-    gData.returnType = INTEGER;
+    gData.returnType = NONE;
+    //gData.returnType = INTEGER;
     global_map_put(gMap, "inputi", gData);
 
     gData.paramCount = 0;
-    gData.returnType = FLOAT;
+    gData.returnType = NONE;
+    //gData.returnType = FLOAT;
     global_map_put(gMap, "inputf", gData);
 }
 
@@ -593,7 +596,8 @@ int check_input(){
 			instr1.type = LF;
 		}
 
-		lData.type = INTEGER;
+		// lData.type = INTEGER;
+		lData.type = NONE;
 		local_map_put(localMap, variable_name, lData);
 	 
 	 	instr1.value.s = variable_name;
@@ -657,18 +661,33 @@ int sth(){
 				tmp = global_map_get_pointer_to_value(gMap, gToken.data.str);
 				if (tmp == NULL){
 					// neni funkce
-					if ( (local_map_get_pointer_to_value(localMap, gToken.data.str)) == NULL){
-						//fprintf(stderr, "Semanticka chyba, funkce nebo promenna %s neni definovana, radek %d\n", gToken.data.str, gToken.row);
-						instruction_exit(SEM_ERR);
-						return SEM_ERR;
-					}
-					else{
-						instr_type = INSTRUCT_MOVE;
-						instr1.type = GF;
-						instr1.value.s = "$result\0";
-						instr2.type = LF;
-						instr2.value.s = gToken.data.str;
-						insert_item(ilist, &instr_type, &instr1, &instr2, &instr3);
+
+
+					// if ( (local_map_get_pointer_to_value(localMap, gToken.data.str)) == NULL){
+					// 	printf("tady\n");
+					// 	//fprintf(stderr, "Semanticka chyba, funkce nebo promenna %s neni definovana, radek %d\n", gToken.data.str, gToken.row);
+					// 	instruction_exit(SEM_ERR);
+					// 	return SEM_ERR;
+					// }
+					// else{
+						
+						if (is_LF){
+							instr_type = INSTRUCT_MOVE;
+							instr1.type = GF;
+							instr1.value.s = "$result\0";
+							instr2.type = LF;
+							instr2.value.s =  "$param1";
+							insert_item(ilist, &instr_type, &instr1, &instr2, &instr3);
+						}
+						else {
+							instr_type = INSTRUCT_MOVE;
+							instr1.type = GF;
+							instr1.value.s = "$result\0";
+							instr2.type = LF;
+							instr2.value.s = gToken.data.str;
+							insert_item(ilist, &instr_type, &instr1, &instr2, &instr3);
+
+						}
 
 
 						// je to promenna prirazenu typu a = b
@@ -697,7 +716,7 @@ int sth(){
 							return SYN_ERR;
 						}
 
-					}
+					// }
 						
 				}
 				else{
@@ -1775,6 +1794,13 @@ int pm_list2(){
 			instr2.value.s = generate_param("%", argCount);
 			insert_item(ilist,&instr_type, &instr1, &instr2, &instr3 );
 
+			// instr_type = INSTRUCT_MOVE;
+			// instr1.type = LF;
+			// instr1.value.s = gToken.data.str;
+			// instr2.type = LF;
+			// instr2.value.s = generate_param("$param", argCount);
+			// insert_item(ilist,&instr_type, &instr1, &instr2, &instr3 );
+
 			// + jeden parametr
 			paramCount++;
 
@@ -1841,6 +1867,14 @@ int pm_list(){
 		instr2.type = LF;
 		instr2.value.s = generate_param("%", argCount);
 		insert_item(ilist,&instr_type, &instr1, &instr2, &instr3 );
+
+		// instr_type = INSTRUCT_MOVE;
+		// instr1.type = LF;
+		// instr1.value.s = gToken.data.str;
+		// instr2.type = LF;
+		// instr2.value.s = generate_param("$param", argCount);
+		// insert_item(ilist,&instr_type, &instr1, &instr2, &instr3 );
+
 
 		paramCount++;
 
