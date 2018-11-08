@@ -209,6 +209,15 @@ else
   testDIR="expressionsData"
   testRunner "$testDIR"
 
+  #TESTS FOR prece
+  testDIR="preceGen"
+  filegen="-n"
+  testRunner "$testDIR"
+
+  #inbuild
+  testDIR="genData"
+  filegen="-n"
+  genTester "$testDIR"
 fi
 
 

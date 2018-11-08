@@ -111,22 +111,22 @@ var1 " \
 echo "Test data for testData: TESTED $TESTNUMBER tests, PASSED: $SUCCTESTS, FAILED: $FAILEDTESTS Totally: ${green}$total%${reset}"
 
 #genDATA
-OUTPUT=$(sudo bash gen_tester.sh -g 2>/dev/null | tail -n 1)
-TESTNUMBER=$(echo $OUTPUT | cut -c8-10)
-SUCCTESTS=$(echo $OUTPUT | cut -c26-27)
-FAILEDTESTS=$((TESTNUMBER-SUCCTESTS))
+#OUTPUT=$(sudo bash gen_tester.sh -g 2>/dev/null | tail -n 1)
+#TESTNUMBER=$(echo $OUTPUT | cut -c8-10)
+#SUCCTESTS=$(echo $OUTPUT | cut -c26-27)
+#FAILEDTESTS=$((TESTNUMBER-SUCCTESTS))
 
-TOTALTESTS=$((TESTNUMBER+TOTALTESTS))
-TOTALFAILED=$((FAILEDTESTS+TOTALFAILED))
-TOTALSUCC=$((SUCCTESTS+TOTALSUCC))
+#TOTALTESTS=$((TESTNUMBER+TOTALTESTS))
+#TOTALFAILED=$((FAILEDTESTS+TOTALFAILED))
+#TOTALSUCC=$((SUCCTESTS+TOTALSUCC))
 
-total=$(echo " scale=2;
-var1 = $SUCCTESTS * 100;
-var1 = var1 / $TESTNUMBER;
-var1 " \
-| bc)
+#total=$(echo " scale=2;
+#var1 = $SUCCTESTS * 100;
+#var1 = var1 / $TESTNUMBER;
+#var1 " \
+#| bc)
 
-echo "Test data for genData: TESTED $TESTNUMBER tests, PASSED: $SUCCTESTS, FAILED: $FAILEDTESTS Totally: ${green}$total%${reset}"
+#echo "Test data for genData: TESTED $TESTNUMBER tests, PASSED: $SUCCTESTS, FAILED: $FAILEDTESTS Totally: ${green}$total%${reset}"
 
 #TOTAL NUMBER OF TESTS + STATISTICS
 total=$(echo " scale=2;
@@ -138,3 +138,26 @@ var1 " \
 
 echo "..."
 echo "Totally tests runned: $TOTALTESTS, PASSED: ${green}$TOTALSUCC${reset}, FAILED: ${red}$TOTALFAILED${reset} Totally: ${green}$total%${reset}"
+
+#code gen
+echo ""
+echo "Testing code generation, this might take few seconds..."
+
+
+OUTPUT=$(sudo bash gen_tester.sh -n 2>/dev/null | tail -n 1)
+TESTNUMBER=$(echo $OUTPUT | cut -c8-10)
+SUCCTESTS=$(echo $OUTPUT | cut -c26-29)
+FAILEDTESTS=$((TESTNUMBER-SUCCTESTS))
+
+TOTALTESTSGEN=$((TESTNUMBER+TOTALTESTSGEN))
+TOTALFAILEDGEN=$((FAILEDTESTS+TOTALFAILEDGEN))
+TOTALSUCCGEN=$((SUCCTESTS+TOTALSUCCGEN))
+
+total=$(echo " scale=2;
+var1 = $TOTALSUCCGEN * 100;
+var1 = var1 / $TOTALTESTSGEN;
+var1 " \
+| bc)
+
+echo "..."
+echo "Totally tests runned: $TOTALTESTSGEN, PASSED: ${green}$TOTALSUCCGEN${reset}, FAILED: ${red}$TOTALFAILEDGEN${reset} Totally: ${green}$total%${reset}"
