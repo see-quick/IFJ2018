@@ -14,6 +14,11 @@
 */
 
 #include "list.h"
+#include "error.h"
+#include "parser.h"
+
+extern tList * function_statements_list;
+extern bool is_LF;
 
 /**
  * Printne upozornenie, ze doslo k chybe
@@ -22,8 +27,9 @@
  */
 int list_error() {
 
-    fprintf (stderr, "*ERROR* The program has performed an illegal operation.\n");
-    return -1;
+    //fprintf (stderr, "*ERROR* The program has performed an illegal operation.\n");
+  instruction_exit(INT_ERR);
+  return INT_ERR;
 }
 
 /**
@@ -60,6 +66,7 @@ void insert_item (tList *instr_list, tInstructionTypes *instr_name , tInstructio
     list_error();
   }
   else {
+
     new_instr->data.type = *instr_name;
     new_instr->data.address1.type = addr1->type;
     new_instr->data.address1.value = addr1->value;
@@ -70,11 +77,17 @@ void insert_item (tList *instr_list, tInstructionTypes *instr_name , tInstructio
     new_instr->data.address3.value = addr3->value;
 
     //new_instr->next = instr_list->first
-    new_instr->next = instr_list->first;  //do ukazatela na dalsi dame aktualne prvy v prvok v zozname
-    instr_list->first = new_instr;  //do prveho dame novy
 
-    if(instr_list->last == NULL) instr_list->last = new_instr;  //poslednym prvkom bude stale prvok ktory sme vlozili ako uplne prvy
-
+    if (is_LF){
+        new_instr->next = function_statements_list->first;  //do ukazatela na dalsi dame aktualne prvy v prvok v zozname
+        function_statements_list->first = new_instr;  //do prveho dame novy
+        if(function_statements_list->last == NULL) function_statements_list->last = new_instr;  //poslednym prvkom bude stale prvok ktory sme vlozili ako uplne prvy
+    }
+    else {
+        new_instr->next = instr_list->first;  //do ukazatela na dalsi dame aktualne prvy v prvok v zozname
+        instr_list->first = new_instr;  //do prveho dame novy
+        if(instr_list->last == NULL) instr_list->last = new_instr;  //poslednym prvkom bude stale prvok ktory sme vlozili ako uplne prvy
+    }
   }
 }
 

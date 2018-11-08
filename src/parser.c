@@ -1441,6 +1441,7 @@ int stat(){
 			}
 			if (while_counter == 1){
 
+
 				ilist = tmp_list;
 
 				reverse(&(variables_list->first));
@@ -1489,6 +1490,7 @@ int stat(){
 				tmp_list = ilist;
 				ilist = while_list;
 			}
+
 
 			instr_type = INSTRUCT_WHILE_START;
 			insert_item(ilist, &instr_type, &instr1, &instr2, &instr3);
@@ -1580,6 +1582,7 @@ int stat(){
 				return result;
 			}
 
+
 			//dalsi token je zase nacten z fce, musi byt END
 			if(!checkTokenType(KW_END)){
 				//fprintf(stderr, "Ocekavan 'end' na radku %d\n", gToken.row);
@@ -1588,6 +1591,7 @@ int stat(){
 			}
 
 			if (while_counter == 1){
+
 
 				ilist = tmp_list;
 
@@ -1864,7 +1868,7 @@ int func(){
 
 	is_LF = true;
 
-	ilist = function_statements_list;
+	//ilist = function_statements_list;
 
 	//pravidlo <func> -> def ID ( <pm_list> ) eol <ST-LIST> end
 
@@ -2042,15 +2046,26 @@ int func(){
 	// konec funkce
 
 
+	//ilist = position_of_main;
 
-	
+	// reverse(&(function_statements_list->first));
+ //   	set_active(function_statements_list);
 
-	ilist = position_of_main;
+ //   	parse_instructions(function_statements_list);
+   //	printf("======\n");
 
-	reverse(&(function_statements_list->first));
-   	set_active(function_statements_list);
+ //   	is_LF = false;
 
-	append_list(ilist, function_statements_list);
+	// //append_list(ilist, function_statements_list);
+
+	// instr_type = INSTRUCT_CREATEFREAME;
+	// insert_item(ilist, &instr_type, &instr1, &instr2, &instr3);
+
+	// parse_instructions(ilist);
+
+	// printf("=======\n");
+
+	// is_LF = true;
 
 
 
@@ -2237,12 +2252,7 @@ int parse(GlobalMap* globalMap, tList *list) {
 
 	if(result == SUCCESS){
 
-		instr_type = INSTRUCT_HEAD;
-		insert_item(ilist, &instr_type, &instr1, &instr2, &instr3);
-
-		position_of_main = ilist;
-
-		// position_of_main = ilist;
+		//position_of_main = ilist;
 
 		instr_type = INSTRUCT_LABEL_MAIN;
 		insert_item(ilist, &instr_type, &instr1, &instr2, &instr3);
