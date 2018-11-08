@@ -33,8 +33,8 @@ char * function_name;
 char * variable_name;
 char *call_name;
 bool in_while = false;
-bool in_function = false;
 int while_counter = 0;
+int function_counter = 0;
 
 /*********************************************************************/
 /*LOKALNI TABULKA SYMBOLU*/
@@ -64,6 +64,8 @@ tList * ilist;               // instruction list
 tList * while_list;
 tList * tmp_list;
 tList * variables_list;
+tList * position_of_main;
+tList * function_statements_list;
 tInstructionTypes instr_type;
 tInstructionData instr1;
 tInstructionData instr2;
@@ -920,6 +922,12 @@ int sth(){
 		default:
 
 
+			if (token == LEX_SUBSTRACTION){
+				instruction_exit(ERROR_LEX);
+				return ERROR_LEX;
+			}
+
+
 			instr_type = INSTRUCT_MOVE;
 			if (token == LEX_NUMBER){
 				instr2.type = I;
@@ -1283,13 +1291,11 @@ int stat(){
 		//<STAT> -> if <EXPR> then eol <ST-LIST> else eol <ST-LIST> end if
 		case KW_IF:
 
-
 			in_while = true;
 
 			++while_counter;
 
 			if (while_counter == 1){
-				//printf("Furst while");
 				tmp_list = ilist;
 				ilist = while_list;
 			}
@@ -1673,8 +1679,6 @@ int st_list(){
 
       case KW_DEF:
 
-      		is_LF = true;
-
 			result = func();
 			if(result != SUCCESS){
 				return result;
@@ -1685,8 +1689,6 @@ int st_list(){
 				instruction_exit(SYN_ERR);
 				return SYN_ERR;
 			}
-
-			is_LF = false;
 
 			// dalsi token pro st_list
 			token = getToken();
@@ -1860,6 +1862,10 @@ int pm_list(){
 int func(){
 	int result;
 
+	is_LF = true;
+
+	ilist = function_statements_list;
+
 	//pravidlo <func> -> def ID ( <pm_list> ) eol <ST-LIST> end
 
 	//dalsi token musi byt typu LEX_ID
@@ -1930,7 +1936,6 @@ int func(){
 	insert_item(ilist, &instr_type, &instr1, &instr2, &instr3);
 
 
-
    	//dalsi token musi byt '('
 	token = getToken();
 	if(!error_lex()){
@@ -1987,7 +1992,6 @@ int func(){
 	paramCount = 0;
 
 
-
 	token = getToken();
 	if(!error_lex()){
 		instruction_exit(ERROR_LEX);
@@ -2037,12 +2041,18 @@ int func(){
 
 	// konec funkce
 
-	// instr_type = INSTRUCT_LABEL;
-	// instr1.type = EMPTY;
 
-	// // vymyslet nejakou promennou pro ukonceni funkce, treba $foo$end
-	// instr1.value.s = "$end";
-	// insert_item(ilist, &instr_type, &instr1, &instr2, &instr3);
+
+	
+
+	ilist = position_of_main;
+
+	reverse(&(function_statements_list->first));
+   	set_active(function_statements_list);
+
+	append_list(ilist, function_statements_list);
+
+
 
 	instr_type = INSTRUCT_MOVE;
 	instr1.type = LF;
@@ -2055,7 +2065,6 @@ int func(){
 	instr_type = INSTRUCT_POPFRAME;
 	insert_item(ilist, &instr_type, &instr1, &instr2, &instr3);
 
-
 	// return retval of function
 	instr_type = INSTRUCT_RETURN;
 	insert_item(ilist, &instr_type, &instr1, &instr2, &instr3);
@@ -2066,6 +2075,8 @@ int func(){
 
 	gData = global_map_get_value(gMap, function_name);
 	local_map_free(gData.lMap);
+
+	is_LF = false;
 
 
 	//nacteni a kontrola dalsiho tokenu
@@ -2208,6 +2219,8 @@ int parse(GlobalMap* globalMap, tList *list) {
 	while_list = list_init();
 	tmp_list = list_init();
 	variables_list = list_init();
+	function_statements_list = list_init();
+	position_of_main = list_init();
 
 	do{
 		if((token = getToken()) == ERROR_LEX) {
@@ -2223,11 +2236,18 @@ int parse(GlobalMap* globalMap, tList *list) {
 
 
 	if(result == SUCCESS){
+
 		instr_type = INSTRUCT_HEAD;
 		insert_item(ilist, &instr_type, &instr1, &instr2, &instr3);
 
+		position_of_main = ilist;
+
+		// position_of_main = ilist;
+
 		instr_type = INSTRUCT_LABEL_MAIN;
 		insert_item(ilist, &instr_type, &instr1, &instr2, &instr3);
+
+
 		// vytvoreni docasneho ramce pro funkce
 		instr_type =  INSTRUCT_CREATEFREAME;
 		insert_item(ilist, &instr_type, &instr1, &instr2, &instr3);
