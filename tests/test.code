@@ -13,10 +13,9 @@ DEFVAR GF@$$EXPR2
 MOVE GF@$$EXPR2 int@0
 DEFVAR GF@$result
 CREATEFRAME
-DEFVAR GF@a
-MOVE GF@$result int@5
-MOVE GF@a GF@$result
 PUSHFRAME
-CALL inputi
-POPFRAME
-EXIT int@2
+DEFVAR LF@a
+MOVE GF@$result int@5
+MOVE LF@a GF@$result
+READ LF@a int
+WRITE LF@a
