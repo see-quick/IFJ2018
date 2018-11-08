@@ -107,7 +107,7 @@ int indexerOfPreceTable (int indexer, LocalMap* lMap)
             }
             else{
                 // nie je to ani fce ani identificator
-                printf("ERROR\n");
+                //printf("ERROR\n");
 
                 // TODO SEMANTICKA CHYBA
                 return eSYNTERROR;
@@ -197,6 +197,69 @@ void setFirstAndSecondVariableToGenerate(int instruction_type){
     instr1.value.s = "$result\0";        // generovanie UNIQUE // generate non Term -> Unikatny nazov
     instr2.type = GF;
     instr2.value.s = "$result\0";
+}
+
+
+void generateInstructionForType(tList* list, tStack *stack, int type, char * instruction_type, int position){
+
+    instr_type = INSTRUCT_TYPE;
+    instr1.type = GF;
+    instr1.value.s = "$type";
+    instr2.type = GF;
+    instr2.value.s = "$result";
+    insert_item(list, &instr_type, &instr1, &instr2, &instr3);
+
+
+    instr_type = INSTRUCT_JUMPIFEQ;
+    instr1.value.s = instruction_type; // NAZEV LABEL PRO USPESNY SKOK;
+    instr2.type = GF;
+    instr2.value.s = "$type";
+    instr3.type = S;
+    switch(type){
+        case I:
+            instr3.value.s = "int"; // tady muze byt string , float, integer, none
+        break;
+        case F:
+            instr3.value.s = "float"; // tady muze byt string , float, integer, none
+        break;
+        case S:
+            instr3.value.s = "string"; // tady muze byt string , float, integer, none
+        break;
+        default:
+            // todo nil , asi chyba
+        break;
+    }
+    
+    insert_item(list, &instr_type, &instr1, &instr2, &instr3);
+
+    instruction_exit(ERR_INCOMPATIBLE_TYPE);
+
+    instr_type = INSTRUCT_LABEL;
+    instr1.value.s = instruction_type; // SUB, MUL
+    insert_item(list, &instr_type, &instr1, &instr2, &instr3);
+
+    setFirstAndSecondVariableToGenerate(INSTRUCT_ADD);
+
+    switch(type){
+        case I:
+            instr3.type = I;
+            instr3.value.i = stack->arrayOfItems[stack->finderOfParenthesis + position].value.i; // tady bude [+1], value.d, value.s ...
+        break;
+        case S:
+            instr3.type = S;
+            instr3.value.s = stack->arrayOfItems[stack->finderOfParenthesis + position].value.string.str; // tady bude [+1], value.d, value.s ...
+        break;
+        case F:
+            instr3.type = F;
+            instr3.value.f = stack->arrayOfItems[stack->finderOfParenthesis + position].value.f; // tady bude [+1], value.d, value.s ...
+        break;
+        case N:
+        //  todo
+        break;
+    }
+    
+    insert_item(list, &instr_type, &instr1, &instr2, &instr3);
+
 }
 
 
@@ -365,7 +428,74 @@ expr_return parse_expr(LocalMap* lMap, tList* list, bool is_bool){
                             // PRAVIDLO E -> E + E
                             if (DEBUG) stack_print_prece(stack);
                              if ((stack->arrayOfNumbers[stack->finderOfParenthesis + 3]) != EMPTY_CHAR) {
-                                 if ((stack->arrayOfItems[stack->finderOfParenthesis + 1].type == STRING) &&
+
+                                if (stack->arrayOfItems[stack->finderOfParenthesis + 1].type == NONE ){
+
+                                        if (stack->arrayOfItems[stack->finderOfParenthesis + 3].type == INTEGER){
+                                            generateInstructionForType(list, stack, I, "ADD", 3);
+                                        }
+
+                                        else if (stack->arrayOfItems[stack->finderOfParenthesis + 3].type == FLOAT){
+
+                                        }
+                                        else if (stack->arrayOfItems[stack->finderOfParenthesis + 3].type == STRING){
+
+                                        }
+                                        else if (stack->arrayOfItems[stack->finderOfParenthesis + 3].type == NONE){
+
+                                        }
+
+                                }
+                                else if (stack->arrayOfItems[stack->finderOfParenthesis + 3].type == NONE ){
+
+                                        if (stack->arrayOfItems[stack->finderOfParenthesis + 1].type == INTEGER){
+
+                                            instr_type = INSTRUCT_TYPE;
+                                            instr1.type = GF;
+                                            instr1.value.s = "$type";
+                                            instr2.type = GF;
+                                            instr2.value.s = "$result";
+                                            insert_item(list, &instr_type, &instr1, &instr2, &instr3);
+
+
+                                            instr_type = INSTRUCT_JUMPIFEQ;
+                                            instr1.value.s = "ADD";
+                                            instr2.type = GF;
+                                            instr2.value.s = "$type";
+                                            instr3.type = S;
+                                            instr3.value.s = "int";
+                                            insert_item(list, &instr_type, &instr1, &instr2, &instr3);
+
+                                            instruction_exit(ERR_INCOMPATIBLE_TYPE);
+
+                                            instr_type = INSTRUCT_LABEL;
+                                            instr1.value.s = "ADD";
+                                            insert_item(list, &instr_type, &instr1, &instr2, &instr3);
+
+                                            setFirstAndSecondVariableToGenerate(INSTRUCT_ADD);
+                                            instr3.type = I;
+                                            instr3.value.i = stack->arrayOfItems[stack->finderOfParenthesis + 1].value.i;
+                                            insert_item(list, &instr_type, &instr1, &instr2, &instr3);
+
+
+                                        }
+
+                                        else if (stack->arrayOfItems[stack->finderOfParenthesis + 1].type == FLOAT){
+
+                                        }
+                                        else if (stack->arrayOfItems[stack->finderOfParenthesis + 1].type == STRING){
+
+                                        }
+                                        else if (stack->arrayOfItems[stack->finderOfParenthesis + 1].type == NONE){
+
+                                        }
+
+
+                                }
+
+
+
+                                else if ((stack->arrayOfItems[stack->finderOfParenthesis + 1].type == STRING) &&
                                      (stack->arrayOfItems[stack->finderOfParenthesis + 3].type == STRING)) {
                                      // ziskanie zo zasobnika zda je token premenna alebo nie v pripade ak ano tak nastavime isFirst alebo isThird na true...
                                      if(stack->arrayOfItems[stack->finderOfParenthesis + 3].isVariable){ isThirdVariable = true; }

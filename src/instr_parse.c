@@ -209,6 +209,7 @@ void parse_instructions(tList *instr_list)  {
           printf("DEFVAR GF@$$EXPR2\n");
           printf("MOVE GF@$$EXPR2 int@0\n");
           printf("DEFVAR GF@$result\n");
+          printf("DEFVAR GF@$type\n");
       break;
 
       case INSTRUCT_CREATEFREAME:
