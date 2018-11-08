@@ -99,8 +99,17 @@ int indexerOfPreceTable (int indexer, LocalMap* lMap)
             else if(local_map_contain(lMap, gToken.data.str)){
                 type = eIDENT;         // nachadza sa to v lMap je to premenna
             }
+            else if (is_LF){
+                gData = global_map_get_value(gMap, function_name);
+                if (local_map_contain(gData.lMap, gToken.data.str)){
+                    type = eIDENT;
+                }
+            }
             else{
                 // nie je to ani fce ani identificator
+                printf("ERROR\n");
+
+                // TODO SEMANTICKA CHYBA
                 return eSYNTERROR;
             }
             break;

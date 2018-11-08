@@ -168,7 +168,14 @@ for ((n=0; n<$lines;n++)); do #loop over test dir
           echo "${red}[TEST FAILED]${reset} : $currentdir/$testfile"
           echo "  expected return value = 0. Returned value = $retval"
         fi
-        cmp --silent $tmpout $outfile || echo "${red}[TEST FAILED]${reset} Outputs aren't the same!"
+        echo "" >> $tmpout
+        cmp  $tmpout $testpath/$currentdir/$outfile
+        ret=$(echo $?)
+        if [[ "$ret" -eq "1" ]]; then
+          ((testfail++));
+          ((testsucc--));
+          echo "${red}[TEST FAILED]${reset} Outputs aren't the same!";
+        fi
       fi
     fi
   done
@@ -202,6 +209,15 @@ else
   testDIR="expressionsData"
   testRunner "$testDIR"
 
+  #TESTS FOR prece
+  testDIR="preceGen"
+  filegen="-n"
+  testRunner "$testDIR"
+
+  #inbuild
+  testDIR="genData"
+  filegen="-n"
+  genTester "$testDIR"
 fi
 
 
