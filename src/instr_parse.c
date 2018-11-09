@@ -102,82 +102,82 @@ void print_symb(tInstructionData instr_operand)  {
   {
      //escape seq ---- > \000
      //handle '\n' and others
-      if(strstr(instr_operand.value.s, "\n") != NULL)
-      {
-        char * new_data;
+      // if(strstr(instr_operand.value.s, "\n") != NULL)
+      // {
+      //   char * new_data;
 
-        while((strstr(instr_operand.value.s, "\n") != NULL))
-        {
-          new_data = malloc(strlen(instr_operand.value.s)+1+2);
-          strcpy(new_data, instr_operand.value.s);
+      //   while((strstr(instr_operand.value.s, "\n") != NULL))
+      //   {
+      //     new_data = malloc(strlen(instr_operand.value.s)+1+2);
+      //     strcpy(new_data, instr_operand.value.s);
 
 
-          new_data=replace_str(new_data, "\n", "\\010");
-          strcpy(instr_operand.value.s, new_data);
+      //     new_data=replace_str(new_data, "\n", "\\010");
+      //     strcpy(instr_operand.value.s, new_data);
 
-          free(new_data);
-        }
-      }
-      else if(strstr(instr_operand.value.s, "\t") != NULL)
-      {
-        char * new_data;
+      //     free(new_data);
+      //   }
+      // }
+      // else if(strstr(instr_operand.value.s, "\t") != NULL)
+      // {
+      //   char * new_data;
 
-        while((strstr(instr_operand.value.s, "\t") != NULL))
-        {
-          new_data = malloc(strlen(instr_operand.value.s)+1+2);
-          strcpy(new_data, instr_operand.value.s);
+      //   while((strstr(instr_operand.value.s, "\t") != NULL))
+      //   {
+      //     new_data = malloc(strlen(instr_operand.value.s)+1+2);
+      //     strcpy(new_data, instr_operand.value.s);
 
-          new_data=replace_str(new_data, "\t", "\\009");
-          strcpy(instr_operand.value.s, new_data);
+      //     new_data=replace_str(new_data, "\t", "\\009");
+      //     strcpy(instr_operand.value.s, new_data);
 
-          free(new_data);
-        }
-      }
-      else if(strstr(instr_operand.value.s, "\v") != NULL)
-      {
-        char * new_data;
+      //     free(new_data);
+      //   }
+      // }
+      // else if(strstr(instr_operand.value.s, "\v") != NULL)
+      // {
+      //   char * new_data;
 
-        while(strstr(instr_operand.value.s, "\v") != NULL)
-        {
-          new_data = malloc(strlen(instr_operand.value.s)+1+2);
-          strcpy(new_data, instr_operand.value.s);
+      //   while(strstr(instr_operand.value.s, "\v") != NULL)
+      //   {
+      //     new_data = malloc(strlen(instr_operand.value.s)+1+2);
+      //     strcpy(new_data, instr_operand.value.s);
 
-          new_data=replace_str(new_data, "\v", "\\011");
-          strcpy(instr_operand.value.s, new_data);
+      //     new_data=replace_str(new_data, "\v", "\\011");
+      //     strcpy(instr_operand.value.s, new_data);
 
-          free(new_data);
-        }
-      }
-      else if(strstr(instr_operand.value.s, "\f") != NULL)
-      {
-        char * new_data;
+      //     free(new_data);
+      //   }
+      // }
+      // else if(strstr(instr_operand.value.s, "\f") != NULL)
+      // {
+      //   char * new_data;
 
-        while(strstr(instr_operand.value.s, "\f") != NULL)
-        {
-          new_data = malloc(strlen(instr_operand.value.s)+1+2);
-          strcpy(new_data, instr_operand.value.s);
+      //   while(strstr(instr_operand.value.s, "\f") != NULL)
+      //   {
+      //     new_data = malloc(strlen(instr_operand.value.s)+1+2);
+      //     strcpy(new_data, instr_operand.value.s);
 
-          new_data=replace_str(new_data, "\f", "\\012");
-          strcpy(instr_operand.value.s, new_data);
+      //     new_data=replace_str(new_data, "\f", "\\012");
+      //     strcpy(instr_operand.value.s, new_data);
 
-          free(new_data);
-        }
-      }
-      else if(strstr(instr_operand.value.s, "\r") != NULL)
-      {
-        char * new_data;
+      //     free(new_data);
+      //   }
+      // }
+      // else if(strstr(instr_operand.value.s, "\r") != NULL)
+      // {
+      //   char * new_data;
 
-        while(strstr(instr_operand.value.s, "\r") != NULL)
-        {
-          new_data = malloc(strlen(instr_operand.value.s)+1+2);
-          strcpy(new_data, instr_operand.value.s);
+      //   while(strstr(instr_operand.value.s, "\r") != NULL)
+      //   {
+      //     new_data = malloc(strlen(instr_operand.value.s)+1+2);
+      //     strcpy(new_data, instr_operand.value.s);
 
-          new_data=replace_str(new_data, "\r", "\\013");
-          strcpy(instr_operand.value.s, new_data);
+      //     new_data=replace_str(new_data, "\r", "\\013");
+      //     strcpy(instr_operand.value.s, new_data);
 
-          free(new_data);
-        }
-      }
+      //     free(new_data);
+      //   }
+      // }
      printf("%s",instr_operand.value.s);
   }
 }
@@ -618,7 +618,8 @@ void parse_instructions(tList *instr_list)  {
           // while pocet parametru ... zatim vypisu jen jeden parametr
           arg_count = act_instr->data.address1.value.i;
           for (int i=1; i <= arg_count; i++){
-              printf("WRITE TF@$_param%d\n", i);
+              printf("WRITE TF@%%");
+              printf("%d\n", i);
           }
       break;
 

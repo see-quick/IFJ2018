@@ -35,6 +35,7 @@ char *call_name;
 bool in_while = false;
 int while_counter = 0;
 int function_counter = 0;
+bool in_print = false;
 
 /*********************************************************************/
 /*LOKALNI TABULKA SYMBOLU*/
@@ -168,45 +169,46 @@ int term(void){
 
 			if ( (result = check_substr_ord_build_in(argCount)) != SUCCESS) return result;
 
-			instr_type = INSTRUCT_DEFVAR;
-			instr1.type = TF;
-			instr1.value.s = generate_param("%", argCount);
+			if (!in_print){
+					instr_type = INSTRUCT_DEFVAR;
+					instr1.type = TF;
+					instr1.value.s = generate_param("%", argCount);
 
-			insert_item(ilist, &instr_type, &instr1, &instr2, &instr3);
-			instr_type = INSTRUCT_MOVE;
-			instr1.type = TF;
-			instr1.value.s = generate_param("%", argCount);
-
-
-			if (token == LEX_NUMBER){
-				instr2.type = I; //integer
-				instr2.value.i = atoi(gToken.data.str);
-				insert_item(ilist, &instr_type, &instr1, &instr2, &instr3);
-
-			}
-			else if (token == LEX_REAL_NUMBER){
-				instr2.type = F; //float
-				instr2.value.f = atof(gToken.data.str);
-				insert_item(ilist, &instr_type, &instr1, &instr2, &instr3);
-			}
-			else if (token == LEX_STRING){
-				instr2.type = S; //string
-				instr2.value.s = gToken.data.str;
-				insert_item(ilist, &instr_type, &instr1, &instr2, &instr3);
-			}
-			else if (token == LEX_ID){
-				if ((local_map_get_pointer_to_key(localMap, gToken.data.str)) == NULL){
-					//fprintf(stderr, "Semanticka chyba, promenna %s neni definovana, radek %d\n", gToken.data.str, gToken.row);
-					instruction_exit(SEM_ERR);
-					return SEM_ERR;
-				}
-				else {
-					instr2.type = LF; //string
-					instr2.value.s = gToken.data.str;
 					insert_item(ilist, &instr_type, &instr1, &instr2, &instr3);
-				}
-			}
+					instr_type = INSTRUCT_MOVE;
+					instr1.type = TF;
+					instr1.value.s = generate_param("%", argCount);
 
+
+					if (token == LEX_NUMBER){
+						instr2.type = I; //integer
+						instr2.value.i = atoi(gToken.data.str);
+						insert_item(ilist, &instr_type, &instr1, &instr2, &instr3);
+
+					}
+					else if (token == LEX_REAL_NUMBER){
+						instr2.type = F; //float
+						instr2.value.f = atof(gToken.data.str);
+						insert_item(ilist, &instr_type, &instr1, &instr2, &instr3);
+					}
+					else if (token == LEX_STRING){
+						instr2.type = S; //string
+						instr2.value.s = gToken.data.str;
+						insert_item(ilist, &instr_type, &instr1, &instr2, &instr3);
+					}
+					else if (token == LEX_ID){
+						if ((local_map_get_pointer_to_key(localMap, gToken.data.str)) == NULL){
+							//fprintf(stderr, "Semanticka chyba, promenna %s neni definovana, radek %d\n", gToken.data.str, gToken.row);
+							instruction_exit(SEM_ERR);
+							return SEM_ERR;
+						}
+						else {
+							instr2.type = LF; //string
+							instr2.value.s = gToken.data.str;
+							insert_item(ilist, &instr_type, &instr1, &instr2, &instr3);
+						}
+					}
+			}
 			
 			token = getToken();
 			if(!error_lex()){
@@ -461,53 +463,55 @@ int term_list(bool zavorka){
 			if ( (result = check_length_substr_ord_build_in()) != SUCCESS) return result;
 			if ( (result = check_chr_build_in()) != SUCCESS) return result;
 
-			instr_type = INSTRUCT_DEFVAR;
-			instr1.type = TF;
-			instr1.value.s = generate_param("%", argCount);
+			// if (!in_print){
+					instr_type = INSTRUCT_DEFVAR;
+					instr1.type = TF;
+					instr1.value.s = generate_param("%", argCount);
 
 
-			insert_item(ilist, &instr_type, &instr1, &instr2, &instr3);
-			instr_type = INSTRUCT_MOVE;
-			instr1.type = TF;
-			instr1.value.s = generate_param("%", argCount);
-
-
-			if (token == LEX_NUMBER){
-				instr2.type = I; //integer
-				instr2.value.i = atoi(gToken.data.str);
-				insert_item(ilist, &instr_type, &instr1, &instr2, &instr3);
-
-			}
-			else if (token == LEX_REAL_NUMBER){
-				instr2.type = F; //float
-				instr2.value.f = atof(gToken.data.str);
-				insert_item(ilist, &instr_type, &instr1, &instr2, &instr3);
-			}
-			else if (token == LEX_STRING){
-				instr2.type = S; //string
-				instr2.value.s = gToken.data.str;
-				insert_item(ilist, &instr_type, &instr1, &instr2, &instr3);
-			}
-			else if (token == LEX_ID){
-				if (!local_map_contain(localMap, gToken.data.str)){
-					//fprintf(stderr, "Semanticka chyba, promenna %s neni definovana, radek %d\n", gToken.data.str, gToken.row);
-					instruction_exit(SEM_ERR);
-					return SEM_ERR;
-				}
-				else if (is_LF){
-					gData = global_map_get_value(gMap, function_name);
-					if (!local_map_contain(gData.lMap, gToken.data.str)){
-						instruction_exit(SEM_ERR);
-						return SEM_ERR;
-					}
-				}
-				else {
-					instr2.type = LF; //string
-					instr2.value.s = gToken.data.str;
 					insert_item(ilist, &instr_type, &instr1, &instr2, &instr3);
-				}
-			}
+					instr_type = INSTRUCT_MOVE;
+					instr1.type = TF;
+					instr1.value.s = generate_param("%", argCount);
 
+
+					if (token == LEX_NUMBER){
+						instr2.type = I; //integer
+						instr2.value.i = atoi(gToken.data.str);
+						insert_item(ilist, &instr_type, &instr1, &instr2, &instr3);
+
+					}
+					else if (token == LEX_REAL_NUMBER){
+						instr2.type = F; //float
+						instr2.value.f = atof(gToken.data.str);
+						insert_item(ilist, &instr_type, &instr1, &instr2, &instr3);
+					}
+					else if (token == LEX_STRING){
+						instr2.type = S; //string
+						instr2.value.s = gToken.data.str;
+						insert_item(ilist, &instr_type, &instr1, &instr2, &instr3);
+					}
+					else if (token == LEX_ID){
+						if (!local_map_contain(localMap, gToken.data.str)){
+							//fprintf(stderr, "Semanticka chyba, promenna %s neni definovana, radek %d\n", gToken.data.str, gToken.row);
+							instruction_exit(SEM_ERR);
+							return SEM_ERR;
+						}
+						else if (is_LF){
+							gData = global_map_get_value(gMap, function_name);
+							if (!local_map_contain(gData.lMap, gToken.data.str)){
+								instruction_exit(SEM_ERR);
+								return SEM_ERR;
+							}
+						}
+						else {
+							instr2.type = LF; //string
+							instr2.value.s = gToken.data.str;
+							insert_item(ilist, &instr_type, &instr1, &instr2, &instr3);
+						}
+					}
+
+			// }
 			// zvetsit pocet argumentu
 			argCount++;
 
@@ -607,12 +611,11 @@ int check_input(){
 		// prirazeni typu promenne
 	}
 	else if ( (strcmp(call_name, "inputf") == 0 ) ) {
-
-		// TODO
 		if (local_map_contain(localMap, variable_name)) { instr1.type = LF;}
 		else {instr1.type = LF;}
 
-		lData.type = FLOAT;
+		//lData.type = FLOAT;
+		lData.type = NONE;
 		local_map_put(localMap, variable_name, lData);
 
 		instr1.value.s = variable_name;
@@ -620,11 +623,11 @@ int check_input(){
 		insert_item(ilist, &instr_type, &instr1, &instr2, &instr3);
 	}
 	else if ( (strcmp(call_name, "inputs") == 0 ) ) {
-		// TODO
 		if (local_map_contain(localMap, variable_name)) { instr1.type = LF;}
 		else {instr1.type = LF;}
 
-		lData.type = STRING;
+		//lData.type = STRING;
+		lData.type = NONE;
 		local_map_put(localMap, variable_name, lData);
 
 		instr1.value.s = variable_name;
@@ -738,9 +741,6 @@ int sth(){
 
 							result = check_input();
 							if (!result) {
-								// instr_type = INSTRUCT_PUSHFRAME;
-								// instr1.type = EMPTY;
-								// insert_item(ilist, &instr_type, &instr1, &instr2, &instr3);
 
 								// instrukce pro volani funkce
 
@@ -765,14 +765,6 @@ int sth(){
 								gData = global_map_get_value(gMap, call_name);
 								lData.type = gData.returnType;
 								local_map_put(localMap, variable_name, lData);
-
-								// TODO
-
-
-								// POPFRAME
-
-								// instr_type = INSTRUCT_POPFRAME;
-								// insert_item(ilist, &instr_type, &instr1, &instr2, &instr3);
 							}
 
 
@@ -819,10 +811,6 @@ int sth(){
 
 									result = check_input();
 									if (!result){
-											// instr_type = INSTRUCT_PUSHFRAME;
-											// instr1.type = EMPTY;
-											// insert_item(ilist, &instr_type, &instr1, &instr2, &instr3);
-
 											// instrukce pro volani funkce
 
 											instr_type = INSTRUCT_CALL;
@@ -841,12 +829,6 @@ int sth(){
 											instr2.type = TF;
 											instr2.value.s = "%retval";
 											insert_item(ilist, &instr_type, &instr1, &instr2, &instr3);
-
-
-											// POPFRAME
-
-											// instr_type = INSTRUCT_POPFRAME;
-											// insert_item(ilist, &instr_type, &instr1, &instr2, &instr3);
 									}
 									token = getToken();
 									if(!error_lex()){
@@ -885,11 +867,6 @@ int sth(){
 									// pro dalsi volani funkce
 									argCount = 0;
 
-
-									// instr_type = INSTRUCT_PUSHFRAME;
-									// instr1.type = EMPTY;
-									// insert_item(ilist, &instr_type, &instr1, &instr2, &instr3);
-
 									// instrukce pro volani funkce
 
 									instr_type = INSTRUCT_CALL;
@@ -908,13 +885,6 @@ int sth(){
 									instr2.type = TF;
 									instr2.value.s = "%retval";
 									insert_item(ilist, &instr_type, &instr1, &instr2, &instr3);
-
-
-									// POPFRAME
-
-									// instr_type = INSTRUCT_POPFRAME;
-									// insert_item(ilist, &instr_type, &instr1, &instr2, &instr3);
-
 
 									return SUCCESS;
 								break;
@@ -1058,22 +1028,11 @@ int sth(){
 						// pro dalsi volani funkce
 						argCount = 0;
 
-
-						// instr_type = INSTRUCT_PUSHFRAME;
-						// instr1.type = EMPTY;
-						// insert_item(ilist, &instr_type, &instr1, &instr2, &instr3);
-
-
 						instr_type = INSTRUCT_CALL;
 						instr1.type = FCE;
 						instr1.value.s = call_name;
 
 						insert_item(ilist, &instr_type, &instr1, &instr2, &instr3);
-
-						// POPFRAME
-
-						// instr_type = INSTRUCT_POPFRAME;
-						// insert_item(ilist, &instr_type, &instr1, &instr2, &instr3);
 
 
 						token = getToken();
@@ -1217,6 +1176,9 @@ int stat(){
 		break;
 
 		case KW_PRINT:
+
+			in_print = true;
+
 			argCount = 0;
 
 			token = getToken();
@@ -1243,6 +1205,9 @@ int stat(){
 
 					//volane term_list()
 					zavorka = true;
+
+					instr_type = INSTRUCT_CREATEFREAME;
+					insert_item(ilist, &instr_type, &instr1, &instr2, &instr3);
 
 					result = term_list(zavorka);
 					if(result != SUCCESS){
@@ -1279,6 +1244,10 @@ int stat(){
 
 					//volane term_list()
 					zavorka = false;
+					
+					instr_type = INSTRUCT_CREATEFREAME;
+					insert_item(ilist, &instr_type, &instr1, &instr2, &instr3);
+
 					result = term_list(zavorka);
 					if(result != SUCCESS){
 						return result;
@@ -1302,6 +1271,8 @@ int stat(){
 					instruction_exit(ERR_PARAMS_COUNT);
 					return ERR_PARAMS_COUNT;
 			}
+
+			in_print = false;
 
 
 		break;
@@ -1782,24 +1753,18 @@ int pm_list2(){
 				local_map_put(gData.lMap, gToken.data.str, lData);
 			}
 
-			instr_type = INSTRUCT_DEFVAR;
-			instr1.type = LF;
-			instr1.value.s = generate_param("$param", paramCount);
-			insert_item(ilist,&instr_type, &instr1, &instr2, &instr3 );
+				instr_type = INSTRUCT_DEFVAR;
+				instr1.type = LF;
+				instr1.value.s = gToken.data.str;
+				insert_item(ilist,&instr_type, &instr1, &instr2, &instr3 );
 
-			instr_type = INSTRUCT_MOVE;
-			instr1.type = LF;
-			instr1.value.s = generate_param("$param", paramCount);
-			instr2.type = LF;
-			instr2.value.s = generate_param("%", argCount);
-			insert_item(ilist,&instr_type, &instr1, &instr2, &instr3 );
 
-			// instr_type = INSTRUCT_MOVE;
-			// instr1.type = LF;
-			// instr1.value.s = gToken.data.str;
-			// instr2.type = LF;
-			// instr2.value.s = generate_param("$param", argCount);
-			// insert_item(ilist,&instr_type, &instr1, &instr2, &instr3 );
+				instr_type = INSTRUCT_MOVE;
+				instr1.type = LF;
+				instr1.value.s = gToken.data.str;
+				instr2.type = LF;
+				instr2.value.s = generate_param("%", argCount);
+				insert_item(ilist,&instr_type, &instr1, &instr2, &instr3 );
 
 			// + jeden parametr
 			paramCount++;
@@ -1858,22 +1823,16 @@ int pm_list(){
 
 		instr_type = INSTRUCT_DEFVAR;
 		instr1.type = LF;
-		instr1.value.s = generate_param("$param", paramCount);
+		instr1.value.s = gToken.data.str;
 		insert_item(ilist,&instr_type, &instr1, &instr2, &instr3 );
+
 
 		instr_type = INSTRUCT_MOVE;
 		instr1.type = LF;
-		instr1.value.s = generate_param("$param", paramCount);
+		instr1.value.s = gToken.data.str;
 		instr2.type = LF;
 		instr2.value.s = generate_param("%", argCount);
 		insert_item(ilist,&instr_type, &instr1, &instr2, &instr3 );
-
-		// instr_type = INSTRUCT_MOVE;
-		// instr1.type = LF;
-		// instr1.value.s = gToken.data.str;
-		// instr2.type = LF;
-		// instr2.value.s = generate_param("$param", argCount);
-		// insert_item(ilist,&instr_type, &instr1, &instr2, &instr3 );
 
 
 		paramCount++;
