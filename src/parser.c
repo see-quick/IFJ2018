@@ -664,6 +664,12 @@ int sth(){
 				tmp = global_map_get_pointer_to_value(gMap, gToken.data.str);
 				if (tmp == NULL){
 					// neni funkce
+					if (!is_LF){
+						if (!local_map_contain(localMap, gToken.data.str)){
+								instruction_exit(SEM_ERR);
+								return SEM_ERR;
+						}
+					}
 
 
 					// if ( (local_map_get_pointer_to_value(localMap, gToken.data.str)) == NULL){
@@ -1174,6 +1180,7 @@ int stat(){
 
 			return SUCCESS;
 		break;
+
 
 		case KW_PRINT:
 
