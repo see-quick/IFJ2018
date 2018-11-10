@@ -52,7 +52,7 @@ elif [[ ! -z "$1" && ! -z "$2" ]]; then
       testtype=${testfile:0:6} #extrakt nazvu testu
 
       if [ "$testtype" == "error1" ]; then  #vsetky testy obsahujuce chybu maju na zaciatku error. error1->chyba v programu v rámci lexikální analýzy (chybná struktura aktuálního lexému).
-        timeout 3 $prog < $testpath/$currentdir/$testfile > /dev/null 2>&1  #presmerovanie vystupu lexeru
+        timeout 1 $prog < $testpath/$currentdir/$testfile > /dev/null 2>&1  #presmerovanie vystupu lexeru
         retval=$(echo $?)
         if [ "$retval" -eq "124" ]; then
             echo "${red}[TEST FAILED]${reset} Program got stucked killed process after 3 sec"
@@ -67,7 +67,7 @@ elif [[ ! -z "$1" && ! -z "$2" ]]; then
         fi
       ##### Syntax tests  #####
       elif [ "$testtype" == "error2" ]; then #testy oznacene error2 --> chyba v programu v rámci syntaktické analýzy (chybná syntaxe programu).
-        timeout 3 $prog < $testpath/$currentdir/$testfile > /dev/null 2>&1
+        timeout 1 $prog < $testpath/$currentdir/$testfile > /dev/null 2>&1
         ##retval=$(echo $?)
 
         retval=`echo $?`
@@ -86,7 +86,7 @@ elif [[ ! -z "$1" && ! -z "$2" ]]; then
         fi
       ##### Semantic tests  #####
       elif [ "$testtype" == "error3" ]; then #testy oznacene error3 --> sémantická chyba v programu – nedefinovaná funkce/proměnná, pokus o redefinici funkce/proměnné, atp
-        timeout 3 $prog < $testpath/$currentdir/$testfile > /dev/null 2>&1
+        timeout 1 $prog < $testpath/$currentdir/$testfile > /dev/null 2>&1
         retval=$(echo $?)
         if [ "$retval" -eq "124" ]; then
             echo "${red}[TEST FAILED]${reset} Program got stucked killed process after 3 sec"
@@ -101,7 +101,7 @@ elif [[ ! -z "$1" && ! -z "$2" ]]; then
         fi
       ##### Semantic tests of type compability  #####
     elif [ "$testtype" == "error4" ]; then #testy oznacene error4 --> sémantická/běhová chyba typové kompatibility v aritmetických, řetězcových a relačních výrazech.
-      timeout 3 $prog < $testpath/$currentdir/$testfile > /dev/null 2>&1
+      timeout 1 $prog < $testpath/$currentdir/$testfile > /dev/null 2>&1
       retval=$(echo $?)
       if [ "$retval" -eq "124" ]; then
           echo "${red}[TEST FAILED]${reset} Program got stucked killed process after 3 sec"
@@ -115,7 +115,7 @@ elif [[ ! -z "$1" && ! -z "$2" ]]; then
         echo "  expected return value = 4. Returned value = $retval"
       fi
       elif [ "$testtype" == "error5" ]; then #error5 -> sémantická chyba v programu – špatný počet parametrů u volání funkce.
-        timeout 3 $prog < $testpath/$currentdir/$testfile > /dev/null 2>&1
+        timeout 1 $prog < $testpath/$currentdir/$testfile > /dev/null 2>&1
         retval=$(echo $?)
         if [ "$retval" -eq "124" ]; then
             echo "${red}[TEST FAILED]${reset} Program got stucked killed process after 3 sec"
@@ -129,7 +129,7 @@ elif [[ ! -z "$1" && ! -z "$2" ]]; then
           echo "  expected return value = 5. Returned value = $retval"
         fi
       elif [ "$testtype" == "error6" ]; then #error6 -> ostatní sémantické chyby
-        timeout 3 $prog < $testpath/$currentdir/$testfile > /dev/null 2>&1
+        timeout 1 $prog < $testpath/$currentdir/$testfile > /dev/null 2>&1
         retval=$(echo $?)
         if [ "$retval" -eq "124" ]; then
             echo "${red}[TEST FAILED]${reset} Program got stucked killed process after 3 sec"
@@ -144,7 +144,7 @@ elif [[ ! -z "$1" && ! -z "$2" ]]; then
         fi
       ##### Zero division #####
       elif [ "$testtype" == "error9" ]; then #error9 -> běhová chyba dělení nulou.
-        timeout 3 $prog < $testpath/$currentdir/$testfile > /dev/null 2>&1
+        timeout 1 $prog < $testpath/$currentdir/$testfile > /dev/null 2>&1
         retval=$(echo $?)
         if [ "$retval" -eq "124" ]; then
             echo "${red}[TEST FAILED]${reset} Program got stucked killed process after 3 sec"
@@ -159,7 +159,7 @@ elif [[ ! -z "$1" && ! -z "$2" ]]; then
         fi
       ##### internal error  #####
     elif [ "$testtype" == "error99" ]; then #error99 -> interní chyba překladače tj. neovlivněná vstupním programem (např. chyba alokace paměti, atd.).
-      timeout 3 $prog < $testpath/$currentdir/$testfile > /dev/null 2>&1
+      timeout 1 $prog < $testpath/$currentdir/$testfile > /dev/null 2>&1
       retval=$(echo $?)
       if [ "$retval" -eq "124" ]; then
           echo "${red}[TEST FAILED]${reset} Program got stucked killed process after 3 sec"
@@ -174,7 +174,7 @@ elif [[ ! -z "$1" && ! -z "$2" ]]; then
       fi
       ##### Success #####
       else
-        timeout 3  $prog < $testpath/$currentdir/$testfile > /dev/null 2>&1
+        timeout 1  $prog < $testpath/$currentdir/$testfile > /dev/null 2>&1
         retval=$(echo $?)
         if [ "$retval" -eq "124" ]; then
             echo "${red}[TEST FAILED]${reset} Program got stucked killed process after 3 sec"

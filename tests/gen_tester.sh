@@ -21,7 +21,7 @@ usage() {
   echo  "Options:"
   echo  "        -h --help display this information."
   echo  "        -s for silent run -> interpret errors will be displayed"
-  echo  "        -n and no output files will be generated"
+  echo  "        -n no Output files will be generated"
   echo  "        -e to run only test for generation code from prece.c"
   echo  "        -g to run test with input and output in code gen(inptuf,inputi...)"
   exit 1
@@ -75,20 +75,20 @@ function testRunner() {
       testtype=${testfile:0:5} #extrakt nazvu testu
 
       if [ "$testtype" != "error" ]; then  #all tests without name error should return value of 0
-        timeout 3 ../src/ifj < $testpath/$currentdir/$testfile 2>/dev/null > test.code
+        timeout 1 ../src/ifj < $testpath/$currentdir/$testfile 2>/dev/null > test.code
         retvalIFJ=$(echo $?)
 
         testname="$testfile.out"  #creating output file by testname
         if [[ "$filegen" == "-n" ]]; then
           :
         else
-           touch codeGenData/$testname
+          touch codeGenData/$testname
         fi
 
         if [[ "$silent" == "-s" ]]; then
-          timeout 3 sudo ./ic18int test.code > /dev/null 2>&1
+          timeout 1 sudo ./ic18int test.code > /dev/null 2>&1
         else
-          timeout 3 sudo ./ic18int test.code
+          timeout 1 sudo ./ic18int test.code
         fi
         retval=$(echo $?)
         if [ "$retval" -eq "124" ]; then
@@ -139,18 +139,19 @@ for ((n=0; n<$lines;n++)); do #loop over test dir
     filetypeOUT=${filetypeOUT:0:3}
     filetypeOUT=$(echo $filetypeOUT | rev)
 
-    if [ "$testtype" != "error" ] && [ "$filetypeIN" == "18" ] && [ "$filetypeOUT" == "j18" ]; then  #all tests without name error should return value of 0 + exclude .in and .out files
+
+    if [ "$filetypeIN" == "18" ] && [ "$filetypeOUT" == "j18" ]; then  #all tests without name error should return value of 0 + exclude .in and .out files
       testCheck=$(echo $testfile | rev)
       testCheck=${testCheck:0:2}
       if [ "$testCheck" != "ni" ] || [ "$testCheck" != "tu" ]; then
 
-        timeout 3 ../src/ifj < $testpath/$currentdir/$testfile 2>/dev/null > test.code
+        timeout 1 ../src/ifj < $testpath/$currentdir/$testfile 2>/dev/null > test.code
         retvalIFJ=$(echo $?)
 
         infile="$testfile.in"
         outfile="$testfile.out"
 
-        timeout 3 sudo ./ic18int test.code < $testpath/$currentdir/$infile > $tmpout
+        timeout 1 sudo ./ic18int test.code < $testpath/$currentdir/$infile > $tmpout
         retval=$(echo $?)
         if [ "$retval" -eq "124" ]; then
           echo "${red}[TEST FAILED]${reset} Program got stucked killed process after 3 sec"
