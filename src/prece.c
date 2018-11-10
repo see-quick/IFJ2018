@@ -1310,13 +1310,13 @@ expr_return parse_expr(LocalMap* lMap, tList* list, bool is_bool){
                                 } else {
                                     //fprintf(stderr, "Semanticka chyba typové kompatibility v aritmetických vyrazech, radek %d\n", gToken.row);
                                     resultOfPrece.result = ERR_INCOMPATIBLE_TYPE;
-                                    resultOfPrece.bool_result = true;
+                                    resultOfPrece.bool_result = false;
                                     //instruction_exit(ERR_INCOMPATIBLE_TYPE);
                                     return resultOfPrece;
                                 }
                             } else {
                                 resultOfPrece.result = SYN_ERR;
-                                resultOfPrece.bool_result = true;
+                                resultOfPrece.bool_result = false;
                                 //instruction_exit(SYN_ERR);
                                 return resultOfPrece;
                             }
@@ -1504,13 +1504,13 @@ expr_return parse_expr(LocalMap* lMap, tList* list, bool is_bool){
                                 } else {
                                     //fprintf(stderr, "Semanticka chyba typové kompatibility v aritmetických vyrazech, radek %d\n", gToken.row);
                                     resultOfPrece.result = ERR_INCOMPATIBLE_TYPE;
-                                    resultOfPrece.bool_result = true;
+                                     resultOfPrece.bool_result = false;
                                     //instruction_exit(ERR_INCOMPATIBLE_TYPE);
                                     return resultOfPrece;
                                 }
                             } else {
                                 resultOfPrece.result = SYN_ERR;
-                                resultOfPrece.bool_result = true;
+                                resultOfPrece.bool_result = false;
                                 //instruction_exit(SYN_ERR);
                                 return resultOfPrece;
                             }
@@ -1744,13 +1744,13 @@ expr_return parse_expr(LocalMap* lMap, tList* list, bool is_bool){
                                 } else {
                                     //fprintf(stderr, "Semanticka chyba typové kompatibility v aritmetických vyrazech, radek %d\n", gToken.row);
                                     resultOfPrece.result = ERR_INCOMPATIBLE_TYPE;
-                                    resultOfPrece.bool_result = true;
+                                    resultOfPrece.bool_result = false;
                                     //instruction_exit(ERR_INCOMPATIBLE_TYPE);
                                     return resultOfPrece;
                                 }
                             } else {
                                 resultOfPrece.result = SYN_ERR;
-                                resultOfPrece.bool_result = true;
+                                resultOfPrece.bool_result = false;
                                 //instruction_exit(SYN_ERR);
                                 return resultOfPrece;
                             }
@@ -1982,13 +1982,13 @@ expr_return parse_expr(LocalMap* lMap, tList* list, bool is_bool){
                                 } else {
                                     //fprintf(stderr, "Semanticka chyba typové kompatibility v aritmetických vyrazech, radek %d\n", gToken.row);
                                     resultOfPrece.result = ERR_INCOMPATIBLE_TYPE;
-                                    resultOfPrece.bool_result = true;
+                                    resultOfPrece.bool_result = false;
                                     //instruction_exit(ERR_INCOMPATIBLE_TYPE);
                                     return resultOfPrece;
                                 }
                             } else {
                                 resultOfPrece.result = SYN_ERR;
-                                resultOfPrece.bool_result = true;
+                                resultOfPrece.bool_result = false;
                                 //instruction_exit(SYN_ERR);
                                 return resultOfPrece;
                             }
@@ -2143,13 +2143,13 @@ expr_return parse_expr(LocalMap* lMap, tList* list, bool is_bool){
                                 } else {
                                     //fprintf(stderr, "Semanticka chyba typové kompatibility v aritmetických vyrazech, radek %d\n", gToken.row);
                                     resultOfPrece.result = ERR_INCOMPATIBLE_TYPE;
-                                    resultOfPrece.bool_result = true;
+                                    resultOfPrece.bool_result = false;
                                     //instruction_exit(ERR_INCOMPATIBLE_TYPE);
                                     return resultOfPrece;
                                 }
                             } else {
                                 resultOfPrece.result = SYN_ERR;
-                                resultOfPrece.bool_result = true;
+                                resultOfPrece.bool_result = false;
                                 //instruction_exit(SYN_ERR);
                                 return resultOfPrece;
                             }
@@ -2321,13 +2321,13 @@ expr_return parse_expr(LocalMap* lMap, tList* list, bool is_bool){
                                 } else {
                                     //fprintf(stderr, "Semanticka chyba typové kompatibility v aritmetických vyrazech, radek %d\n", gToken.row);
                                     resultOfPrece.result = ERR_INCOMPATIBLE_TYPE;
-                                    resultOfPrece.bool_result = true;
+                                    resultOfPrece.bool_result = false;
                                     //instruction_exit(ERR_INCOMPATIBLE_TYPE);
                                     return resultOfPrece;
                                 }
                             } else {
                                 resultOfPrece.result = SYN_ERR;
-                                resultOfPrece.bool_result = true;
+                                resultOfPrece.bool_result = false;
                                 //instruction_exit(SYN_ERR);
 
                                 return resultOfPrece;
