@@ -70,7 +70,10 @@ int main() {
 
 
   result = parse(globalMap, list);
-  instruction_exit(result);
+  if (result == SUCCESS){
+      instruction_exit(result);
+  }
+
 
   // if(result == SUCCESS) {
 

@@ -35,7 +35,8 @@ char *call_name;
 bool in_while = false;
 int while_counter = 0;
 int function_counter = 0;
-bool in_print = false;
+int return_type = -1;
+
 
 /*********************************************************************/
 /*LOKALNI TABULKA SYMBOLU*/
@@ -169,7 +170,6 @@ int term(void){
 
 			if ( (result = check_substr_ord_build_in(argCount)) != SUCCESS) return result;
 
-			if (!in_print){
 					instr_type = INSTRUCT_DEFVAR;
 					instr1.type = TF;
 					instr1.value.s = generate_param("%", argCount);
@@ -208,7 +208,6 @@ int term(void){
 							insert_item(ilist, &instr_type, &instr1, &instr2, &instr3);
 						}
 					}
-			}
 			
 			token = getToken();
 			if(!error_lex()){
@@ -463,7 +462,6 @@ int term_list(bool zavorka){
 			if ( (result = check_length_substr_ord_build_in()) != SUCCESS) return result;
 			if ( (result = check_chr_build_in()) != SUCCESS) return result;
 
-			// if (!in_print){
 					instr_type = INSTRUCT_DEFVAR;
 					instr1.type = TF;
 					instr1.value.s = generate_param("%", argCount);
@@ -511,7 +509,6 @@ int term_list(bool zavorka){
 						}
 					}
 
-			// }
 			// zvetsit pocet argumentu
 			argCount++;
 
@@ -574,7 +571,6 @@ int move_value(expr_return res){
 
 	lData.type = res.data_type;
 	if (is_LF){
-		//printf("Move in function %s, promenna je %s\n", function_name, variable_name);
 		gData = global_map_get_value(gMap, function_name);
 		local_map_put(gData.lMap, variable_name, lData);
 	}
@@ -671,61 +667,39 @@ int sth(){
 						}
 					}
 
+					instr_type = INSTRUCT_MOVE;
+					instr1.type = GF;
+					instr1.value.s = "$result\0";
+					instr2.type = LF;
+					instr2.value.s = gToken.data.str;
+					insert_item(ilist, &instr_type, &instr1, &instr2, &instr3);
 
-					// if ( (local_map_get_pointer_to_value(localMap, gToken.data.str)) == NULL){
-					// 	printf("tady\n");
-					// 	//fprintf(stderr, "Semanticka chyba, funkce nebo promenna %s neni definovana, radek %d\n", gToken.data.str, gToken.row);
-					// 	instruction_exit(SEM_ERR);
-					// 	return SEM_ERR;
-					// }
-					// else{
-						
-						if (is_LF){
-							instr_type = INSTRUCT_MOVE;
-							instr1.type = GF;
-							instr1.value.s = "$result\0";
-							instr2.type = LF;
-							instr2.value.s =  "$param1";
-							insert_item(ilist, &instr_type, &instr1, &instr2, &instr3);
-						}
-						else {
-							instr_type = INSTRUCT_MOVE;
-							instr1.type = GF;
-							instr1.value.s = "$result\0";
-							instr2.type = LF;
-							instr2.value.s = gToken.data.str;
-							insert_item(ilist, &instr_type, &instr1, &instr2, &instr3);
+					// je to promenna prirazenu typu a = b
+					res = parse_expr(localMap, ilist, false);
+					result = res.result;
+					if (is_LF) return_type = res.data_type;
 
-						}
+					if (res.bool_result && res.result != SUCCESS){
+						instruction_exit(ERR_SEMANTIC);
+						return ERR_SEMANTIC;
+					}
 
+					if (result == SUCCESS){
+						move_value(res);
+					}
+					// to muze byt funkce
+					
+					else {
+						instruction_exit(result);
+						return result;
+					}
 
-						// je to promenna prirazenu typu a = b
-						res = parse_expr(localMap, ilist, false);
-						result = res.result;
-
-						if (res.bool_result && res.result != SUCCESS){
-							instruction_exit(ERR_SEMANTIC);
-							return ERR_SEMANTIC;
-						}
-
-						if (result == SUCCESS){
-							move_value(res);
-						}
-						// to muze byt funkce
-						
-						else {
-							instruction_exit(result);
-							return result;
-						}
-
-						// cokoliv jineho syntakticka chyba
-						if (token != LEX_EOL){
-							//fprintf(stderr, "Syntakticka chyba, ocekavano 'eol' na radku %d\n", gToken.row);
-							instruction_exit(SYN_ERR);
-							return SYN_ERR;
-						}
-
-					// }
+					// cokoliv jineho syntakticka chyba
+					if (token != LEX_EOL){
+						//fprintf(stderr, "Syntakticka chyba, ocekavano 'eol' na radku %d\n", gToken.row);
+						instruction_exit(SYN_ERR);
+						return SYN_ERR;
+					}
 						
 				}
 				else{
@@ -916,7 +890,6 @@ int sth(){
 		//pokud neni token LEX_ID_F, prozenem to precedencni SA
 		default:
 
-
 			if (token == LEX_SUBSTRACTION){
 				instruction_exit(ERROR_LEX);
 				return ERROR_LEX;
@@ -949,6 +922,8 @@ int sth(){
 
 			res = parse_expr(localMap, ilist, false);
 			result = res.result;
+
+			if (is_LF) return_type = res.data_type;
 
 
 			if(res.bool_result && res.result != SUCCESS){
@@ -1093,12 +1068,16 @@ int sth(){
 int stat(){
 	int result = SUCCESS;
 	expr_return res;
+
+	tDataFunction * tmp;
+	(void) tmp;
+
 	switch(token){
 		//<STAT> -> id = <STH>
 		case LEX_ID:
 			variable_name = gToken.data.str;
 
-			//dalsi musi byt '='
+			//dalsi musi byt '=' nebo EOL
 			token = getToken();
 			if(!error_lex()){
 				instruction_exit(ERROR_LEX);
@@ -1108,84 +1087,157 @@ int stat(){
 				return INT_ERR;
 			}
 
-			if(!checkTokenType(LEX_EQUAL)){
-				//fprintf(stderr, "Ocekavano '=' na radku %d\n", gToken.row);
-				instruction_exit(SYN_ERR);
-				return SYN_ERR;
-			}
+			switch(token){
+				case LEX_EQUAL:
+						if (global_map_contain(gMap, variable_name)){
+							//fprintf(stderr, "Semanticka chyba na radku %d, existuje promenna se stejnym jmenem \n", gToken.row);
+							instruction_exit(SEM_ERR);
+							return SEM_ERR;
+						}
 
-			if (global_map_contain(gMap, variable_name)){
-				//fprintf(stderr, "Semanticka chyba na radku %d, existuje promenna se stejnym jmenem \n", gToken.row);
-				instruction_exit(SEM_ERR);
-				return SEM_ERR;
-			}
+						if (is_LF){
+							gData = global_map_get_value(gMap, function_name);
+							if (!local_map_contain(gData.lMap, variable_name) && !(local_map_contain(localMap, variable_name))){
+								lData.defined = 1;
+								lData.value.nil = true;
+								lData.type = 500;
 
-			if (is_LF){
-				gData = global_map_get_value(gMap, function_name);
-				if (!local_map_contain(gData.lMap, variable_name) && !(local_map_contain(localMap, variable_name))){
-					lData.defined = 1;
-					lData.value.nil = true;
-					lData.type = 500;
+								local_map_put(gData.lMap, variable_name, lData);
 
-					local_map_put(gData.lMap, variable_name, lData);
+								instr_type = INSTRUCT_DEFVAR;
+								instr1.type = LF;
 
-					instr_type = INSTRUCT_DEFVAR;
-					instr1.type = LF;
+								instr1.value.s = variable_name; // nazev promenne
+								if (in_while) insert_item(variables_list, &instr_type, &instr1, &instr2, &instr3);
+								else {insert_item(ilist, &instr_type, &instr1, &instr2, &instr3);}
+							}
+						}
+						else {
+							if ( !local_map_contain(localMap, variable_name) ){
+								// ulozeni promenne do lokalni mapy, hodnota nil, typ nil
+								lData.defined = 1;
+								lData.value.nil = true;
+								lData.type = 500; // typ nil - NONE
 
-					instr1.value.s = variable_name; // nazev promenne
-					if (in_while) insert_item(variables_list, &instr_type, &instr1, &instr2, &instr3);
-					else {insert_item(ilist, &instr_type, &instr1, &instr2, &instr3);}
+
+								// nazev promenne ziskame z list pro tokeny pomoci funkce DLCOPYFISRT
+								local_map_put(localMap, variable_name, lData);
+					
+
+								// generovani instrukce pro definice promenne s typem nil a hodnotou nil
+								instr_type = INSTRUCT_DEFVAR;
+								instr1.type = LF;
+
+								instr1.value.s = variable_name; // nazev promenne
+								if (in_while) insert_item(variables_list, &instr_type, &instr1, &instr2, &instr3);
+								else {insert_item(ilist, &instr_type, &instr1, &instr2, &instr3);}
+							
+							}
+						}
+						// jinak promenna je v lokalni mape, nebudeme ukladat promennou s typem none
+						
+						// nacteni dalsiho tokenu , musi byt  bud' identifikator nebo vyraz nebo funkce
+						token = getToken();
+						if(!error_lex()){
+							instruction_exit(ERROR_LEX);
+							return ERROR_LEX;
+						} else if (!error_int()){
+							instruction_exit(INT_ERR);
+							return INT_ERR;
+						}
+
+
+						// volani pravidla sth()
+						result = sth(localMap);
+
+						if(result != SUCCESS){
+							return result;
+						}
+
+				break;
+
+				case LEX_EOL:
+					if (!global_map_contain(gMap, variable_name)){
+						if (!local_map_contain(localMap, variable_name)){
+							if (is_LF){
+								gData = global_map_get_value(gMap, function_name);
+								if (!local_map_contain(gData.lMap, variable_name)){
+									instruction_exit(SEM_ERR);
+									return SEM_ERR;
+								}
+								else {
+									lData = local_map_get_value(gData.lMap, variable_name);
+									return_type = lData.type;
+								}
+							}
+							else {
+								instruction_exit(SEM_ERR);
+								return SEM_ERR;
+							}
+						}
+					// }else {
+					// 		// todo
+					// }
 				}
-			}
-			else {
-				if ( !local_map_contain(localMap, variable_name) ){
-					// ulozeni promenne do lokalni mapy, hodnota nil, typ nil
-					lData.defined = 1;
-					lData.value.nil = true;
-					lData.type = 500; // typ nil - NONE
+					
+				break;
 
-
-					// nazev promenne ziskame z list pro tokeny pomoci funkce DLCOPYFISRT
-					local_map_put(localMap, variable_name, lData);
-		
-
-					// generovani instrukce pro definice promenne s typem nil a hodnotou nil
-					instr_type = INSTRUCT_DEFVAR;
-					instr1.type = LF;
-
-					instr1.value.s = variable_name; // nazev promenne
-					if (in_while) insert_item(variables_list, &instr_type, &instr1, &instr2, &instr3);
-					else {insert_item(ilist, &instr_type, &instr1, &instr2, &instr3);}
-				
-				}
-			}
-			// jinak promenna je v lokalni mape, nebudeme ukladat promennou s typem none
-			
-			// nacteni dalsiho tokenu , musi byt  bud' identifikator nebo vyraz nebo funkce
-			token = getToken();
-			if(!error_lex()){
-				instruction_exit(ERROR_LEX);
-				return ERROR_LEX;
-			} else if (!error_int()){
-				instruction_exit(INT_ERR);
-				return INT_ERR;
-			}
-
-
-			// volani pravidla sth()
-			result = sth(localMap);
-
-			if(result != SUCCESS){
-				return result;
+				default:
+					instruction_exit(SYN_ERR);
+					return SYN_ERR;
 			}
 
 			return SUCCESS;
 		break;
 
 
-		case KW_PRINT:
+		case LEX_NUMBER:
+		case LEX_REAL_NUMBER:
+		case LEX_STRING:
 
-			in_print = true;
+			if (is_LF){
+					switch(token){
+						case LEX_NUMBER:
+							return_type = INTEGER;
+						break;
+						case LEX_REAL_NUMBER:
+							return_type = FLOAT;
+						break;
+						case LEX_STRING:
+							return_type = STRING;
+						break;
+				}
+			}
+
+			token = getToken();
+			if(!error_lex()){
+				instruction_exit(ERROR_LEX);
+				return ERROR_LEX;
+			} else if (!error_int()){
+				instruction_exit(INT_ERR);
+				return INT_ERR;
+			}
+
+			if (!checkTokenType(LEX_EOL)){
+				instruction_exit(SYN_ERR);
+				return SYN_ERR;
+			}
+
+			token = getToken();
+			if(!error_lex()){
+				instruction_exit(ERROR_LEX);
+				return ERROR_LEX;
+			} else if (!error_int()){
+				instruction_exit(INT_ERR);
+				return INT_ERR;
+			}
+
+			return SUCCESS;
+
+		break;
+
+
+		case KW_PRINT:
 
 			argCount = 0;
 
@@ -1280,8 +1332,7 @@ int stat(){
 					return ERR_PARAMS_COUNT;
 			}
 
-			in_print = false;
-
+			return SUCCESS;
 
 		break;
 
@@ -2044,37 +2095,19 @@ int func(){
 
 	// konec funkce
 
+	if (return_type != -1){
+		instr_type = INSTRUCT_MOVE;
+		instr1.type = LF;
+		instr1.value.s = "%retval";
+		instr2.type = GF;
+		instr2.value.s = "$result";
 
-	//ilist = position_of_main;
+		insert_item(ilist, &instr_type, &instr1, &instr2, &instr3);
+	}
 
-	// reverse(&(function_statements_list->first));
- //   	set_active(function_statements_list);
-
- //   	parse_instructions(function_statements_list);
-   //	printf("======\n");
-
- //   	is_LF = false;
-
-	// //append_list(ilist, function_statements_list);
-
-	// instr_type = INSTRUCT_CREATEFREAME;
-	// insert_item(ilist, &instr_type, &instr1, &instr2, &instr3);
-
-	// parse_instructions(ilist);
-
-	// printf("=======\n");
-
-	// is_LF = true;
-
-
-
-	instr_type = INSTRUCT_MOVE;
-	instr1.type = LF;
-	instr1.value.s = "%retval";
-	instr2.type = F;
-	instr2.value.f = 0.0;
-
-	insert_item(ilist, &instr_type, &instr1, &instr2, &instr3);
+	// ukladani typu navratove hodnoty do globalni mapy
+	gData.returnType = return_type;
+	global_map_put(gMap, function_name, gData);
 
 	instr_type = INSTRUCT_POPFRAME;
 	insert_item(ilist, &instr_type, &instr1, &instr2, &instr3);
