@@ -253,19 +253,32 @@ void generateLabelJumps(tList* list, int type){
     }
 }
 
-
+/**
+ * Generating float label
+ * @param list concrete list
+ */
 void generatingFloatLabel(tList* list){
     instr_type = INSTRUCT_LABEL;
     instr1.value.s = "ADD_float"; // SUB, MUL
     insert_item(list, &instr_type, &instr1, &instr2, &instr3);
 }
 
+/**
+ * Generating int label
+ * @param list concrete list
+ */
 void generatingIntLabel(tList* list){
     instr_type = INSTRUCT_LABEL;
     instr1.value.s = "ADD_int"; // SUB, MUL
     insert_item(list, &instr_type, &instr1, &instr2, &instr3);
 }
 
+/**
+ * Generating conversion int to float
+ * @param list concrete list
+ * @param stack concrete stack
+ * @param position position in stack +1 or +3 E -> E([1]) + E([3])
+ */
 void generatingIntToFloat(tList* list, tStack *stack, int position ){
     instr1.type = GF;
     instr1.value.s = "$result\0";
@@ -275,6 +288,9 @@ void generatingIntToFloat(tList* list, tStack *stack, int position ){
     insert_item(list, &instr_type, &instr1, &instr2, &instr3);
 }
 
+/*
+ * Function which will decide between type of instruction and then sets all ADD <var> <symb> <symb> and insert to the list
+ */
 void generatingConcreteInstruction(tList* list, tStack *stack, int type, char * instruction_type, int position){
     if (strcmp(instruction_type, "CONCAT") == 0){
         setFirstAndSecondVariableToGenerate(INSTRUCT_CONCAT);
@@ -306,6 +322,14 @@ void generatingConcreteInstruction(tList* list, tStack *stack, int type, char * 
     insert_item(list, &instr_type, &instr1, &instr2, &instr3);
 }
 
+/**
+ * Function which doing all job of generating
+ * @param list concrete list
+ * @param stack concrete stack
+ * @param type type -> I, S, F or NONE ?
+ * @param instruction_type ADD, SUB etc.
+ * @param position position in stack +1 or +3 E -> E([1]) + E([3])
+ */
 void generateInstructionForType(tList* list, tStack *stack, int type, char * instruction_type, int position){
     // this generating concrete type
     generateType(list);
