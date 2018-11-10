@@ -70,6 +70,7 @@ int main(int argc, char** argv) {
 
 
   result = parse(globalMap, list);
+  instruction_exit(result);
 
   // if(result == SUCCESS) {
 
