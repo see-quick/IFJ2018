@@ -282,8 +282,14 @@ void generatingIntLabel(tList* list){
 void generatingIntToFloat(tList* list, tStack *stack, int position ){
     instr1.type = GF;
     instr1.value.s = "$result\0";
-    instr2.type = LF;
-    instr2.value.s = stack->arrayOfItems[stack->finderOfParenthesis + position].nameOfTheVariable;
+    // v pripade ze sa je o prve spracovanie tak nechavame
+    if (isThirdVariable){
+        instr2.type = LF;
+        instr2.value.s = stack->arrayOfItems[stack->finderOfParenthesis + position].nameOfTheVariable;
+    }
+    else { instr2.type = I;
+        instr2.value.i = stack->arrayOfItems[stack->finderOfParenthesis + position].value.i;
+    }
     instr_type = INSTRUCT_INT2FLOAT;
     insert_item(list, &instr_type, &instr1, &instr2, &instr3);
 }
@@ -310,21 +316,32 @@ void generatingConcreteInstruction(tList* list, tStack *stack, int type, char * 
 
             if (isThirdVariable == true ){
                 instr3.type = LF;
-                instr3.value.s = stack->arrayOfItems[stack->finderOfParenthesis + 3].nameOfTheVariable;
+                instr3.value.s = stack->arrayOfItems[stack->finderOfParenthesis + position].nameOfTheVariable;
             }
             else { instr3.type = I;
-                instr3.value.i = stack->arrayOfItems[stack->finderOfParenthesis + 3].value.i;
+                instr3.value.i = stack->arrayOfItems[stack->finderOfParenthesis + position].value.i; // tady bude [+1], value.d, value.s ...
             }
-//            instr3.type = I;
-//            instr3.value.i = stack->arrayOfItems[stack->finderOfParenthesis + position].value.i; // tady bude [+1], value.d, value.s ...
             break;
         case S:
+            // TODO: for variables
             instr3.type = S;
             instr3.value.s = stack->arrayOfItems[stack->finderOfParenthesis + position].value.string.str; // tady bude [+1], value.d, value.s ...
             break;
         case F:
-            instr3.type = F;
-            instr3.value.f = stack->arrayOfItems[stack->finderOfParenthesis + position].value.f; // tady bude [+1], value.d, value.s ...
+            // ziskanie zo zasobnika zda je token premenna alebo nie v pripade ak ano tak nastavime isFirst alebo isThird na true...
+            if(stack->arrayOfItems[stack->finderOfParenthesis + 1].isVariable){ isFirstVariable = true;}
+            else{ isFirstVariable = false; }
+            if(stack->arrayOfItems[stack->finderOfParenthesis + 3].isVariable){ isThirdVariable = true; }
+            else{ isThirdVariable = false; }
+
+            // v pripade ze sa je o prve spracovanie tak nechavame
+            if (isThirdVariable){
+                instr3.type = LF;
+                instr3.value.s = stack->arrayOfItems[stack->finderOfParenthesis + 3].nameOfTheVariable;
+            }
+            else { instr3.type = I;
+                instr3.value.i = stack->arrayOfItems[stack->finderOfParenthesis + 3].value.i;   // tady bude [+1], value.d, value.s ...
+            }
             break;
         case N:
             //  todo
@@ -545,6 +562,7 @@ expr_return parse_expr(LocalMap* lMap, tList* list, bool is_bool){
                                         else if (stack->arrayOfItems[stack->finderOfParenthesis + 3].type == NONE){
 
                                         }
+                                    isFirstVariable = false;
                                     isThirdVariable = false;
                                 }
                                 else if (stack->arrayOfItems[stack->finderOfParenthesis + 3].type == NONE ){
@@ -559,6 +577,7 @@ expr_return parse_expr(LocalMap* lMap, tList* list, bool is_bool){
                                         }
                                         else if (stack->arrayOfItems[stack->finderOfParenthesis + 1].type == NONE){
                                         }
+                                    isFirstVariable = false;
                                     isThirdVariable = false;
                                 }
 
