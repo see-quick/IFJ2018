@@ -703,7 +703,7 @@ int sth(){
 						res = parse_expr(localMap, ilist, false);
 						result = res.result;
 
-						if (res.bool_result && res.result != SUCCESS){
+						if (res.bool_result && res.result != SUCCESS && res.result != ERR_INCOMPATIBLE_TYPE){
 							instruction_exit(ERR_SEMANTIC);
 							return ERR_SEMANTIC;
 						}
@@ -951,7 +951,7 @@ int sth(){
 			result = res.result;
 
 
-			if (res.bool_result && res.result != SUCCESS){
+			if(res.bool_result && res.result != SUCCESS && res.result != ERR_INCOMPATIBLE_TYPE){
 				instruction_exit(ERR_SEMANTIC);
 				return ERR_SEMANTIC;
 			}
