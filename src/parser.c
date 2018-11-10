@@ -664,6 +664,12 @@ int sth(){
 				tmp = global_map_get_pointer_to_value(gMap, gToken.data.str);
 				if (tmp == NULL){
 					// neni funkce
+					if (!is_LF){
+						if (!local_map_contain(localMap, gToken.data.str)){
+								instruction_exit(SEM_ERR);
+								return SEM_ERR;
+						}
+					}
 
 
 					// if ( (local_map_get_pointer_to_value(localMap, gToken.data.str)) == NULL){
@@ -697,7 +703,7 @@ int sth(){
 						res = parse_expr(localMap, ilist, false);
 						result = res.result;
 
-						if (res.bool_result){
+						if (res.bool_result && res.result != SUCCESS){
 							instruction_exit(ERR_SEMANTIC);
 							return ERR_SEMANTIC;
 						}
@@ -944,7 +950,8 @@ int sth(){
 			res = parse_expr(localMap, ilist, false);
 			result = res.result;
 
-			if (res.bool_result){
+
+			if (res.bool_result && res.result != SUCCESS){
 				instruction_exit(ERR_SEMANTIC);
 				return ERR_SEMANTIC;
 			}
@@ -1174,6 +1181,7 @@ int stat(){
 
 			return SUCCESS;
 		break;
+
 
 		case KW_PRINT:
 
@@ -1781,11 +1789,9 @@ int pm_list2(){
 
 
 			return pm_list2();
-		break;
 
 		case LEX_R_BRACKET:
 			return SUCCESS;
-		break;
 
 		default:
 			//fprintf(stderr, "Syntakticka chyba, ocekavano ',', ')' na radku %d\n", gToken.row);
