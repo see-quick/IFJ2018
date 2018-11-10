@@ -292,6 +292,7 @@ void generatingIntToFloat(tList* list, tStack *stack, int position ){
  * Function which will decide between type of instruction and then sets all ADD <var> <symb> <symb> and insert to the list
  */
 void generatingConcreteInstruction(tList* list, tStack *stack, int type, char * instruction_type, int position){
+
     if (strcmp(instruction_type, "CONCAT") == 0){
         setFirstAndSecondVariableToGenerate(INSTRUCT_CONCAT);
     }
@@ -538,14 +539,16 @@ expr_return parse_expr(LocalMap* lMap, tList* list, bool is_bool){
 
                                 }
                                 else if (stack->arrayOfItems[stack->finderOfParenthesis + 3].type == NONE ){
-                                        if (stack->arrayOfItems[stack->finderOfParenthesis + 1].type == INTEGER)
+                                        if (stack->arrayOfItems[stack->finderOfParenthesis + 1].type == INTEGER){
                                             generateInstructionForType(list, stack, I, "ADD", 1);
-                                        else if (stack->arrayOfItems[stack->finderOfParenthesis + 1].type == FLOAT)
+                                        }
+                                        else if (stack->arrayOfItems[stack->finderOfParenthesis + 1].type == FLOAT){
                                             generateInstructionForType(list, stack, F, "ADD", 1);
-                                        else if (stack->arrayOfItems[stack->finderOfParenthesis + 1].type == STRING)
+                                        }
+                                        else if (stack->arrayOfItems[stack->finderOfParenthesis + 1].type == STRING){
                                             generateInstructionForType(list, stack, S, "CONCAT", 1);
+                                        }
                                         else if (stack->arrayOfItems[stack->finderOfParenthesis + 1].type == NONE){
-
                                         }
 
 
