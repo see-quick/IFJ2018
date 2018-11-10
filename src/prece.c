@@ -253,6 +253,7 @@ void generateLabelJumps(tList* list, int type){
     }
 }
 
+
 void generatingFloatLabel(tList* list){
     instr_type = INSTRUCT_LABEL;
     instr1.value.s = "ADD_float"; // SUB, MUL
@@ -338,13 +339,10 @@ void generateInstructionForType(tList* list, tStack *stack, int type, char * ins
 
     // generating ADD_int label
     generatingIntLabel(list);
-
     // ZISKANIE KONKRETNEHO TYPU INSTRUKCIE
     // generating concrete instructions f.e. ADD, SUB etc...
     generatingConcreteInstruction(list, stack, type, instruction_type, position);
-
 }
-
 
 // @varName pravidlo id = <sth>
 // @lMap je lokalni Mapa
