@@ -703,7 +703,7 @@ int sth(){
 						res = parse_expr(localMap, ilist, false);
 						result = res.result;
 
-						if (res.bool_result){
+						if (res.bool_result && res.result != SUCCESS){
 							instruction_exit(ERR_SEMANTIC);
 							return ERR_SEMANTIC;
 						}
@@ -950,7 +950,8 @@ int sth(){
 			res = parse_expr(localMap, ilist, false);
 			result = res.result;
 
-			if (res.bool_result){
+
+			if (res.bool_result && res.result != SUCCESS){
 				instruction_exit(ERR_SEMANTIC);
 				return ERR_SEMANTIC;
 			}
@@ -1788,11 +1789,9 @@ int pm_list2(){
 
 
 			return pm_list2();
-		break;
 
 		case LEX_R_BRACKET:
 			return SUCCESS;
-		break;
 
 		default:
 			//fprintf(stderr, "Syntakticka chyba, ocekavano ',', ')' na radku %d\n", gToken.row);
