@@ -39,7 +39,7 @@ extern tInstructionData instr2;
 extern tInstructionData instr3;
 
 
-int main(int argc, char** argv) {
+int main() {
    
   int result = SUCCESS;
 

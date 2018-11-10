@@ -74,7 +74,7 @@ typedef struct{
 
 // hlavni funkce precedencni analyzy
 expr_return parse_expr(LocalMap*, tList*, bool);
-void setEmptyDataIDF(tDataIDF dataIDF);
+void setEmptyDataIDF();
 
 // pomocne debugovanie funckie
 char* convert_to_char(int token);

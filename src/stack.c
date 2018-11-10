@@ -87,7 +87,7 @@ tDataIDF* stack_top_token_data(tStack *stack){
        return result;
     }
     return &stack->arrayOfItems[stack->top];
-};
+}
 
 /**
  * Funckia, ktora pushuje zvoleny token do zasobnika

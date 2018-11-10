@@ -60,7 +60,7 @@ prece_states prece_table [SIZEOFTABLE][SIZEOFTABLE] = {
 /* f */ {Err, Err, Err, Err, Err, Err,Err,Err, Err , Err , Err, EQ, Err, Err,Err,Err},
 };
 
-void setEmptyDataIDF(tDataIDF dataIDF) {
+void setEmptyDataIDF() {
     dataIDF.type = 500;
     dataIDF.defined = false;
     dataIDF.value.nil = true;
@@ -266,11 +266,11 @@ void generatingIntLabel(tList* list){
     insert_item(list, &instr_type, &instr1, &instr2, &instr3);
 }
 
-void generatingIntToFloat(tList* list, tStack *stack ){
+void generatingIntToFloat(tList* list, tStack *stack, int position ){
     instr1.type = GF;
     instr1.value.s = "$result\0";
     instr2.type = LF;
-    instr2.value.s = stack->arrayOfItems[stack->finderOfParenthesis + 1].nameOfTheVariable;
+    instr2.value.s = stack->arrayOfItems[stack->finderOfParenthesis + position].nameOfTheVariable;
     instr_type = INSTRUCT_INT2FLOAT;
     insert_item(list, &instr_type, &instr1, &instr2, &instr3);
 }
@@ -307,34 +307,19 @@ void generatingConcreteInstruction(tList* list, tStack *stack, int type, char * 
 }
 
 void generateInstructionForType(tList* list, tStack *stack, int type, char * instruction_type, int position){
-
-
     // this generating concrete type
     generateType(list);
-//     this generating concrete labels
+    // this generating concrete labels
     generateLabelJumps(list,type);
     // error for INCOMPATIBLE_TYPE
     instruction_exit(ERR_INCOMPATIBLE_TYPE);
-    // if (type == F){
-    //     instr_type = INSTRUCT_LABEL;
-    //     instr1.value.s = "ADD_float";
-    //     insert_item(list, &instr_type, &instr1, &instr2, &instr3);
-
-    //     instr_type = INSTRUCT_INT2FLOAT;
-    //     instr1.type = GF;
-    //     instr1.value.s = "$result";
-    //     instr2.type = LF;
-    //     // vraci mil pro a = 1.0 + a
-    //     instr2.value.s = stack->arrayOfItems[stack->finderOfParenthesis + position].nameOfTheVariable;
-    //     insert_item(list, &instr_type, &instr1, &instr2, &instr3);
-    // }
 
     // for float generating
     if(type == F){
         // generating ADD_float label
         generatingFloatLabel(list);
         // TOTO JE KONVERZIA... INT TO FLOAT...
-        generatingIntToFloat(list, stack);
+        generatingIntToFloat(list, stack, position);
     }
 
     // generating ADD_int label
