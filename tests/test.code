@@ -12,10 +12,11 @@ MOVE GF@$$EXPR1 int@0
 DEFVAR GF@$$EXPR2
 MOVE GF@$$EXPR2 int@0
 DEFVAR GF@$result
+DEFVAR GF@$type
 CREATEFRAME
 PUSHFRAME
 DEFVAR LF@a
-MOVE GF@$result int@5
-MOVE LF@a GF@$result
 READ LF@a int
 WRITE LF@a
+MOVE GF@$result LF@a
+EXIT int@4
