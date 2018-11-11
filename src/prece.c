@@ -110,7 +110,7 @@ int indexerOfPreceTable (int indexer, LocalMap* lMap)
                 //printf("ERROR\n");
 
                 // TODO SEMANTICKA CHYBA
-                return eSYNTERROR;
+                return eSEMERROR;
             }
             break;
 

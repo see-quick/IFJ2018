@@ -53,6 +53,7 @@
 #define EMPTY_CHAR     30
 
 #define eSYNTERROR 800 // syntax error
+#define eSEMERROR  801
 
 tDataIDF dataIDF;
 

@@ -205,6 +205,9 @@ int term(void){
 									instruction_exit(SEM_ERR);
 									return SEM_ERR;
 								}
+							} else{
+								instruction_exit(SEM_ERR);
+								return SEM_ERR;
 							}
 						}
 						else {
@@ -552,6 +555,10 @@ int term_list(bool zavorka){
 									instruction_exit(SEM_ERR);
 									return SEM_ERR;
 								}
+							}
+							else {
+								instruction_exit(SEM_ERR);
+								return SEM_ERR;
 							}
 						}
 						else {
