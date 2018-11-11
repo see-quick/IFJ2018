@@ -99,9 +99,9 @@ int main() {
   free(function_statements_list);
 
 
-  free(function_name);
-  free(call_name);
-  free(variable_name);
+  if (function_name != NULL){ free(function_name); }
+  if (call_name != NULL ){ free(call_name); }
+  if (variable_name != NULL){ free(variable_name); }
 
   return result;  
 }
