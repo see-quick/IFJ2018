@@ -13,10 +13,14 @@ DEFVAR GF@$$EXPR2
 MOVE GF@$$EXPR2 int@0
 DEFVAR GF@$result
 DEFVAR GF@$type
+DEFVAR GF@$tmp
+MOVE GF@$tmp float@0x0p+0
+DEFVAR GF@$type2
 CREATEFRAME
 PUSHFRAME
 DEFVAR LF@a
-READ LF@a int
+MOVE GF@$result float@0x1.c28f5c28f5c29p-4
+MOVE LF@a GF@$result
+READ LF@a float
 WRITE LF@a
-MOVE GF@$result LF@a
-EXIT int@4
+EXIT int@0

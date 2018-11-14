@@ -65,7 +65,7 @@ typedef struct LocalMapItem{
 } LocalMapItem;
 
 typedef struct LocalMap{
-    int size;
+    unsigned int size;
     struct LocalMapItem **list;
 }LocalMap;
 

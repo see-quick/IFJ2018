@@ -27,7 +27,7 @@
 typedef struct{
     int top;
     int finderOfParenthesis;
-    unsigned memory;
+    int memory;
     int *arrayOfNumbers;
     tDataIDF *arrayOfItems;
 }tStack;

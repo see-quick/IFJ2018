@@ -39,7 +39,7 @@ extern tInstructionData instr2;
 extern tInstructionData instr3;
 
 
-int main(int argc, char** argv) {
+int main() {
    
   int result = SUCCESS;
 
@@ -70,6 +70,10 @@ int main(int argc, char** argv) {
 
 
   result = parse(globalMap, list);
+  if (result == SUCCESS){
+      instruction_exit(result);
+  }
+
 
   // if(result == SUCCESS) {
 
@@ -95,9 +99,9 @@ int main(int argc, char** argv) {
   free(function_statements_list);
 
 
-  free(function_name);
-  free(call_name);
-  free(variable_name);
+  if (function_name != NULL){ free(function_name); }
+  if (call_name != NULL ){ free(call_name); }
+  if (variable_name != NULL){ free(variable_name); }
 
   return result;  
 }
