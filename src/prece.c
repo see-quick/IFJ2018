@@ -285,17 +285,25 @@ void generatingIntLabel(tList* list){
  * @param stack concrete stack
  * @param position position in stack +1 or +3 E -> E([1]) + E([3])
  */
-void generatingIntToFloat(tList* list, tStack *stack, int position ){
+void generatingIntToFloat(tList* list, tStack *stack, int positionForIntToFloatInstruction ){
     instr1.type = GF;
-    instr1.value.s = "$tmp\0";
+    instr1.value.s = "$result\0";
+
     // v pripade ze sa je o prve spracovanie tak nechavame
-    if (isThirdVariable){
+    if (isFirstVariable){
         instr2.type = LF;
-        instr2.value.s = stack->arrayOfItems[stack->finderOfParenthesis + position].nameOfTheVariable;
+        instr2.value.s = stack->arrayOfItems[stack->finderOfParenthesis + 1].nameOfTheVariable;
+    }
+    else if(isThirdVariable){
+        instr1.type = LF;
+        instr1.value.s = stack->arrayOfItems[stack->finderOfParenthesis + 3].nameOfTheVariable;
+        instr2.type = LF;
+        instr2.value.s = stack->arrayOfItems[stack->finderOfParenthesis + 3].nameOfTheVariable;
     }
     else { instr2.type = I;
-        instr2.value.i = stack->arrayOfItems[stack->finderOfParenthesis + position].value.i;
+        instr2.value.i = stack->arrayOfItems[stack->finderOfParenthesis + positionForIntToFloatInstruction].value.i;
     }
+
     instr_type = INSTRUCT_INT2FLOAT;
     insert_item(list, &instr_type, &instr1, &instr2, &instr3);
 }
@@ -303,7 +311,7 @@ void generatingIntToFloat(tList* list, tStack *stack, int position ){
 /*
  * Function which will decide between type of instruction and then sets all ADD <var> <symb> <symb> and insert to the list
  */
-void generatingConcreteInstruction(tList* list, tStack *stack, int type, char * instruction_type, int position){
+void generatingConcreteInstruction(tList* list, tStack *stack, int type, char * instruction_type, int positionForConcreteInstruction){
 
     if (strcmp(instruction_type, "CONCAT") == 0){
         setFirstAndSecondVariableToGenerate(INSTRUCT_CONCAT);
@@ -318,38 +326,35 @@ void generatingConcreteInstruction(tList* list, tStack *stack, int type, char * 
 
     switch(type){
         case I:
-            // this is for variables
-            if(stack->arrayOfItems[stack->finderOfParenthesis + 3].isVariable){ isThirdVariable = true; }
-            else{ isThirdVariable = false; }
-
             if (isThirdVariable == true ){
                 instr3.type = LF;
-                instr3.value.s = stack->arrayOfItems[stack->finderOfParenthesis + position].nameOfTheVariable;
+                instr3.value.s = stack->arrayOfItems[stack->finderOfParenthesis + positionForConcreteInstruction].nameOfTheVariable;
             }
             else { instr3.type = I;
-                instr3.value.i = stack->arrayOfItems[stack->finderOfParenthesis + position].value.i; // tady bude [+1], value.d, value.s ...
+                instr3.value.i = stack->arrayOfItems[stack->finderOfParenthesis + positionForConcreteInstruction].value.i; // tady bude [+1], value.d, value.s ...
             }
             break;
         case S:
             // TODO: for variables
             instr3.type = S;
-            instr3.value.s = stack->arrayOfItems[stack->finderOfParenthesis + position].value.string.str; // tady bude [+1], value.d, value.s ...
+            instr3.value.s = stack->arrayOfItems[stack->finderOfParenthesis + positionForConcreteInstruction].value.string.str; // tady bude [+1], value.d, value.s ...
             break;
         case F:
-            // ziskanie zo zasobnika zda je token premenna alebo nie v pripade ak ano tak nastavime isFirst alebo isThird na true...
-            if(stack->arrayOfItems[stack->finderOfParenthesis + 1].isVariable){ isFirstVariable = true;}
-            else{ isFirstVariable = false; }
-            if(stack->arrayOfItems[stack->finderOfParenthesis + 3].isVariable){ isThirdVariable = true; }
-            else{ isThirdVariable = false; }
-
             // v pripade ze sa je o prve spracovanie tak nechavame
-            if (isThirdVariable){
-                instr3.type = GF;
-                //instr3.value.s = stack->arrayOfItems[stack->finderOfParenthesis + 3].nameOfTheVariable;
-                instr3.value.s = "$tmp";
+            if (isFirstVariable){
+                instr3.type = LF;
+                instr3.value.s = stack->arrayOfItems[stack->finderOfParenthesis + 1].nameOfTheVariable;
             }
-            else { instr3.type = I;
-                instr3.value.i = stack->arrayOfItems[stack->finderOfParenthesis + 3].value.i;   // tady bude [+1], value.d, value.s ...
+            else{
+                instr3.type = F;
+                instr3.value.f = stack->arrayOfItems[stack->finderOfParenthesis + positionForConcreteInstruction].value.f;   // tady bude [+1], value.d, value.s ...
+            }
+            if (isThirdVariable){
+                instr3.type = LF;
+                instr3.value.s = stack->arrayOfItems[stack->finderOfParenthesis + 3].nameOfTheVariable;
+            }
+            else { instr3.type = F;
+                instr3.value.f = stack->arrayOfItems[stack->finderOfParenthesis + positionForConcreteInstruction].value.f;   // tady bude [+1], value.d, value.s ...
             }
             break;
         case N:
@@ -368,7 +373,7 @@ void generatingConcreteInstruction(tList* list, tStack *stack, int type, char * 
  * @param instruction_type ADD, SUB etc.
  * @param position position in stack +1 or +3 E -> E([1]) + E([3])
  */
-void generateInstructionForType(tList* list, tStack *stack, int type, char * instruction_type, int position){
+void generateInstructionForType(tList* list, tStack *stack, int type, char * instruction_type, int positionForConcreteInstruction, int positionForIntToFloatInstruction){
     // this generating concrete type
     generateType(list, stack);
     // this generating concrete labels
@@ -381,7 +386,7 @@ void generateInstructionForType(tList* list, tStack *stack, int type, char * ins
         // generating ADD_float label
         generatingIntLabel(list);
         // TOTO JE KONVERZIA... INT TO FLOAT...
-        generatingIntToFloat(list, stack, position);
+        generatingIntToFloat(list, stack, positionForIntToFloatInstruction);
 
         // generating ADD_int label
         generatingFloatLabel(list);
@@ -392,7 +397,7 @@ void generateInstructionForType(tList* list, tStack *stack, int type, char * ins
     
     // ZISKANIE KONKRETNEHO TYPU INSTRUKCIE
     // generating concrete instructions f.e. ADD, SUB etc...
-    generatingConcreteInstruction(list, stack, type, instruction_type, position);
+    generatingConcreteInstruction(list, stack, type, instruction_type, positionForConcreteInstruction);
 }
 
 // @varName pravidlo id = <sth>
@@ -566,14 +571,14 @@ expr_return parse_expr(LocalMap* lMap, tList* list, bool is_bool){
                                         isFirstVariable = true;
 
                                         if (stack->arrayOfItems[stack->finderOfParenthesis + 3].type == INTEGER){
-                                            generateInstructionForType(list, stack, I, "ADD", 1);
+                                            generateInstructionForType(list, stack, I, "ADD", 3, 1);
                                         }
                                         else if (stack->arrayOfItems[stack->finderOfParenthesis + 3].type == FLOAT){
                                             // pridat pretypovani int2float
-                                            generateInstructionForType(list, stack, F, "ADD", 1);
+                                            generateInstructionForType(list, stack, F, "ADD", 3, 1);
                                         }
                                         else if (stack->arrayOfItems[stack->finderOfParenthesis + 3].type == STRING){
-                                            generateInstructionForType(list, stack, S, "CONCAT", 1);
+                                            generateInstructionForType(list, stack, S, "CONCAT", 3, 1);
                                         }
                                         else if (stack->arrayOfItems[stack->finderOfParenthesis + 3].type == NONE){
                                             instr_type = INSTRUCT_TYPE;
@@ -590,13 +595,13 @@ expr_return parse_expr(LocalMap* lMap, tList* list, bool is_bool){
                                         isThirdVariable = true;
 
                                         if (stack->arrayOfItems[stack->finderOfParenthesis + 1].type == INTEGER){
-                                            generateInstructionForType(list, stack, I, "ADD", 3);
+                                            generateInstructionForType(list, stack, I, "ADD", 3, 1);
                                         }
                                         else if (stack->arrayOfItems[stack->finderOfParenthesis + 1].type == FLOAT){
-                                            generateInstructionForType(list, stack, F, "ADD", 3);
+                                            generateInstructionForType(list, stack, F, "ADD", 3, 1);
                                         }
                                         else if (stack->arrayOfItems[stack->finderOfParenthesis + 1].type == STRING){
-                                            generateInstructionForType(list, stack, S, "CONCAT", 3);
+                                            generateInstructionForType(list, stack, S, "CONCAT", 3, 1);
                                         }
                                         else if (stack->arrayOfItems[stack->finderOfParenthesis + 1].type == NONE){
                                         }
@@ -1447,13 +1452,13 @@ expr_return parse_expr(LocalMap* lMap, tList* list, bool is_bool){
                                  if (stack->arrayOfItems[stack->finderOfParenthesis + 1].type == NONE ){
 
                                         if (stack->arrayOfItems[stack->finderOfParenthesis + 3].type == INTEGER){
-                                            generateInstructionForType(list, stack, I, "GT", 3);
+                                            generateInstructionForType(list, stack, I, "GT", 3, 1);
                                         }
                                         else if (stack->arrayOfItems[stack->finderOfParenthesis + 3].type == FLOAT)
                                             // pridat pretypovani int2float
-                                            generateInstructionForType(list, stack, F, "GT", 3);
+                                            generateInstructionForType(list, stack, F, "GT", 3, 1);
                                         else if (stack->arrayOfItems[stack->finderOfParenthesis + 3].type == STRING){
-                                            generateInstructionForType(list, stack, S, "GT", 3);
+                                            generateInstructionForType(list, stack, S, "GT", 3, 1);
                                         }
                                         else if (stack->arrayOfItems[stack->finderOfParenthesis + 3].type == NONE){
 
@@ -1462,11 +1467,11 @@ expr_return parse_expr(LocalMap* lMap, tList* list, bool is_bool){
                                 }
                                 else if (stack->arrayOfItems[stack->finderOfParenthesis + 3].type == NONE ){
                                         if (stack->arrayOfItems[stack->finderOfParenthesis + 1].type == INTEGER)
-                                            generateInstructionForType(list, stack, I, "GT", 1);
+                                            generateInstructionForType(list, stack, I, "GT", 1, 3);
                                         else if (stack->arrayOfItems[stack->finderOfParenthesis + 1].type == FLOAT)
-                                            generateInstructionForType(list, stack, F, "GT", 1);
+                                            generateInstructionForType(list, stack, F, "GT", 1, 3);
                                         else if (stack->arrayOfItems[stack->finderOfParenthesis + 1].type == STRING)
-                                            generateInstructionForType(list, stack, S, "GT", 1);
+                                            generateInstructionForType(list, stack, S, "GT", 1, 3);
                                         else if (stack->arrayOfItems[stack->finderOfParenthesis + 1].type == NONE){
 
                                         }
