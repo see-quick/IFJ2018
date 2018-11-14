@@ -946,7 +946,7 @@ int sth(){
 					result = res.result;
 					if (is_LF) return_type = res.data_type;
 
-					if (res.bool_result && res.result != SUCCESS){
+					if (res.bool_result){
 						instruction_exit(ERR_SEMANTIC);
 						return ERR_SEMANTIC;
 					}
@@ -1025,7 +1025,7 @@ int sth(){
 			if (is_LF) return_type = res.data_type;
 
 
-			if(res.bool_result && res.result != SUCCESS){
+			if(res.bool_result){
 				instruction_exit(ERR_SEMANTIC);
 				return ERR_SEMANTIC;
 			}

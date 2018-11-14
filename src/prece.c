@@ -252,6 +252,14 @@ void generateLabelJumps(tList* list, int type){
             break;
         case S:
             instr3.value.s = "string"; // tady muze byt string , float, integer, none
+//            insert_item(list, &instr_type, &instr1, &instr2, &instr3);
+
+            instr_type = INSTRUCT_JUMPIFEQ;
+            instr1.value.s = "ADD_string";
+            instr2.type = GF;
+            instr2.value.s = "$type";
+            instr3.type = S;
+            instr3.value.s = "string";
             insert_item(list, &instr_type, &instr1, &instr2, &instr3);
             break;
         default:
@@ -276,6 +284,16 @@ void generatingFloatLabel(tList* list){
 void generatingIntLabel(tList* list){
     instr_type = INSTRUCT_LABEL;
     instr1.value.s = "ADD_int"; // SUB, MUL
+    insert_item(list, &instr_type, &instr1, &instr2, &instr3);
+}
+
+/**
+ * Generating string label
+ * @param list concrete list
+ */
+void generatingStringLabel(tList* list){
+    instr_type = INSTRUCT_LABEL;
+    instr1.value.s = "ADD_string"; // SUB, MUL
     insert_item(list, &instr_type, &instr1, &instr2, &instr3);
 }
 
@@ -335,9 +353,22 @@ void generatingConcreteInstruction(tList* list, tStack *stack, int type, char * 
             }
             break;
         case S:
-            // TODO: for variables
-            instr3.type = S;
-            instr3.value.s = stack->arrayOfItems[stack->finderOfParenthesis + positionForConcreteInstruction].value.string.str; // tady bude [+1], value.d, value.s ...
+            // v pripade ze sa je o prve spracovanie tak nechavame
+            if (isFirstVariable){
+                instr3.type = LF;
+                instr3.value.s = stack->arrayOfItems[stack->finderOfParenthesis + 1].nameOfTheVariable;
+            }
+            else{
+                instr3.type = S;
+                instr3.value.s = stack->arrayOfItems[stack->finderOfParenthesis + positionForConcreteInstruction].value.string.str;   // tady bude [+1], value.d, value.s ...
+            }
+            if (isThirdVariable){
+                instr3.type = LF;
+                instr3.value.s = stack->arrayOfItems[stack->finderOfParenthesis + 3].nameOfTheVariable;
+            }
+            else { instr3.type = S;
+                instr3.value.s = stack->arrayOfItems[stack->finderOfParenthesis + positionForConcreteInstruction].value.string.str;   /// tady bude [+1], value.d, value.s ...
+            }
             break;
         case F:
             // v pripade ze sa je o prve spracovanie tak nechavame
@@ -390,10 +421,14 @@ void generateInstructionForType(tList* list, tStack *stack, int type, char * ins
 
         // generating ADD_int label
         generatingFloatLabel(list);
-    } else {
+    } else if (type == I) {
         // generating ADD_float label
         generatingIntLabel(list);
     }
+    else{
+        generatingStringLabel(list);
+    }
+    // TODO: type == N (NIL)
     
     // ZISKANIE KONKRETNEHO TYPU INSTRUKCIE
     // generating concrete instructions f.e. ADD, SUB etc...
@@ -1478,6 +1513,7 @@ expr_return parse_expr(LocalMap* lMap, tList* list, bool is_bool){
 
 
                                 }
+
 
 
                                 else if ((stack->arrayOfItems[stack->finderOfParenthesis + 1].type == STRING) &&
