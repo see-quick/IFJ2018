@@ -2189,7 +2189,7 @@ int func(){
 	insert_item(ilist, &instr_type, &instr1, &instr2, &instr3);
 
 	function_name = gToken.data.str;
-	
+
 	// navratova hodnota
 	instr_type = INSTRUCT_DEFVAR;
 	instr1.type = LF;
