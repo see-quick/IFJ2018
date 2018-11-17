@@ -174,7 +174,6 @@ int term(void){
 				if ( (result = check_substr_ord_build_in(argCount)) != SUCCESS) return result;
 			}
 
-			
 
 			instr_type = INSTRUCT_DEFVAR;
 			instr1.type = TF;
@@ -230,6 +229,7 @@ int term(void){
 				//instruction_exit(INT_ERR);
 				return INT_ERR;
 			}
+
 			return SUCCESS;
 		break;
 
@@ -429,8 +429,56 @@ int check_substr_ord_build_in(int param){
 									else {
 										lData = local_map_get_value(gData.lMap, gToken.data.str);
 										if (lData.type != INTEGER){
-											instruction_exit(ERR_INCOMPATIBLE_TYPE);
-											return ERR_INCOMPATIBLE_TYPE;
+											if (lData.type == NONE){
+													instr_type = INSTRUCT_TYPE;
+													instr1.type = GF;
+													instr1.value.s = "$tmp2";
+													instr2.type = LF;
+													instr2.value.s = gToken.data.str;
+													insert_item(ilist, &instr_type, &instr1, &instr2, &instr3);
+
+													switch(param){
+														case 1:
+															instr_type = INSTRUCT_JUMPIFEQ;
+															instr1.value.s = "$label_true_2";
+															instr2.type = GF;
+															instr2.value.s = "$tmp2";
+															instr3.type = S;
+															instr3.value.s = "int";
+															insert_item(ilist, &instr_type, &instr1, &instr2, &instr3);
+
+															instruction_exit(ERR_INCOMPATIBLE_TYPE);
+
+															instr_type = INSTRUCT_LABEL;
+															instr1.value.s = "$label_true_2";
+
+															insert_item(ilist, &instr_type, &instr1, &instr2, &instr3);
+														break;
+
+														case 2:
+															instr_type = INSTRUCT_JUMPIFEQ;
+															instr1.value.s = "$label_true_3";
+															instr2.type = GF;
+															instr2.value.s = "$tmp2";
+															instr3.type = S;
+															instr3.value.s = "int";
+															insert_item(ilist, &instr_type, &instr1, &instr2, &instr3);
+
+															instruction_exit(ERR_INCOMPATIBLE_TYPE);
+
+															instr_type = INSTRUCT_LABEL;
+															instr1.value.s = "$label_true_3";
+
+															insert_item(ilist, &instr_type, &instr1, &instr2, &instr3);
+														break;
+													}
+
+													
+											}
+											else {
+												instruction_exit(ERR_INCOMPATIBLE_TYPE);
+												return ERR_INCOMPATIBLE_TYPE;
+											}
 										}
 									}
 								}
@@ -448,10 +496,8 @@ int check_substr_ord_build_in(int param){
 			}
 		break;
 
-		case 3:
-			instruction_exit(ERR_PARAMS_COUNT);
-			return ERR_PARAMS_COUNT;
-		break;
+		default:
+			break;
 	}
 	return SUCCESS;
 }
@@ -473,11 +519,12 @@ int term_list2(bool zavorka){
 
 			result = term();
 
+			argCount++;
+
 			if(result != SUCCESS){
 				return result;
 			}
 
-			argCount++;
 
 			//nacteno z param()
 			return term_list2(zavorka);
@@ -1705,7 +1752,6 @@ int stat(){
 			++while_counter;
 
 			if (while_counter == 1){
-				//printf("Furst while");
 				tmp_list = ilist;
 				ilist = while_list;
 			}
@@ -1982,18 +2028,18 @@ int pm_list2(){
 				local_map_put(gData.lMap, gToken.data.str, lData);
 			}
 
-				instr_type = INSTRUCT_DEFVAR;
-				instr1.type = LF;
-				instr1.value.s = gToken.data.str;
-				insert_item(ilist,&instr_type, &instr1, &instr2, &instr3 );
+			instr_type = INSTRUCT_DEFVAR;
+			instr1.type = LF;
+			instr1.value.s = gToken.data.str;
+			insert_item(ilist,&instr_type, &instr1, &instr2, &instr3 );
 
 
-				instr_type = INSTRUCT_MOVE;
-				instr1.type = LF;
-				instr1.value.s = gToken.data.str;
-				instr2.type = LF;
-				instr2.value.s = generate_param("%", argCount);
-				insert_item(ilist,&instr_type, &instr1, &instr2, &instr3 );
+			instr_type = INSTRUCT_MOVE;
+			instr1.type = LF;
+			instr1.value.s = gToken.data.str;
+			instr2.type = LF;
+			instr2.value.s = generate_param("%", paramCount);
+			insert_item(ilist,&instr_type, &instr1, &instr2, &instr3 );
 
 			// + jeden parametr
 			paramCount++;
@@ -2057,7 +2103,7 @@ int pm_list(){
 		instr1.type = LF;
 		instr1.value.s = gToken.data.str;
 		instr2.type = LF;
-		instr2.value.s = generate_param("%", argCount);
+		instr2.value.s = generate_param("%", paramCount);
 		insert_item(ilist,&instr_type, &instr1, &instr2, &instr3 );
 
 
@@ -2076,6 +2122,7 @@ int pm_list(){
 		return pm_list2();
 	}
 	else{
+		// def foo(1, 4) -> validni?
 		return SUCCESS;
 	}
 
@@ -2142,8 +2189,7 @@ int func(){
 	insert_item(ilist, &instr_type, &instr1, &instr2, &instr3);
 
 	function_name = gToken.data.str;
-	//printf("Function name is %s\n", function_name);
-
+	
 	// navratova hodnota
 	instr_type = INSTRUCT_DEFVAR;
 	instr1.type = LF;
@@ -2210,6 +2256,7 @@ int func(){
 	// ulozeni poctu formalnich parametru funkce
 	gData.paramCount = paramCount;
 	global_map_put(gMap, function_name, gData);
+
 
 	// pro dalsi funkce
 	paramCount = 0;
@@ -2469,8 +2516,6 @@ int parse(GlobalMap* globalMap, tList *list) {
 		// instr_type = INSTRUCT_CHR;
 		// insert_item(ilist, &instr_type, &instr1, &instr2, &instr3);
 		// instr_type = INSTRUCT_ORD;
-		// insert_item(ilist, &instr_type, &instr1, &instr2, &instr3);
-		// instr_type = INSTRUCT_SUBSTR;
 		// insert_item(ilist, &instr_type, &instr1, &instr2, &instr3);
 
 		result = prog();

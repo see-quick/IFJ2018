@@ -495,7 +495,7 @@ void global_map_print( GlobalMap* ptrMap ) {
         GlobalMapItem *ptr = (ptrMap->list[i]);
 
         while (ptr != NULL) {
-            printf(" (%s, %d)", ptr->key, ptr->globalData.type);
+            printf(" (%s, %d)", ptr->key, ptr->globalData.paramCount);
             cnt++;
             ptr = ptr->ptrnext;
         }
