@@ -173,8 +173,10 @@ for ((n=0; n<$lines;n++)); do #loop over test dir
         cmp  $tmpout $testpath/$currentdir/$outfile
         ret=$(echo $?)
         if [[ "$ret" -eq "1" ]]; then
-          ((testfail++));
-          ((testsucc--));
+          if [[ "$retval" -eq "0" ]]; then
+            ((testfail++));
+            ((testsucc--));
+           fi
           echo "${red}[TEST FAILED]${reset} Outputs aren't the same!";
         fi
       fi
