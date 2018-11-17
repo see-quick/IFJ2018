@@ -569,7 +569,10 @@ void parse_instructions(tList *instr_list)  {
 
       case INSTRUCT_LENGTH:
           printf("LABEL length\n");
-          printf("STRLEN GF$$var_integer LF@_param1\n");
+          printf("PUSHFRAME\n");
+          printf("DEFVAR LF@%%retval\n");
+          printf("STRLEN LF@%%retval LF@%%1\n");
+          printf("POPFRAME\n");
           printf("RETURN\n");
       break;
 
@@ -592,7 +595,10 @@ void parse_instructions(tList *instr_list)  {
 
       case INSTRUCT_CHR:
           printf("LABEL chr\n");
-          printf("INT2CHAR GF@$$var_string LF@_param1\n");
+          printf("PUSHFRAME\n");
+          printf("DEFVAR LF@%%retval\n");
+          printf("INT2CHAR  LF@%%retval LF@%%1\n");
+          printf("POPFRAME\n");
           printf("RETURN\n");
       break;
 
