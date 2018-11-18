@@ -28,21 +28,23 @@ int arg_count;
  * @param str nas retazec s ktorym pracujeme
  * @param orig retazec ktory hladame
  * @param rep retaec za ktory ho vymenime
- * @return novy retazec bez orig -> vymeneny za rep
+ * Je na uzivateli pak uvolneni str.
 */
-char *replace_str(char *str, char *orig, char *rep) {
-  static char buffer[4096];
+void replace_str(char **str, char *orig, char *rep) {
+  if (*str == NULL || orig == NULL || rep == NULL) return;
   char *p;
+  if ((p = strstr(*str, orig)) == NULL) return;
+  char *buffer = malloc(strlen(*str) - strlen(orig) + strlen(rep) + 1);
+  memset(buffer, '\0', strlen(buffer));
 
-  if(!(p = strstr(str, orig)))
-    return str;
+  strncpy(buffer, *str, p-(*str));
+  buffer[p-(*str)] = '\0';
 
-  strncpy(buffer, str, p-str);
-  buffer[p-str] = '\0';
+  sprintf(buffer+(p-(*str)), "%s%s", rep, p+strlen(orig));
+  buffer[strlen(buffer)] = '\0';
 
-  sprintf(buffer+(p-str), "%s%s", rep, p+strlen(orig));
-
-  return buffer;
+  free((*str));
+  *str = buffer;
 }
 
 /**
@@ -102,83 +104,40 @@ void print_symb(tInstructionData instr_operand)  {
   {
      //escape seq ---- > \000
      //handle '\n' and others
-      // if(strstr(instr_operand.value.s, "\n") != NULL)
-      // {
-      //   char * new_data;
-
-      //   while((strstr(instr_operand.value.s, "\n") != NULL))
-      //   {
-      //     new_data = malloc(strlen(instr_operand.value.s)+1+2);
-      //     strcpy(new_data, instr_operand.value.s);
-
-
-      //     new_data=replace_str(new_data, "\n", "\\010");
-      //     strcpy(instr_operand.value.s, new_data);
-
-      //     free(new_data);
-      //   }
-      // }
-      // else if(strstr(instr_operand.value.s, "\t") != NULL)
-      // {
-      //   char * new_data;
-
-      //   while((strstr(instr_operand.value.s, "\t") != NULL))
-      //   {
-      //     new_data = malloc(strlen(instr_operand.value.s)+1+2);
-      //     strcpy(new_data, instr_operand.value.s);
-
-      //     new_data=replace_str(new_data, "\t", "\\009");
-      //     strcpy(instr_operand.value.s, new_data);
-
-      //     free(new_data);
-      //   }
-      // }
-      // else if(strstr(instr_operand.value.s, "\v") != NULL)
-      // {
-      //   char * new_data;
-
-      //   while(strstr(instr_operand.value.s, "\v") != NULL)
-      //   {
-      //     new_data = malloc(strlen(instr_operand.value.s)+1+2);
-      //     strcpy(new_data, instr_operand.value.s);
-
-      //     new_data=replace_str(new_data, "\v", "\\011");
-      //     strcpy(instr_operand.value.s, new_data);
-
-      //     free(new_data);
-      //   }
-      // }
-      // else if(strstr(instr_operand.value.s, "\f") != NULL)
-      // {
-      //   char * new_data;
-
-      //   while(strstr(instr_operand.value.s, "\f") != NULL)
-      //   {
-      //     new_data = malloc(strlen(instr_operand.value.s)+1+2);
-      //     strcpy(new_data, instr_operand.value.s);
-
-      //     new_data=replace_str(new_data, "\f", "\\012");
-      //     strcpy(instr_operand.value.s, new_data);
-
-      //     free(new_data);
-      //   }
-      // }
-      // else if(strstr(instr_operand.value.s, "\r") != NULL)
-      // {
-      //   char * new_data;
-
-      //   while(strstr(instr_operand.value.s, "\r") != NULL)
-      //   {
-      //     new_data = malloc(strlen(instr_operand.value.s)+1+2);
-      //     strcpy(new_data, instr_operand.value.s);
-
-      //     new_data=replace_str(new_data, "\r", "\\013");
-      //     strcpy(instr_operand.value.s, new_data);
-
-      //     free(new_data);
-      //   }
-      // }
-     printf("%s",instr_operand.value.s);
+    if (instr_operand.value.s == NULL){
+        return;
+    }
+    if (strstr(instr_operand.value.s, "\n") != NULL) {
+      while((strstr(instr_operand.value.s, "\n") != NULL)) {
+        replace_str(&instr_operand.value.s, "\n", "\\010");
+      }
+    }     
+    if (strstr(instr_operand.value.s, "\t") != NULL) {
+      while ((strstr(instr_operand.value.s, "\t") != NULL)) {
+        replace_str(&instr_operand.value.s, "\t", "\\009");
+      }
+    }
+    if (strstr(instr_operand.value.s, "\v") != NULL) {
+      while(strstr(instr_operand.value.s, "\v") != NULL) {
+        replace_str(&instr_operand.value.s, "\v", "\\011");
+      }
+    }
+    if (strstr(instr_operand.value.s, "\f") != NULL) {
+      while(strstr(instr_operand.value.s, "\f") != NULL) {
+        replace_str(&instr_operand.value.s, "\f", "\\012");
+      }
+    }
+    if (strstr(instr_operand.value.s, "\r") != NULL) {
+      while(strstr(instr_operand.value.s, "\r") != NULL) {
+        replace_str(&instr_operand.value.s, "\r", "\\013");
+      }
+    }
+    if (strstr(instr_operand.value.s, " ") != NULL) {
+      while(strstr(instr_operand.value.s, " ") != NULL) {
+        replace_str(&instr_operand.value.s, " ", "\\032");
+      }
+    }
+    printf("%s",instr_operand.value.s);
   }
 }
 
@@ -299,6 +258,7 @@ void parse_instructions(tList *instr_list)  {
           printf("DEFVAR GF@$type\n");
           printf("DEFVAR GF@$tmp\n");
           printf("DEFVAR GF@$tmp2\n");
+          printf("DEFVAR GF@$type1\n");
           printf("DEFVAR GF@$type2\n");
       break;
 

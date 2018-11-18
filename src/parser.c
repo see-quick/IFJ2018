@@ -708,22 +708,19 @@ int check_input(){
 			instr1.type = LF;
 		}
 
-		// lData.type = INTEGER;
-		lData.type = NONE;
+		lData.type = INTEGER;
 		local_map_put(localMap, variable_name, lData);
 	 
 	 	instr1.value.s = variable_name;
 		instr_type = INSTRUCT_INPUT_I;
 		insert_item(ilist, &instr_type, &instr1, &instr2, &instr3);
-
 		// prirazeni typu promenne
 	}
 	else if ( (strcmp(call_name, "inputf") == 0 ) ) {
 		if (local_map_contain(localMap, variable_name)) { instr1.type = LF;}
 		else {instr1.type = LF;}
 
-		//lData.type = FLOAT;
-		lData.type = NONE;
+		lData.type = FLOAT;
 		local_map_put(localMap, variable_name, lData);
 
 		instr1.value.s = variable_name;
@@ -734,8 +731,8 @@ int check_input(){
 		if (local_map_contain(localMap, variable_name)) { instr1.type = LF;}
 		else {instr1.type = LF;}
 
-		//lData.type = STRING;
-		lData.type = NONE;
+		lData.type = STRING;
+		//lData.type = NONE;
 		local_map_put(localMap, variable_name, lData);
 
 		instr1.value.s = variable_name;
@@ -1040,36 +1037,34 @@ int sth(){
 		break;
 
 		//pokud neni token LEX_ID_F, prozenem to precedencni SA
-		default:
+		case LEX_NUMBER:
+		case LEX_STRING:
+		case LEX_REAL_NUMBER:
 
-			if (token == LEX_SUBSTRACTION){
-				instruction_exit(ERROR_LEX);
-				return ERROR_LEX;
-			}
+			if (token == LEX_NUMBER || token == LEX_REAL_NUMBER || token == LEX_STRING || token == LEX_ID){
+				instr_type = INSTRUCT_MOVE;
+				if (token == LEX_NUMBER){
+					instr2.type = I;
+					instr2.value.i = atoi(gToken.data.str);
+				}
+				else if (token == LEX_REAL_NUMBER){
+					instr2.type = F;
+					instr2.value.f = atof(gToken.data.str);
+				}
+				else if (token == LEX_STRING) {
+					instr2.type = S;
+					instr2.value.s = gToken.data.str;
+				}
+				else if (token == LEX_ID){
+					instr2.type = LF;
+					instr2.value.s = gToken.data.str;
+				}
 
+				instr1.type = GF;
+				instr1.value.s = "$result\0";
 
-			instr_type = INSTRUCT_MOVE;
-			if (token == LEX_NUMBER){
-				instr2.type = I;
-				instr2.value.i = atoi(gToken.data.str);
+				insert_item(ilist, &instr_type, &instr1, &instr2, &instr3);
 			}
-			else if (token == LEX_REAL_NUMBER){
-				instr2.type = F;
-				instr2.value.f = atof(gToken.data.str);
-			}
-			else if (token == LEX_STRING) {
-				instr2.type = S;
-				instr2.value.s = gToken.data.str;
-			}
-			else if (token == LEX_ID){
-				instr2.type = LF;
-				instr2.value.s = gToken.data.str;
-			}
-
-			instr1.type = GF;
-			instr1.value.s = "$result\0";
-
-			insert_item(ilist, &instr_type, &instr1, &instr2, &instr3);
 
 
 			res = parse_expr(localMap, ilist, false);
@@ -1212,6 +1207,10 @@ int sth(){
 			}
 
 			return result;
+			break;
+		default:
+				instruction_exit(ERROR_LEX);
+				return ERROR_LEX;
 	} // end switch 
 
 	return result;
@@ -1296,7 +1295,6 @@ int stat(){
 							//instruction_exit(INT_ERR);
 							return INT_ERR;
 						}
-
 
 						// volani pravidla sth()
 						result = sth(localMap);
@@ -1547,6 +1545,8 @@ int stat(){
 			}
 
 			in_print = false;
+
+			argCount = 0;
 
 			return SUCCESS;
 

@@ -113,17 +113,15 @@ int getToken(){
         c = getchar();
         switch(state){
             case S_START:
-
-
                 if(isspace(c)){
                     if (c == '\n') {
                         gToken.row++;
                         state = S_EOL;
                         continue;
                     }
-                else {
-                    state = S_START;
-                }
+                    else {
+                        state = S_START;
+                    }
                 }
 
                 if(c == ' ' || c == '\r' || c == '\t') break;
@@ -372,7 +370,6 @@ int getToken(){
                         digit_check = 1;    // pro kontrolu 1e+ erroru
                     }
                     else if (isdigit(c)){
-                        printf("cisloo");
                         digit_check = 0;
                     }
                     //digit_check = 1;
@@ -393,6 +390,10 @@ int getToken(){
                 else if (c == 'e' || c == 'E') {
                     pushToken(c);
                     state = S_NUMBER_EXPONENT;
+                }
+                else if (c == '.'){
+                    ungetc(c, stdin);
+                    return ERROR_LEX;
                 }
                 else{
                     ungetc(c, stdin);
@@ -522,7 +523,10 @@ int getToken(){
 
             //Retezec
             case S_STRING:
-                    if(c == EOF || c == '\n')
+                    if ( c == '\n'){
+                        return ERROR_LEX;
+                    }
+                    if( c == EOF)
                         return ERROR_LEX;
                     else if (c == '\\'){
                         state = S_STRING_ESCAPED;
@@ -578,7 +582,6 @@ int getToken(){
                         long ascii_tmp = strtol(ascii_val, &endptr, 16);
 
                         if (*endptr != '\0' || strcmp(endptr, ascii_val) == 0){
-                            printf("asci err here 1");
                             return ERROR_LEX;
                         }
                             
@@ -591,9 +594,7 @@ int getToken(){
                     ungetc(c, stdin);
                     char *endptr = NULL;
                     long ascii_tmp = strtol(ascii_val, &endptr, 16);
-                    printf("%d  %ld  %s ", *endptr, ascii_tmp, ascii_val);
                     if (*endptr != '\0' || strcmp(endptr, ascii_val) == 0){
-                        printf("asci err here 2");
                         return ERROR_LEX;
                     }
                         
@@ -602,7 +603,6 @@ int getToken(){
                     state = S_STRING;
                 }
                 else{
-                    printf("asci err here 3");
                     return ERROR_LEX;
                 }
                 break;
