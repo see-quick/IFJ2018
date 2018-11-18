@@ -739,6 +739,13 @@ expr_return parse_expr(LocalMap* lMap, tList* list, bool is_bool){
                 stack_push(stack, actTokenIndexToPreceTable, dataIDF);
                 if (DEBUG)stack_print_prece(stack);
                 token = getToken();     //zavolanie si noveho tokenu
+                if(!error_lex()){
+                    resultOfPrece.result =  ERROR_LEX;
+                    return resultOfPrece;
+                } else if (!error_int()){
+                    resultOfPrece.result = INT_ERR;
+                    return resultOfPrece;
+                }
                 break;
             case L:
                 if (DEBUG)printf("CASE: |<| (shifting)\n");
@@ -755,6 +762,13 @@ expr_return parse_expr(LocalMap* lMap, tList* list, bool is_bool){
                     if (DEBUG)stack_print_prece(stack);
                 }
                 token = getToken();     //zavolanie si noveho tokenu
+                if(!error_lex()){
+                    resultOfPrece.result =  ERROR_LEX;
+                    return resultOfPrece;
+                } else if (!error_int()){
+                    resultOfPrece.result = INT_ERR;
+                    return resultOfPrece;
+                }
                 break;
             case G:
                 if (DEBUG)printf("CASE: |>| (reduction)\n");

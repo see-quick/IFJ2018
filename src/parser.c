@@ -1037,12 +1037,9 @@ int sth(){
 		break;
 
 		//pokud neni token LEX_ID_F, prozenem to precedencni SA
-		default:
-
-			if (token == LEX_SUBSTRACTION){
-				instruction_exit(ERROR_LEX);
-				return ERROR_LEX;
-			}
+		case LEX_NUMBER:
+		case LEX_STRING:
+		case LEX_REAL_NUMBER:
 
 			if (token == LEX_NUMBER || token == LEX_REAL_NUMBER || token == LEX_STRING || token == LEX_ID){
 				instr_type = INSTRUCT_MOVE;
@@ -1210,6 +1207,10 @@ int sth(){
 			}
 
 			return result;
+			break;
+		default:
+				instruction_exit(ERROR_LEX);
+				return ERROR_LEX;
 	} // end switch 
 
 	return result;
@@ -1294,7 +1295,6 @@ int stat(){
 							//instruction_exit(INT_ERR);
 							return INT_ERR;
 						}
-
 
 						// volani pravidla sth()
 						result = sth(localMap);
@@ -1546,6 +1546,8 @@ int stat(){
 			}
 
 			in_print = false;
+
+			argCount = 0;
 
 			return SUCCESS;
 

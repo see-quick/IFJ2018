@@ -113,17 +113,15 @@ int getToken(){
         c = getchar();
         switch(state){
             case S_START:
-
-
                 if(isspace(c)){
                     if (c == '\n') {
                         gToken.row++;
                         state = S_EOL;
                         continue;
                     }
-                else {
-                    state = S_START;
-                }
+                    else {
+                        state = S_START;
+                    }
                 }
 
                 if(c == ' ' || c == '\r' || c == '\t') break;
@@ -525,7 +523,10 @@ int getToken(){
 
             //Retezec
             case S_STRING:
-                    if(c == EOF || c == '\n')
+                    if ( c == '\n'){
+                        return ERROR_LEX;
+                    }
+                    if( c == EOF)
                         return ERROR_LEX;
                     else if (c == '\\'){
                         state = S_STRING_ESCAPED;
