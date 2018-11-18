@@ -1399,7 +1399,6 @@ int stat(){
 			}
 
 			return SUCCESS;
-		break;
 
 
 		case LEX_NUMBER:
