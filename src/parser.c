@@ -1044,29 +1044,30 @@ int sth(){
 				return ERROR_LEX;
 			}
 
+			if (token == LEX_NUMBER || token == LEX_REAL_NUMBER || token == LEX_STRING || token == LEX_ID){
+				instr_type = INSTRUCT_MOVE;
+				if (token == LEX_NUMBER){
+					instr2.type = I;
+					instr2.value.i = atoi(gToken.data.str);
+				}
+				else if (token == LEX_REAL_NUMBER){
+					instr2.type = F;
+					instr2.value.f = atof(gToken.data.str);
+				}
+				else if (token == LEX_STRING) {
+					instr2.type = S;
+					instr2.value.s = gToken.data.str;
+				}
+				else if (token == LEX_ID){
+					instr2.type = LF;
+					instr2.value.s = gToken.data.str;
+				}
 
-			instr_type = INSTRUCT_MOVE;
-			if (token == LEX_NUMBER){
-				instr2.type = I;
-				instr2.value.i = atoi(gToken.data.str);
-			}
-			else if (token == LEX_REAL_NUMBER){
-				instr2.type = F;
-				instr2.value.f = atof(gToken.data.str);
-			}
-			else if (token == LEX_STRING) {
-				instr2.type = S;
-				instr2.value.s = gToken.data.str;
-			}
-			else if (token == LEX_ID){
-				instr2.type = LF;
-				instr2.value.s = gToken.data.str;
-			}
+				instr1.type = GF;
+				instr1.value.s = "$result\0";
 
-			instr1.type = GF;
-			instr1.value.s = "$result\0";
-
-			insert_item(ilist, &instr_type, &instr1, &instr2, &instr3);
+				insert_item(ilist, &instr_type, &instr1, &instr2, &instr3);
+			}
 
 
 			res = parse_expr(localMap, ilist, false);

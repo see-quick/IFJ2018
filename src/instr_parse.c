@@ -31,6 +31,7 @@ int arg_count;
  * Je na uzivateli pak uvolneni str.
 */
 void replace_str(char **str, char *orig, char *rep) {
+  if (*str == NULL || orig == NULL || rep == NULL) return;
   char *p;
   if ((p = strstr(*str, orig)) == NULL) return;
   char *buffer = malloc(strlen(*str) - strlen(orig) + strlen(rep) + 1);
@@ -103,37 +104,40 @@ void print_symb(tInstructionData instr_operand)  {
   {
      //escape seq ---- > \000
      //handle '\n' and others
-      if (strstr(instr_operand.value.s, "\n") != NULL) {
-        while((strstr(instr_operand.value.s, "\n") != NULL)) {
-          replace_str(&instr_operand.value.s, "\n", "\\010");
-        }
-      }     
-      if (strstr(instr_operand.value.s, "\t") != NULL) {
-        while ((strstr(instr_operand.value.s, "\t") != NULL)) {
-          replace_str(&instr_operand.value.s, "\t", "\\009");
-        }
+    if (instr_operand.value.s == NULL){
+        return;
+    }
+    if (strstr(instr_operand.value.s, "\n") != NULL) {
+      while((strstr(instr_operand.value.s, "\n") != NULL)) {
+        replace_str(&instr_operand.value.s, "\n", "\\010");
       }
-      if (strstr(instr_operand.value.s, "\v") != NULL) {
-        while(strstr(instr_operand.value.s, "\v") != NULL) {
-          replace_str(&instr_operand.value.s, "\v", "\\011");
-        }
+    }     
+    if (strstr(instr_operand.value.s, "\t") != NULL) {
+      while ((strstr(instr_operand.value.s, "\t") != NULL)) {
+        replace_str(&instr_operand.value.s, "\t", "\\009");
       }
-      if (strstr(instr_operand.value.s, "\f") != NULL) {
-        while(strstr(instr_operand.value.s, "\f") != NULL) {
-          replace_str(&instr_operand.value.s, "\f", "\\012");
-        }
+    }
+    if (strstr(instr_operand.value.s, "\v") != NULL) {
+      while(strstr(instr_operand.value.s, "\v") != NULL) {
+        replace_str(&instr_operand.value.s, "\v", "\\011");
       }
-      if (strstr(instr_operand.value.s, "\r") != NULL) {
-        while(strstr(instr_operand.value.s, "\r") != NULL) {
-          replace_str(&instr_operand.value.s, "\r", "\\013");
-        }
+    }
+    if (strstr(instr_operand.value.s, "\f") != NULL) {
+      while(strstr(instr_operand.value.s, "\f") != NULL) {
+        replace_str(&instr_operand.value.s, "\f", "\\012");
       }
-      if (strstr(instr_operand.value.s, " ") != NULL) {
-        while(strstr(instr_operand.value.s, " ") != NULL) {
-          replace_str(&instr_operand.value.s, " ", "\\032");
-        }
+    }
+    if (strstr(instr_operand.value.s, "\r") != NULL) {
+      while(strstr(instr_operand.value.s, "\r") != NULL) {
+        replace_str(&instr_operand.value.s, "\r", "\\013");
       }
-      printf("%s",instr_operand.value.s);
+    }
+    if (strstr(instr_operand.value.s, " ") != NULL) {
+      while(strstr(instr_operand.value.s, " ") != NULL) {
+        replace_str(&instr_operand.value.s, " ", "\\032");
+      }
+    }
+    printf("%s",instr_operand.value.s);
   }
 }
 

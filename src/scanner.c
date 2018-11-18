@@ -394,6 +394,10 @@ int getToken(){
                     pushToken(c);
                     state = S_NUMBER_EXPONENT;
                 }
+                else if (c == '.'){
+                    ungetc(c, stdin);
+                    return ERROR_LEX;
+                }
                 else{
                     ungetc(c, stdin);
                     //printf("qqqqqq");
