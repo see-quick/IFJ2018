@@ -372,7 +372,6 @@ int getToken(){
                         digit_check = 1;    // pro kontrolu 1e+ erroru
                     }
                     else if (isdigit(c)){
-                        printf("cisloo");
                         digit_check = 0;
                     }
                     //digit_check = 1;
@@ -582,7 +581,6 @@ int getToken(){
                         long ascii_tmp = strtol(ascii_val, &endptr, 16);
 
                         if (*endptr != '\0' || strcmp(endptr, ascii_val) == 0){
-                            printf("asci err here 1");
                             return ERROR_LEX;
                         }
                             
@@ -595,9 +593,7 @@ int getToken(){
                     ungetc(c, stdin);
                     char *endptr = NULL;
                     long ascii_tmp = strtol(ascii_val, &endptr, 16);
-                    printf("%d  %ld  %s ", *endptr, ascii_tmp, ascii_val);
                     if (*endptr != '\0' || strcmp(endptr, ascii_val) == 0){
-                        printf("asci err here 2");
                         return ERROR_LEX;
                     }
                         
@@ -606,7 +602,6 @@ int getToken(){
                     state = S_STRING;
                 }
                 else{
-                    printf("asci err here 3");
                     return ERROR_LEX;
                 }
                 break;
