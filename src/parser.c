@@ -37,6 +37,7 @@ int while_counter = 0;
 int function_counter = 0;
 int return_type = -1;
 bool in_stat = false;
+bool in_print = false;
 
 
 /*********************************************************************/
@@ -169,62 +170,66 @@ int term(void){
 			// if LEX_ID -> zkontrolovat zda je promenna definovana
 			// pokud je to LEX_ID, LEX_NUMBER, LEX_REAL, LEX_STRING , podle typu vytvorit vnitrni promennou s hodnotou argumentu
 
-			if ( (result = check_substr_ord_build_in(argCount)) != SUCCESS) return result;
+			if(!in_print){
+				if ( (result = check_substr_ord_build_in(argCount)) != SUCCESS) return result;
+			}
 
-					instr_type = INSTRUCT_DEFVAR;
-					instr1.type = TF;
-					instr1.value.s = generate_param("%", argCount);
 
+			instr_type = INSTRUCT_DEFVAR;
+			instr1.type = TF;
+			instr1.value.s = generate_param("%", argCount);
+
+			insert_item(ilist, &instr_type, &instr1, &instr2, &instr3);
+			instr_type = INSTRUCT_MOVE;
+			instr1.type = TF;
+			instr1.value.s = generate_param("%", argCount);
+
+
+			if (token == LEX_NUMBER){
+				instr2.type = I; //integer
+				instr2.value.i = atoi(gToken.data.str);
+				insert_item(ilist, &instr_type, &instr1, &instr2, &instr3);
+
+			}
+			else if (token == LEX_REAL_NUMBER){
+				instr2.type = F; //float
+				instr2.value.f = atof(gToken.data.str);
+				insert_item(ilist, &instr_type, &instr1, &instr2, &instr3);
+			}
+			else if (token == LEX_STRING){
+				instr2.type = S; //string
+				instr2.value.s = gToken.data.str;
+				insert_item(ilist, &instr_type, &instr1, &instr2, &instr3);
+			}
+			else if (token == LEX_ID){
+				if (!local_map_contain(localMap, gToken.data.str)){
+				 	if (is_LF){
+						gData = global_map_get_value(gMap, function_name);
+						if (!local_map_contain(gData.lMap, gToken.data.str)){
+							instruction_exit(SEM_ERR);
+							return SEM_ERR;
+						}
+					} else{
+						instruction_exit(SEM_ERR);
+						return SEM_ERR;
+					}
+				}
+				else {
+					instr2.type = LF; //string
+					instr2.value.s = gToken.data.str;
 					insert_item(ilist, &instr_type, &instr1, &instr2, &instr3);
-					instr_type = INSTRUCT_MOVE;
-					instr1.type = TF;
-					instr1.value.s = generate_param("%", argCount);
-
-
-					if (token == LEX_NUMBER){
-						instr2.type = I; //integer
-						instr2.value.i = atoi(gToken.data.str);
-						insert_item(ilist, &instr_type, &instr1, &instr2, &instr3);
-
-					}
-					else if (token == LEX_REAL_NUMBER){
-						instr2.type = F; //float
-						instr2.value.f = atof(gToken.data.str);
-						insert_item(ilist, &instr_type, &instr1, &instr2, &instr3);
-					}
-					else if (token == LEX_STRING){
-						instr2.type = S; //string
-						instr2.value.s = gToken.data.str;
-						insert_item(ilist, &instr_type, &instr1, &instr2, &instr3);
-					}
-					else if (token == LEX_ID){
-						if (!local_map_contain(localMap, gToken.data.str)){
-						 	if (is_LF){
-								gData = global_map_get_value(gMap, function_name);
-								if (!local_map_contain(gData.lMap, gToken.data.str)){
-									instruction_exit(SEM_ERR);
-									return SEM_ERR;
-								}
-							} else{
-								instruction_exit(SEM_ERR);
-								return SEM_ERR;
-							}
-						}
-						else {
-							instr2.type = LF; //string
-							instr2.value.s = gToken.data.str;
-							insert_item(ilist, &instr_type, &instr1, &instr2, &instr3);
-						}
-					}
-			
+				}
+			}
+	
 			token = getToken();
 			if(!error_lex()){
 				instruction_exit(ERROR_LEX);
 				return ERROR_LEX;
 			} else if (!error_int()){
-				instruction_exit(INT_ERR);
+				//instruction_exit(INT_ERR);
 				return INT_ERR;
 			}
+
 			return SUCCESS;
 		break;
 
@@ -363,7 +368,7 @@ int check_chr_build_in(){
 									}
 									else {
 										int i = atoi(gToken.data.str);
-										if (i >= 299){
+										if (i >= 299 || i < 0){
 											instruction_exit(ERR_SEMANTIC);
 											return ERR_SEMANTIC;
 										}
@@ -424,8 +429,56 @@ int check_substr_ord_build_in(int param){
 									else {
 										lData = local_map_get_value(gData.lMap, gToken.data.str);
 										if (lData.type != INTEGER){
-											instruction_exit(ERR_INCOMPATIBLE_TYPE);
-											return ERR_INCOMPATIBLE_TYPE;
+											if (lData.type == NONE){
+													instr_type = INSTRUCT_TYPE;
+													instr1.type = GF;
+													instr1.value.s = "$tmp2";
+													instr2.type = LF;
+													instr2.value.s = gToken.data.str;
+													insert_item(ilist, &instr_type, &instr1, &instr2, &instr3);
+
+													switch(param){
+														case 1:
+															instr_type = INSTRUCT_JUMPIFEQ;
+															instr1.value.s = "$label_true_2";
+															instr2.type = GF;
+															instr2.value.s = "$tmp2";
+															instr3.type = S;
+															instr3.value.s = "int";
+															insert_item(ilist, &instr_type, &instr1, &instr2, &instr3);
+
+															instruction_exit(ERR_INCOMPATIBLE_TYPE);
+
+															instr_type = INSTRUCT_LABEL;
+															instr1.value.s = "$label_true_2";
+
+															insert_item(ilist, &instr_type, &instr1, &instr2, &instr3);
+														break;
+
+														case 2:
+															instr_type = INSTRUCT_JUMPIFEQ;
+															instr1.value.s = "$label_true_3";
+															instr2.type = GF;
+															instr2.value.s = "$tmp2";
+															instr3.type = S;
+															instr3.value.s = "int";
+															insert_item(ilist, &instr_type, &instr1, &instr2, &instr3);
+
+															instruction_exit(ERR_INCOMPATIBLE_TYPE);
+
+															instr_type = INSTRUCT_LABEL;
+															instr1.value.s = "$label_true_3";
+
+															insert_item(ilist, &instr_type, &instr1, &instr2, &instr3);
+														break;
+													}
+
+													
+											}
+											else {
+												instruction_exit(ERR_INCOMPATIBLE_TYPE);
+												return ERR_INCOMPATIBLE_TYPE;
+											}
 										}
 									}
 								}
@@ -443,10 +496,8 @@ int check_substr_ord_build_in(int param){
 			}
 		break;
 
-		case 3:
-			instruction_exit(ERR_PARAMS_COUNT);
-			return ERR_PARAMS_COUNT;
-		break;
+		default:
+			break;
 	}
 	return SUCCESS;
 }
@@ -462,17 +513,18 @@ int term_list2(bool zavorka){
 				instruction_exit(ERROR_LEX);
 				return ERROR_LEX;
 			} else if (!error_int()){
-				instruction_exit(INT_ERR);
+				////instruction_exit(INT_ERR);
 				return INT_ERR;
 			}
 
 			result = term();
 
+			argCount++;
+
 			if(result != SUCCESS){
 				return result;
 			}
 
-			argCount++;
 
 			//nacteno z param()
 			return term_list2(zavorka);
@@ -516,57 +568,58 @@ int term_list(bool zavorka){
 			// if LEX_ID -> zkontrolovat zda je promenna definovana
 			// pokud je to LEX_ID, LEX_NUMBER, LEX_REAL, LEX_STRING , podle typu vytvorit vnitrni promennou s hodnotou argumentu
 
+			if (!in_print){
+				if ( (result = check_length_substr_ord_build_in()) != SUCCESS) return result;
+				if ( (result = check_chr_build_in()) != SUCCESS) return result;
+			}
 
-			if ( (result = check_length_substr_ord_build_in()) != SUCCESS) return result;
-			if ( (result = check_chr_build_in()) != SUCCESS) return result;
-
-					instr_type = INSTRUCT_DEFVAR;
-					instr1.type = TF;
-					instr1.value.s = generate_param("%", argCount);
+			instr_type = INSTRUCT_DEFVAR;
+			instr1.type = TF;
+			instr1.value.s = generate_param("%", argCount);
 
 
+			insert_item(ilist, &instr_type, &instr1, &instr2, &instr3);
+			instr_type = INSTRUCT_MOVE;
+			instr1.type = TF;
+			instr1.value.s = generate_param("%", argCount);
+
+
+			if (token == LEX_NUMBER){
+				instr2.type = I; //integer
+				instr2.value.i = atoi(gToken.data.str);
+				insert_item(ilist, &instr_type, &instr1, &instr2, &instr3);
+
+			}
+			else if (token == LEX_REAL_NUMBER){
+				instr2.type = F; //float
+				instr2.value.f = atof(gToken.data.str);
+				insert_item(ilist, &instr_type, &instr1, &instr2, &instr3);
+			}
+			else if (token == LEX_STRING){
+				instr2.type = S; //string
+				instr2.value.s = gToken.data.str;
+				insert_item(ilist, &instr_type, &instr1, &instr2, &instr3);
+			}
+			else if (token == LEX_ID){
+				if (!local_map_contain(localMap, gToken.data.str)){
+				 	if (is_LF){
+						gData = global_map_get_value(gMap, function_name);
+						if (!local_map_contain(gData.lMap, gToken.data.str)){
+							instruction_exit(SEM_ERR);
+							return SEM_ERR;
+						}
+					}
+					else {
+						instruction_exit(SEM_ERR);
+						return SEM_ERR;
+					}
+				}
+				else {
+					instr2.type = LF; //string
+					instr2.value.s = gToken.data.str;
 					insert_item(ilist, &instr_type, &instr1, &instr2, &instr3);
-					instr_type = INSTRUCT_MOVE;
-					instr1.type = TF;
-					instr1.value.s = generate_param("%", argCount);
-
-
-					if (token == LEX_NUMBER){
-						instr2.type = I; //integer
-						instr2.value.i = atoi(gToken.data.str);
-						insert_item(ilist, &instr_type, &instr1, &instr2, &instr3);
-
-					}
-					else if (token == LEX_REAL_NUMBER){
-						instr2.type = F; //float
-						instr2.value.f = atof(gToken.data.str);
-						insert_item(ilist, &instr_type, &instr1, &instr2, &instr3);
-					}
-					else if (token == LEX_STRING){
-						instr2.type = S; //string
-						instr2.value.s = gToken.data.str;
-						insert_item(ilist, &instr_type, &instr1, &instr2, &instr3);
-					}
-					else if (token == LEX_ID){
-						if (!local_map_contain(localMap, gToken.data.str)){
-						 	if (is_LF){
-								gData = global_map_get_value(gMap, function_name);
-								if (!local_map_contain(gData.lMap, gToken.data.str)){
-									instruction_exit(SEM_ERR);
-									return SEM_ERR;
-								}
-							}
-							else {
-								instruction_exit(SEM_ERR);
-								return SEM_ERR;
-							}
-						}
-						else {
-							instr2.type = LF; //string
-							instr2.value.s = gToken.data.str;
-							insert_item(ilist, &instr_type, &instr1, &instr2, &instr3);
-						}
-					}
+				}
+			}
 
 			// zvetsit pocet argumentu
 			argCount++;
@@ -577,7 +630,7 @@ int term_list(bool zavorka){
 				instruction_exit(ERROR_LEX);
 				return ERROR_LEX;
 			} else if (!error_int()){
-				instruction_exit(INT_ERR);
+				//instruction_exit(INT_ERR);
 				return INT_ERR;
 			}
 		
@@ -615,7 +668,7 @@ int term_list(bool zavorka){
 		instruction_exit(ERROR_LEX);
 		return ERROR_LEX;
 	} else if (!error_int()){
-		instruction_exit(INT_ERR);
+		//instruction_exit(INT_ERR);
 		return INT_ERR;
 	}
 
@@ -705,7 +758,7 @@ int call_left_bracket(tDataFunction *tmp){
 		instruction_exit(ERROR_LEX);
 		return ERROR_LEX;
 	} else if (!error_int()){
-		instruction_exit(INT_ERR);
+		//instruction_exit(INT_ERR);
 		return INT_ERR;
 	}
 
@@ -769,7 +822,7 @@ int call_left_bracket(tDataFunction *tmp){
 		instruction_exit(ERROR_LEX);
 		return ERROR_LEX;
 	} else if (!error_int()){
-		instruction_exit(INT_ERR);
+		//instruction_exit(INT_ERR);
 		return INT_ERR;
 	}
 
@@ -835,7 +888,7 @@ int call_function(tDataFunction * tmp){
 		instruction_exit(ERROR_LEX);
 		return ERROR_LEX;
 	} else if (!error_int()){
-		instruction_exit(INT_ERR);
+		//instruction_exit(INT_ERR);
 		return INT_ERR;
 	}
 
@@ -1040,7 +1093,7 @@ int sth(){
 							instruction_exit(ERROR_LEX);
 							return ERROR_LEX;
 						} else if (!error_int()){
-							instruction_exit(INT_ERR);
+							//instruction_exit(INT_ERR);
 							return INT_ERR;
 						}
 
@@ -1054,7 +1107,7 @@ int sth(){
 										instruction_exit(ERROR_LEX);
 										return ERROR_LEX;
 									} else if (!error_int()){
-										instruction_exit(INT_ERR);
+										//instruction_exit(INT_ERR);
 										return INT_ERR;
 									}
 
@@ -1121,7 +1174,7 @@ int sth(){
 							instruction_exit(ERROR_LEX);
 							return ERROR_LEX;
 						} else if (!error_int()){
-							instruction_exit(INT_ERR);
+							//instruction_exit(INT_ERR);
 							return INT_ERR;
 						}
 
@@ -1132,7 +1185,7 @@ int sth(){
 								instruction_exit(ERROR_LEX);
 								return ERROR_LEX;
 							} else if (!error_int()){
-								instruction_exit(INT_ERR);
+								//instruction_exit(INT_ERR);
 								return INT_ERR;
 							}
 
@@ -1181,7 +1234,7 @@ int stat(){
 				instruction_exit(ERROR_LEX);
 				return ERROR_LEX;
 			} else if (!error_int()){
-				instruction_exit(INT_ERR);
+				//instruction_exit(INT_ERR);
 				return INT_ERR;
 			}
 
@@ -1240,7 +1293,7 @@ int stat(){
 							instruction_exit(ERROR_LEX);
 							return ERROR_LEX;
 						} else if (!error_int()){
-							instruction_exit(INT_ERR);
+							//instruction_exit(INT_ERR);
 							return INT_ERR;
 						}
 
@@ -1372,7 +1425,7 @@ int stat(){
 				instruction_exit(ERROR_LEX);
 				return ERROR_LEX;
 			} else if (!error_int()){
-				instruction_exit(INT_ERR);
+				//instruction_exit(INT_ERR);
 				return INT_ERR;
 			}
 
@@ -1386,7 +1439,7 @@ int stat(){
 				instruction_exit(ERROR_LEX);
 				return ERROR_LEX;
 			} else if (!error_int()){
-				instruction_exit(INT_ERR);
+				//instruction_exit(INT_ERR);
 				return INT_ERR;
 			}
 
@@ -1397,6 +1450,8 @@ int stat(){
 
 		case KW_PRINT:
 
+			in_print = true;
+
 			argCount = 0;
 
 			token = getToken();
@@ -1405,7 +1460,7 @@ int stat(){
 				instruction_exit(ERROR_LEX);
 				return ERROR_LEX;
 			} else if (!error_int()){
-				instruction_exit(INT_ERR);
+				//instruction_exit(INT_ERR);
 				return INT_ERR;
 			}
 
@@ -1417,7 +1472,7 @@ int stat(){
 						instruction_exit(ERROR_LEX);
 						return ERROR_LEX;
 					} else if (!error_int()){
-						instruction_exit(INT_ERR);
+						//instruction_exit(INT_ERR);
 						return INT_ERR;
 					}
 
@@ -1437,7 +1492,7 @@ int stat(){
 						instruction_exit(ERROR_LEX);
 						return ERROR_LEX;
 					} else if (!error_int()){
-						instruction_exit(INT_ERR);
+						//instruction_exit(INT_ERR);
 						return INT_ERR;
 					}
 
@@ -1466,10 +1521,12 @@ int stat(){
 					instr_type = INSTRUCT_CREATEFREAME;
 					insert_item(ilist, &instr_type, &instr1, &instr2, &instr3);
 
+
 					result = term_list(zavorka);
 					if(result != SUCCESS){
 						return result;
 					}
+
 
 					if (argCount == 0){
 						instruction_exit(ERR_PARAMS_COUNT);
@@ -1489,6 +1546,8 @@ int stat(){
 					instruction_exit(ERR_PARAMS_COUNT);
 					return ERR_PARAMS_COUNT;
 			}
+
+			in_print = false;
 
 			return SUCCESS;
 
@@ -1513,7 +1572,7 @@ int stat(){
 				instruction_exit(ERROR_LEX);
 				return ERROR_LEX;
 			} else if (!error_int()){
-				instruction_exit(INT_ERR);
+				//instruction_exit(INT_ERR);
 				return INT_ERR;
 			}
 
@@ -1564,7 +1623,7 @@ int stat(){
 				instruction_exit(ERROR_LEX);
 				return ERROR_LEX;
 			} else if (!error_int()){
-				instruction_exit(INT_ERR);
+				//instruction_exit(INT_ERR);
 				return INT_ERR;
 			}
 
@@ -1580,7 +1639,7 @@ int stat(){
 				instruction_exit(ERROR_LEX);
 				return ERROR_LEX;
 			} else if (!error_int()){
-				instruction_exit(INT_ERR);
+				//instruction_exit(INT_ERR);
 				return INT_ERR;
 			}
 
@@ -1611,7 +1670,7 @@ int stat(){
 				instruction_exit(ERROR_LEX);
 				return ERROR_LEX;
 			} else if (!error_int()){
-				instruction_exit(INT_ERR);
+				//instruction_exit(INT_ERR);
 				return INT_ERR;
 			}
 
@@ -1627,7 +1686,7 @@ int stat(){
 				instruction_exit(ERROR_LEX);
 				return ERROR_LEX;
 			} else if (!error_int()){
-				instruction_exit(INT_ERR);
+				//instruction_exit(INT_ERR);
 				return INT_ERR;
 			}
 
@@ -1673,7 +1732,7 @@ int stat(){
 				instruction_exit(ERROR_LEX);
 				return ERROR_LEX;
 			} else if (!error_int()){
-				instruction_exit(INT_ERR);
+				//instruction_exit(INT_ERR);
 				return INT_ERR;
 			}
 
@@ -1693,7 +1752,6 @@ int stat(){
 			++while_counter;
 
 			if (while_counter == 1){
-				//printf("Furst while");
 				tmp_list = ilist;
 				ilist = while_list;
 			}
@@ -1709,7 +1767,7 @@ int stat(){
 				instruction_exit(ERROR_LEX);
 				return ERROR_LEX;
 			} else if (!error_int()){
-				instruction_exit(INT_ERR);
+				//instruction_exit(INT_ERR);
 				return INT_ERR;
 			}
 
@@ -1761,7 +1819,7 @@ int stat(){
 				instruction_exit(ERROR_LEX);
 				return ERROR_LEX;
 			} else if (!error_int()){
-				instruction_exit(INT_ERR);
+				//instruction_exit(INT_ERR);
 				return INT_ERR;
 			}
 
@@ -1778,7 +1836,7 @@ int stat(){
 				instruction_exit(ERROR_LEX);
 				return ERROR_LEX;
 			} else if (!error_int()){
-				instruction_exit(INT_ERR);
+				//instruction_exit(INT_ERR);
 				return INT_ERR;
 			}
 
@@ -1824,7 +1882,7 @@ int stat(){
 				instruction_exit(ERROR_LEX);
 				return ERROR_LEX;
 			} else if (!error_int()){
-				instruction_exit(INT_ERR);
+				//instruction_exit(INT_ERR);
 				return INT_ERR;
 			}
 
@@ -1875,7 +1933,7 @@ int st_list(){
 					instruction_exit(ERROR_LEX);
 					return ERROR_LEX;
 				} else if (!error_int()){
-					instruction_exit(INT_ERR);
+					//instruction_exit(INT_ERR);
 					return INT_ERR;
 				}
 				return st_list();
@@ -1907,7 +1965,7 @@ int st_list(){
 				instruction_exit(ERROR_LEX);
 				return ERROR_LEX;
 			} else if (!error_int()){
-				instruction_exit(INT_ERR);
+				//instruction_exit(INT_ERR);
 				return INT_ERR;
 			}
 
@@ -1926,7 +1984,7 @@ int st_list(){
 				instruction_exit(ERROR_LEX);
 				return ERROR_LEX;
 			} else if (!error_int()){
-				instruction_exit(INT_ERR);
+				//instruction_exit(INT_ERR);
 				return INT_ERR;
 			}
 
@@ -1949,7 +2007,7 @@ int pm_list2(){
 				instruction_exit(ERROR_LEX);
 				return ERROR_LEX;
 			} else if (!error_int()){
-				instruction_exit(INT_ERR);
+				//instruction_exit(INT_ERR);
 				return INT_ERR;
 			}
 
@@ -1970,18 +2028,18 @@ int pm_list2(){
 				local_map_put(gData.lMap, gToken.data.str, lData);
 			}
 
-				instr_type = INSTRUCT_DEFVAR;
-				instr1.type = LF;
-				instr1.value.s = gToken.data.str;
-				insert_item(ilist,&instr_type, &instr1, &instr2, &instr3 );
+			instr_type = INSTRUCT_DEFVAR;
+			instr1.type = LF;
+			instr1.value.s = gToken.data.str;
+			insert_item(ilist,&instr_type, &instr1, &instr2, &instr3 );
 
 
-				instr_type = INSTRUCT_MOVE;
-				instr1.type = LF;
-				instr1.value.s = gToken.data.str;
-				instr2.type = LF;
-				instr2.value.s = generate_param("%", argCount);
-				insert_item(ilist,&instr_type, &instr1, &instr2, &instr3 );
+			instr_type = INSTRUCT_MOVE;
+			instr1.type = LF;
+			instr1.value.s = gToken.data.str;
+			instr2.type = LF;
+			instr2.value.s = generate_param("%", paramCount);
+			insert_item(ilist,&instr_type, &instr1, &instr2, &instr3 );
 
 			// + jeden parametr
 			paramCount++;
@@ -1992,7 +2050,7 @@ int pm_list2(){
 				instruction_exit(ERROR_LEX);
 				return ERROR_LEX;
 			} else if (!error_int()){
-				instruction_exit(INT_ERR);
+				//instruction_exit(INT_ERR);
 				return INT_ERR;
 			}
 
@@ -2013,7 +2071,7 @@ int pm_list2(){
 		instruction_exit(ERROR_LEX);
 		return ERROR_LEX;
 	} else if(!error_int()){
-		instruction_exit(INT_ERR);
+		//instruction_exit(INT_ERR);
 		return INT_ERR;
 	}
 
@@ -2045,7 +2103,7 @@ int pm_list(){
 		instr1.type = LF;
 		instr1.value.s = gToken.data.str;
 		instr2.type = LF;
-		instr2.value.s = generate_param("%", argCount);
+		instr2.value.s = generate_param("%", paramCount);
 		insert_item(ilist,&instr_type, &instr1, &instr2, &instr3 );
 
 
@@ -2057,13 +2115,14 @@ int pm_list(){
 			instruction_exit(ERROR_LEX);
 			return ERROR_LEX;
 		} else if (!error_int()){
-			instruction_exit(INT_ERR);
+			//instruction_exit(INT_ERR);
 			return INT_ERR;
 		}
 
 		return pm_list2();
 	}
 	else{
+		// def foo(1, 4) -> validni?
 		return SUCCESS;
 	}
 
@@ -2085,7 +2144,7 @@ int func(){
 		instruction_exit(ERROR_LEX);
 		return ERROR_LEX;
 	} else if(!error_int()){
-		instruction_exit(INT_ERR);
+		//instruction_exit(INT_ERR);
 		return INT_ERR;
 	}
 
@@ -2130,7 +2189,6 @@ int func(){
 	insert_item(ilist, &instr_type, &instr1, &instr2, &instr3);
 
 	function_name = gToken.data.str;
-	//printf("Function name is %s\n", function_name);
 
 	// navratova hodnota
 	instr_type = INSTRUCT_DEFVAR;
@@ -2153,7 +2211,7 @@ int func(){
 		instruction_exit(ERROR_LEX);
 		return ERROR_LEX;
 	} else if (!error_int()){
-		instruction_exit(INT_ERR);
+		//instruction_exit(INT_ERR);
 		return INT_ERR;
 	}
 
@@ -2170,7 +2228,7 @@ int func(){
 		instruction_exit(ERROR_LEX);
 		return ERROR_LEX;
 	} else if (!error_int()){
-		instruction_exit(INT_ERR);
+		//instruction_exit(INT_ERR);
 		return INT_ERR;
 	}
 
@@ -2185,7 +2243,7 @@ int func(){
 		instruction_exit(ERROR_LEX);
 		return ERROR_LEX;
 	} else if (!error_int()){
-		instruction_exit(INT_ERR);
+		//instruction_exit(INT_ERR);
 		return INT_ERR;
 	}
 
@@ -2199,6 +2257,7 @@ int func(){
 	gData.paramCount = paramCount;
 	global_map_put(gMap, function_name, gData);
 
+
 	// pro dalsi funkce
 	paramCount = 0;
 
@@ -2208,7 +2267,7 @@ int func(){
 		instruction_exit(ERROR_LEX);
 		return ERROR_LEX;
 	} else if (!error_int()){
-		instruction_exit(INT_ERR);
+		//instruction_exit(INT_ERR);
 		return INT_ERR;
 	}
 
@@ -2225,7 +2284,7 @@ int func(){
 		instruction_exit(ERROR_LEX);
 		return ERROR_LEX;
 	} else if (!error_int()){
-		instruction_exit(INT_ERR);
+		//instruction_exit(INT_ERR);
 		return INT_ERR;
 	}
 
@@ -2240,7 +2299,7 @@ int func(){
 		instruction_exit(ERROR_LEX);
 		return ERROR_LEX;
 	} else if (!error_int()){
-		instruction_exit(INT_ERR);
+		//instruction_exit(INT_ERR);
 		return INT_ERR;
 	}
 
@@ -2289,7 +2348,7 @@ int func(){
 		instruction_exit(ERROR_LEX);
 		return ERROR_LEX;
 	} else if (!error_int()){
-		instruction_exit(INT_ERR);
+		//instruction_exit(INT_ERR);
 		return INT_ERR;
 	}
 
@@ -2327,7 +2386,7 @@ int main_p(void){
 				instruction_exit(ERROR_LEX);
 				return ERROR_LEX;
 			} else if (!error_int()){
-				instruction_exit(INT_ERR);
+				//instruction_exit(INT_ERR);
 				return INT_ERR;
 			}
 
@@ -2341,7 +2400,7 @@ int main_p(void){
 				instruction_exit(ERROR_LEX);
 				return ERROR_LEX;
 			} else if (!error_int()){
-				instruction_exit(INT_ERR);
+				//instruction_exit(INT_ERR);
 				return INT_ERR;
 			}
 			//fprintf(stderr, "Ocekavano zacatek programu na radku %d\n", gToken.row);
@@ -2384,7 +2443,7 @@ int prog(){
     			instruction_exit(ERROR_LEX);
 				return ERROR_LEX;
 			} else if (!error_int()){
-				instruction_exit(INT_ERR);
+				//instruction_exit(INT_ERR);
 				return INT_ERR;
 			}
 			else{
@@ -2432,7 +2491,7 @@ int parse(GlobalMap* globalMap, tList *list) {
 			instruction_exit(ERROR_LEX);
 			result = ERROR_LEX;
 		} else if (token == INT_ERR) {
-			instruction_exit(INT_ERR);
+			//instruction_exit(INT_ERR);
 			return INT_ERR;
 			//fprintf(stderr, "Interni chyba\n");
 		}
@@ -2453,13 +2512,10 @@ int parse(GlobalMap* globalMap, tList *list) {
 
 		instr_type =  INSTRUCT_PUSHFRAME;
 		insert_item(ilist, &instr_type, &instr1, &instr2, &instr3);
-		// instr_type = INSTRUCT_LENGTH;
-		// insert_item(ilist, &instr_type, &instr1, &instr2, &instr3);
+		
 		// instr_type = INSTRUCT_CHR;
 		// insert_item(ilist, &instr_type, &instr1, &instr2, &instr3);
 		// instr_type = INSTRUCT_ORD;
-		// insert_item(ilist, &instr_type, &instr1, &instr2, &instr3);
-		// instr_type = INSTRUCT_SUBSTR;
 		// insert_item(ilist, &instr_type, &instr1, &instr2, &instr3);
 
 		result = prog();

@@ -14,7 +14,7 @@ MOVE GF@$$EXPR2 int@0
 DEFVAR GF@$result
 DEFVAR GF@$type
 DEFVAR GF@$tmp
-MOVE GF@$tmp float@0x0p+0
+DEFVAR GF@$tmp2
 DEFVAR GF@$type2
 CREATEFRAME
 PUSHFRAME

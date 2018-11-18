@@ -435,6 +435,183 @@ void generateInstructionForType(tList* list, tStack *stack, int type, char * ins
     generatingConcreteInstruction(list, stack, type, instruction_type, positionForConcreteInstruction);
 }
 
+
+void generateInstructionForNones(tList* list, tStack *stack, char * instruction_type){
+    (void)instruction_type;
+
+    instr_type = INSTRUCT_TYPE;
+    instr1.type = GF;
+    instr1.value.s = "$type1";
+    instr2.type = LF;
+    instr2.value.s = stack->arrayOfItems[stack->finderOfParenthesis + 1].nameOfTheVariable;
+
+    insert_item(list,&instr_type, &instr1, &instr2, &instr3);
+    instr_type = INSTRUCT_TYPE;
+    instr1.type = GF;
+    instr1.value.s = "$type2";
+    instr2.type = LF;
+    instr2.value.s = stack->arrayOfItems[stack->finderOfParenthesis + 3].nameOfTheVariable;
+    insert_item(list, &instr_type, &instr1, &instr2, &instr3);
+
+
+    instr_type = INSTRUCT_JUMPIFEQ;
+    instr1.value.s = "$if_string";
+    instr2.type = GF;
+    instr2.value.s = "$type1";
+    instr3.type = S;
+    instr3.value.s = "string";
+    insert_item(list, &instr_type, &instr1, &instr2, &instr3);
+
+    instr_type = INSTRUCT_JUMPIFEQ;
+    instr1.value.s = "$int_2_float1";
+    instr2.type = GF;
+    instr2.value.s = "$type1";
+    instr3.type = S;
+    instr3.value.s = "int";
+    insert_item(list, &instr_type, &instr1, &instr2, &instr3);
+
+    instr_type = INSTRUCT_JUMPIFEQ;
+    instr1.value.s = "$int_2_float2";
+    instr2.type = GF;
+    instr2.value.s = "$type1";
+    instr3.type = S;
+    instr3.value.s = "float";
+    insert_item(list, &instr_type, &instr1, &instr2, &instr3);
+
+    instruction_exit(ERR_INCOMPATIBLE_TYPE);
+
+    instr_type = INSTRUCT_LABEL;
+    instr1.value.s = "$int_2_float1";
+
+    instr_type = INSTRUCT_JUMPIFEQ;
+    instr1.value.s = "$label_3";
+    instr2.type = GF;
+    instr2.value.s = "$type2";
+    instr3.type = S;
+    instr3.value.s = "int";
+    insert_item(list, &instr_type, &instr1, &instr2, &instr3);
+
+
+    instr_type = INSTRUCT_JUMPIFEQ;
+    instr1.value.s = "$label_3";
+    instr2.type = GF;
+    instr2.value.s = "$type2";
+    instr3.type = S;
+    instr3.value.s = "float";
+    insert_item(list, &instr_type, &instr1, &instr2, &instr3);
+
+    instruction_exit(ERR_INCOMPATIBLE_TYPE);
+
+    instr_type = INSTRUCT_LABEL;
+    instr1.value.s = "$int_2_float1";
+    insert_item(list, &instr_type, &instr1, &instr2, &instr3);
+
+    instr_type = INSTRUCT_INT2FLOAT;
+    instr1.type = LF;
+    instr1.value.s = stack->arrayOfItems[stack->finderOfParenthesis + 1].nameOfTheVariable;
+    instr2.type = LF;
+    instr2.value.s = stack->arrayOfItems[stack->finderOfParenthesis + 1].nameOfTheVariable;
+    insert_item(list, &instr_type, &instr1, &instr2, &instr3);
+
+    instr_type = INSTRUCT_JUMP;
+    instr1.value.s = "$label_3";
+    insert_item(list, &instr_type, &instr1, &instr2, &instr3);
+
+    instr_type = INSTRUCT_LABEL;
+    instr1.value.s = "$if_string";
+    insert_item(list, &instr_type, &instr1, &instr2, &instr3);
+
+    instr_type = INSTRUCT_JUMPIFEQ;
+    instr1.value.s = "$label_2";
+    instr2.type = GF;
+    instr2.value.s = "$type1";
+    instr3.type = S;
+    instr3.value.s = "string";
+    insert_item(list, &instr_type, &instr1, &instr2, &instr3);
+
+    instr_type = INSTRUCT_JUMPIFEQ;
+    instr1.value.s = "$label_3";
+    instr2.type = GF;
+    instr2.value.s = "$type1";
+    instr3.type = S;
+    instr3.value.s = "int";
+    insert_item(list, &instr_type, &instr1, &instr2, &instr3);
+
+    instr1.value.s = "$label_3";
+    instr2.type = GF;
+    instr2.value.s = "$type1";
+    instr3.type = S;
+    instr3.value.s = "float";
+    insert_item(list, &instr_type, &instr1, &instr2, &instr3);
+
+    instr_type = INSTRUCT_LABEL;
+    instr1.value.s = "label_2";
+    insert_item(list, &instr_type, &instr1, &instr2, &instr3);
+
+    instr_type = INSTRUCT_CONCAT;
+    instr1.type = GF;
+    instr1.value.s = "$result";
+    instr2.type = LF;
+    instr2.value.s = stack->arrayOfItems[stack->finderOfParenthesis + 1].nameOfTheVariable;
+    instr3.type = LF;
+    instr3.value.s = stack->arrayOfItems[stack->finderOfParenthesis + 3].nameOfTheVariable;
+    insert_item(list, &instr_type, &instr1, &instr2, &instr3);
+
+    instr_type = INSTRUCT_LABEL;
+    instr1.value.s = "$label_3";
+    insert_item(list, &instr_type, &instr1, &instr2, &instr3);
+
+    instr_type = INSTRUCT_ADD;
+    instr1.type = GF;
+    instr1.value.s = "$result";
+    instr2.type = LF;
+    instr2.value.s = stack->arrayOfItems[stack->finderOfParenthesis + 1].nameOfTheVariable;
+    instr3.type = LF;
+    instr3.value.s = stack->arrayOfItems[stack->finderOfParenthesis + 3].nameOfTheVariable;
+
+    insert_item(list, &instr_type, &instr1, &instr2, &instr3);
+
+    instr_type = INSTRUCT_LABEL;
+    instr1.value.s = "$int_2_float2";
+    insert_item(list, &instr_type, &instr1, &instr2, &instr3);
+
+    instr_type = INSTRUCT_JUMPIFEQ;
+    instr1.value.s = "$label3";
+    instr2.type = GF;
+    instr2.value.s = "$type2";
+    instr3.type = S;
+    instr3.value.s = "float";
+    insert_item(list, &instr_type, &instr1, &instr2, &instr3);
+
+    instr_type = INSTRUCT_JUMPIFEQ;
+    instr1.value.s = "$int_2_float3";
+    instr2.type = GF;
+    instr2.value.s = "$type2";
+    instr3.type = S;
+    instr3.value.s = "int";
+    insert_item(list, &instr_type, &instr1, &instr2, &instr3);
+
+    instruction_exit(ERR_INCOMPATIBLE_TYPE);
+
+    instr_type = INSTRUCT_LABEL;
+    instr1.value.s = "$int_2_float3";
+    insert_item(list, &instr_type, &instr1, &instr2, &instr3);
+    instr_type = INSTRUCT_INT2FLOAT;
+    instr1.type = LF;
+    instr1.value.s = stack->arrayOfItems[stack->finderOfParenthesis + 1].nameOfTheVariable;
+    instr2.type = LF;
+    instr3.value.s = stack->arrayOfItems[stack->finderOfParenthesis + 3].nameOfTheVariable;
+    insert_item(list, &instr_type, &instr1, &instr2, &instr3);
+
+    instr_type = INSTRUCT_JUMP;
+    instr1.value.s = "$label_3";
+    insert_item(list, &instr_type, &instr1, &instr2, &instr3);
+}
+
+
+
+
+
 // @varName pravidlo id = <sth>
 // @lMap je lokalni Mapa
 expr_return parse_expr(LocalMap* lMap, tList* list, bool is_bool){
@@ -616,12 +793,7 @@ expr_return parse_expr(LocalMap* lMap, tList* list, bool is_bool){
                                             generateInstructionForType(list, stack, S, "CONCAT", 3, 1);
                                         }
                                         else if (stack->arrayOfItems[stack->finderOfParenthesis + 3].type == NONE){
-                                            instr_type = INSTRUCT_TYPE;
-                                            instr1.type = GF;
-                                            instr1.value.s = "$type2";
-                                            instr2.type = LF;
-                                            instr2.value.s = stack->arrayOfItems[stack->finderOfParenthesis + 3].nameOfTheVariable;
-                                            insert_item(list, &instr_type, &instr1, &instr2, &instr3);
+                                            generateInstructionForNones(list, stack, "ADD");
                                         }
                                     isFirstVariable = false;
                                     isThirdVariable = false;
@@ -637,8 +809,6 @@ expr_return parse_expr(LocalMap* lMap, tList* list, bool is_bool){
                                         }
                                         else if (stack->arrayOfItems[stack->finderOfParenthesis + 1].type == STRING){
                                             generateInstructionForType(list, stack, S, "CONCAT", 3, 1);
-                                        }
-                                        else if (stack->arrayOfItems[stack->finderOfParenthesis + 1].type == NONE){
                                         }
                                     isFirstVariable = false;
                                     isThirdVariable = false;
@@ -1464,7 +1634,7 @@ expr_return parse_expr(LocalMap* lMap, tList* list, bool is_bool){
                                 } else {
                                     //fprintf(stderr, "Semanticka chyba typové kompatibility v aritmetických vyrazech, radek %d\n", gToken.row);
                                     resultOfPrece.result = ERR_INCOMPATIBLE_TYPE;
-                                    resultOfPrece.bool_result = false;
+                                    resultOfPrece.bool_result = true;
                                     //instruction_exit(ERR_INCOMPATIBLE_TYPE);
                                     return resultOfPrece;
                                 }
@@ -1659,7 +1829,7 @@ expr_return parse_expr(LocalMap* lMap, tList* list, bool is_bool){
                                 } else {
                                     //fprintf(stderr, "Semanticka chyba typové kompatibility v aritmetických vyrazech, radek %d\n", gToken.row);
                                     resultOfPrece.result = ERR_INCOMPATIBLE_TYPE;
-                                     resultOfPrece.bool_result = false;
+                                     resultOfPrece.bool_result = true;
                                     //instruction_exit(ERR_INCOMPATIBLE_TYPE);
                                     return resultOfPrece;
                                 }
@@ -1899,7 +2069,7 @@ expr_return parse_expr(LocalMap* lMap, tList* list, bool is_bool){
                                 } else {
                                     //fprintf(stderr, "Semanticka chyba typové kompatibility v aritmetických vyrazech, radek %d\n", gToken.row);
                                     resultOfPrece.result = ERR_INCOMPATIBLE_TYPE;
-                                    resultOfPrece.bool_result = false;
+                                    resultOfPrece.bool_result = true;
                                     //instruction_exit(ERR_INCOMPATIBLE_TYPE);
                                     return resultOfPrece;
                                 }
@@ -2137,7 +2307,7 @@ expr_return parse_expr(LocalMap* lMap, tList* list, bool is_bool){
                                 } else {
                                     //fprintf(stderr, "Semanticka chyba typové kompatibility v aritmetických vyrazech, radek %d\n", gToken.row);
                                     resultOfPrece.result = ERR_INCOMPATIBLE_TYPE;
-                                    resultOfPrece.bool_result = false;
+                                    resultOfPrece.bool_result = true;
                                     //instruction_exit(ERR_INCOMPATIBLE_TYPE);
                                     return resultOfPrece;
                                 }
@@ -2298,7 +2468,7 @@ expr_return parse_expr(LocalMap* lMap, tList* list, bool is_bool){
                                 } else {
                                     //fprintf(stderr, "Semanticka chyba typové kompatibility v aritmetických vyrazech, radek %d\n", gToken.row);
                                     resultOfPrece.result = ERR_INCOMPATIBLE_TYPE;
-                                    resultOfPrece.bool_result = false;
+                                    resultOfPrece.bool_result = true;
                                     //instruction_exit(ERR_INCOMPATIBLE_TYPE);
                                     return resultOfPrece;
                                 }
@@ -2476,7 +2646,7 @@ expr_return parse_expr(LocalMap* lMap, tList* list, bool is_bool){
                                 } else {
                                     //fprintf(stderr, "Semanticka chyba typové kompatibility v aritmetických vyrazech, radek %d\n", gToken.row);
                                     resultOfPrece.result = ERR_INCOMPATIBLE_TYPE;
-                                    resultOfPrece.bool_result = false;
+                                    resultOfPrece.bool_result = true;
                                     //instruction_exit(ERR_INCOMPATIBLE_TYPE);
                                     return resultOfPrece;
                                 }

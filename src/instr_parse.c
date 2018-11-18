@@ -298,7 +298,7 @@ void parse_instructions(tList *instr_list)  {
           printf("DEFVAR GF@$result\n");
           printf("DEFVAR GF@$type\n");
           printf("DEFVAR GF@$tmp\n");
-          printf("MOVE GF@$tmp float@0x0p+0\n");
+          printf("DEFVAR GF@$tmp2\n");
           printf("DEFVAR GF@$type2\n");
       break;
 
@@ -569,7 +569,10 @@ void parse_instructions(tList *instr_list)  {
 
       case INSTRUCT_LENGTH:
           printf("LABEL length\n");
-          printf("STRLEN GF$$var_integer LF@_param1\n");
+          printf("PUSHFRAME\n");
+          printf("DEFVAR LF@%%retval\n");
+          printf("STRLEN LF@%%retval LF@%%1\n");
+          printf("POPFRAME\n");
           printf("RETURN\n");
       break;
 
@@ -592,7 +595,10 @@ void parse_instructions(tList *instr_list)  {
 
       case INSTRUCT_CHR:
           printf("LABEL chr\n");
-          printf("INT2CHAR GF@$$var_string LF@_param1\n");
+          printf("PUSHFRAME\n");
+          printf("DEFVAR LF@%%retval\n");
+          printf("INT2CHAR  LF@%%retval LF@%%1\n");
+          printf("POPFRAME\n");
           printf("RETURN\n");
       break;
 
@@ -628,23 +634,24 @@ void parse_instructions(tList *instr_list)  {
 
       case INSTRUCT_SUBSTR:
           printf("LABEL substr\n");
-          printf("STRLEN $$var_integer LF@_param2\n");
-          printf("LT GF@$$var_double GF@$$var_integer LF@_param1\n"); // i out of 0 - length(s)
+          printf("PUSHFRAME\n");
+          printf("STRLEN $$var_integer LF@%%2\n");
+          printf("LT GF@$$var_double GF@$$var_integer LF@%%1\n"); // i out of 0 - length(s)
           printf("JUMPIFEQ label_substr bool@true GF@$$var_double\n");
 
           printf("MOVE GF@$$var_integer int@0\n");
-          printf("LT GF@$$var_integer LF@_param3 GF@$$var_integer\n");  // n < 0
+          printf("LT GF@$$var_integer LF@%%3 GF@$$var_integer\n");  // n < 0
           printf("JUMPIFEQ label_substr bool@true GF@$$var_integer\n");
           printf("MOVE GF@$$var_integer int@0\n");  // GF@var_int = 0
 
-          printf("SUB LF@_param2 LF@_param2 int@1\n");  //index 0
+          printf("SUB LF@%%2 LF@%%2 int@1\n");  //index 0
 
           printf("LABEL label_substr_read\n");
-          printf("EQ GF@$$var_integer LF@_param3 int@0\n"); // while n == 0 -> end of loop
-            printf("JUMPIFEQ label_substr bool@true GF@$$var_integer\n");
-            printf("GETCHAR GF@$$var_string LF@_param1 LF@_param2\n");
-            printf("CONCAT GF@$result GF@$result GF@$$var_string\n");
-            printf("SUB LF@_param3 LF@_param3 int@1\n");  //n--
+          printf("EQ GF@$$var_integer LF@%%3 int@0\n"); // while n == 0 -> end of loop
+          printf("JUMPIFEQ label_substr bool@true GF@$$var_integer\n");
+          printf("GETCHAR GF@$$var_string LF@%%1 LF@%%2\n");
+          printf("CONCAT GF@$result GF@$result GF@$$var_string\n");
+          printf("SUB LF@%%3 LF@%%3 int@1\n");  //n--
           printf("JUMP label_substr_read\n");
 
           printf("LABEL label_substr\n");
@@ -653,6 +660,7 @@ void parse_instructions(tList *instr_list)  {
           printf("LABEl label_end_substr\n");
           printf("MOVE GF@$$var_double float@0x0p+0\n");
           printf("MOVE GF@$$var_string string@\n");
+          printf("POPFRAME\n");
           printf("RETURN\n");
       break;
 

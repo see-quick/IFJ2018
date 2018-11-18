@@ -52,6 +52,12 @@ int main() {
   instr_type = INSTRUCT_HEAD;
   insert_item(pom_list, &instr_type, &instr1, &instr2, &instr3);
 
+  // instr_type = INSTRUCT_LENGTH;
+  // insert_item(pom_list, &instr_type, &instr1, &instr2, &instr3);
+
+  // instr_type = INSTRUCT_SUBSTR;
+  // insert_item(pom_list, &instr_type, &instr1, &instr2, &instr3);
+
   // instr_type = INSTRUCT_LABEL;
   // instr1.value.s = "a";
   // insert_item(pom_list, &instr_type, &instr1, &instr2, &instr3);
