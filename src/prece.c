@@ -337,6 +337,13 @@ void generatingConcreteInstruction(tList* list, tStack *stack, int type, char * 
     else if (strcmp(instruction_type, "GT") == 0 ){
         setFirstAndSecondVariableToGenerate(INSTRUCT_GT);
     }
+    else if (strcmp(instruction_type, "LT") == 0){
+        setFirstAndSecondVariableToGenerate(INSTRUCT_LT);
+    } else if (strcmp(instruction_type, "SUB") == 0){
+        setFirstAndSecondVariableToGenerate(INSTRUCT_SUB);
+    }else if (strcmp(instruction_type, "MUL") == 0){
+        setFirstAndSecondVariableToGenerate(INSTRUCT_MUL);
+    }
     else setFirstAndSecondVariableToGenerate(INSTRUCT_ADD);
 
     // todo
@@ -458,8 +465,8 @@ void generateInstructionForNones(tList* list, tStack *stack, char * instruction_
     instr1.value.s = "$if_string";
     instr2.type = GF;
     instr2.value.s = "$type1";
-    instr3.type = S;
-    instr3.value.s = "string";
+    instr3.type = GF;
+    instr3.value.s = "$type2";
     insert_item(list, &instr_type, &instr1, &instr2, &instr3);
 
     instr_type = INSTRUCT_JUMPIFEQ;
@@ -545,7 +552,7 @@ void generateInstructionForNones(tList* list, tStack *stack, char * instruction_
     insert_item(list, &instr_type, &instr1, &instr2, &instr3);
 
     instr_type = INSTRUCT_LABEL;
-    instr1.value.s = "label_2";
+    instr1.value.s = "$label_2";
     insert_item(list, &instr_type, &instr1, &instr2, &instr3);
 
     instr_type = INSTRUCT_CONCAT;
@@ -596,11 +603,12 @@ void generateInstructionForNones(tList* list, tStack *stack, char * instruction_
     instr_type = INSTRUCT_LABEL;
     instr1.value.s = "$int_2_float3";
     insert_item(list, &instr_type, &instr1, &instr2, &instr3);
+
     instr_type = INSTRUCT_INT2FLOAT;
     instr1.type = LF;
     instr1.value.s = stack->arrayOfItems[stack->finderOfParenthesis + 1].nameOfTheVariable;
     instr2.type = LF;
-    instr3.value.s = stack->arrayOfItems[stack->finderOfParenthesis + 3].nameOfTheVariable;
+    instr2.value.s = stack->arrayOfItems[stack->finderOfParenthesis + 3].nameOfTheVariable;
     insert_item(list, &instr_type, &instr1, &instr2, &instr3);
 
     instr_type = INSTRUCT_JUMP;
@@ -996,7 +1004,48 @@ expr_return parse_expr(LocalMap* lMap, tList* list, bool is_bool){
                             // PRAVIDLO E -> E - E
                         case eMINUS:
                             if ((stack->arrayOfNumbers[stack->finderOfParenthesis + 3]) != EMPTY_CHAR) {
-                                if ((stack->arrayOfItems[stack->finderOfParenthesis + 1].type == STRING) ||
+                                 if (stack->arrayOfItems[stack->finderOfParenthesis + 1].type == NONE ){
+
+                                        isFirstVariable = true;
+
+                                        if (stack->arrayOfItems[stack->finderOfParenthesis + 3].type == INTEGER){
+                                            generateInstructionForType(list, stack, I, "SUB", 3, 1);
+                                        }
+                                        else if (stack->arrayOfItems[stack->finderOfParenthesis + 3].type == FLOAT){
+                                            // pridat pretypovani int2float
+                                            generateInstructionForType(list, stack, F, "SUB", 3, 1);
+                                        }
+                                        else if (stack->arrayOfItems[stack->finderOfParenthesis + 3].type == STRING){
+                                            resultOfPrece.result = ERR_INCOMPATIBLE_TYPE;
+                                            resultOfPrece.bool_result = false;
+                                            //instruction_exit(ERR_INCOMPATIBLE_TYPE);
+                                            return resultOfPrece;
+                                        }
+                                        else if (stack->arrayOfItems[stack->finderOfParenthesis + 3].type == NONE){
+                                            generateInstructionForNones(list, stack, "SUB");
+                                        }
+                                    isFirstVariable = false;
+                                    isThirdVariable = false;
+                                }
+                                else if (stack->arrayOfItems[stack->finderOfParenthesis + 3].type == NONE ){
+                                        isThirdVariable = true;
+
+                                        if (stack->arrayOfItems[stack->finderOfParenthesis + 1].type == INTEGER){
+                                            generateInstructionForType(list, stack, I, "SUB", 3, 1);
+                                        }
+                                        else if (stack->arrayOfItems[stack->finderOfParenthesis + 1].type == FLOAT){
+                                            generateInstructionForType(list, stack, F, "SUB", 3, 1);
+                                        }
+                                        else if (stack->arrayOfItems[stack->finderOfParenthesis + 1].type == STRING){
+                                            resultOfPrece.result = ERR_INCOMPATIBLE_TYPE;
+                                            resultOfPrece.bool_result = false;
+                                            //instruction_exit(ERR_INCOMPATIBLE_TYPE);
+                                            return resultOfPrece;
+                                        }
+                                    isFirstVariable = false;
+                                    isThirdVariable = false;
+                                }
+                                else if ((stack->arrayOfItems[stack->finderOfParenthesis + 1].type == STRING) ||
                                     (stack->arrayOfItems[stack->finderOfParenthesis + 3].type == STRING)) {
 
                                     //fprintf(stderr, "Semanticka chyba typové kompatibility v aritmetických vyrazech, radek %d\n", gToken.row);
@@ -1150,7 +1199,47 @@ expr_return parse_expr(LocalMap* lMap, tList* list, bool is_bool){
                             // PRAVIDLO E -> E * E
                         case eMUL:
                             if ((stack->arrayOfNumbers[stack->finderOfParenthesis + 3]) != EMPTY_CHAR) {
-                                if ((stack->arrayOfItems[stack->finderOfParenthesis + 1].type == STRING) ||
+                                if (stack->arrayOfItems[stack->finderOfParenthesis + 1].type == NONE ){
+
+                                        isFirstVariable = true;
+
+                                        if (stack->arrayOfItems[stack->finderOfParenthesis + 3].type == INTEGER){
+                                            generateInstructionForType(list, stack, I, "MUL", 3, 1);
+                                        }
+                                        else if (stack->arrayOfItems[stack->finderOfParenthesis + 3].type == FLOAT){
+                                            // pridat pretypovani int2float
+                                            generateInstructionForType(list, stack, F, "MUL", 3, 1);
+                                        }
+                                        else if (stack->arrayOfItems[stack->finderOfParenthesis + 3].type == STRING){
+                                            resultOfPrece.result = ERR_INCOMPATIBLE_TYPE;
+                                            resultOfPrece.bool_result = false;
+                                            return resultOfPrece;
+                                        }
+                                        else if (stack->arrayOfItems[stack->finderOfParenthesis + 3].type == NONE){
+                                            generateInstructionForNones(list, stack, "MUL");
+                                        }
+                                    isFirstVariable = false;
+                                    isThirdVariable = false;
+                                }
+                                else if (stack->arrayOfItems[stack->finderOfParenthesis + 3].type == NONE ){
+                                        isThirdVariable = true;
+
+                                        if (stack->arrayOfItems[stack->finderOfParenthesis + 1].type == INTEGER){
+                                            generateInstructionForType(list, stack, I, "MUL", 3, 1);
+                                        }
+                                        else if (stack->arrayOfItems[stack->finderOfParenthesis + 1].type == FLOAT){
+                                            generateInstructionForType(list, stack, F, "MUL", 3, 1);
+                                        }
+                                        else if (stack->arrayOfItems[stack->finderOfParenthesis + 1].type == STRING){
+                                            resultOfPrece.result = ERR_INCOMPATIBLE_TYPE;
+                                            resultOfPrece.bool_result = false;
+                                            return resultOfPrece;
+                                        }
+                                    isFirstVariable = false;
+                                    isThirdVariable = false;
+                                }
+
+                                else if ((stack->arrayOfItems[stack->finderOfParenthesis + 1].type == STRING) ||
                                     (stack->arrayOfItems[stack->finderOfParenthesis + 3].type == STRING)) {
 
                                     //fprintf(stderr, "Semanticka chyba typové kompatibility v aritmetických vyrazech, radek %d\n", gToken.row);
@@ -1492,7 +1581,43 @@ expr_return parse_expr(LocalMap* lMap, tList* list, bool is_bool){
                             // PRAVIDLO E -> E < E
                         case eLESS:
                             if ((stack->arrayOfNumbers[stack->finderOfParenthesis + 3]) != EMPTY_CHAR) {
-                                if ((stack->arrayOfItems[stack->finderOfParenthesis + 1].type == STRING) &&
+
+                                if (stack->arrayOfItems[stack->finderOfParenthesis + 1].type == NONE ){
+                                        isFirstVariable = true;
+
+                                        if (stack->arrayOfItems[stack->finderOfParenthesis + 3].type == INTEGER){
+                                            generateInstructionForType(list, stack, I, "LT", 3, 1);
+                                        }
+                                        else if (stack->arrayOfItems[stack->finderOfParenthesis + 3].type == FLOAT){
+                                            // pridat pretypovani int2float
+                                            generateInstructionForType(list, stack, F, "LT", 3, 1);
+                                        }
+                                        else if (stack->arrayOfItems[stack->finderOfParenthesis + 3].type == STRING){
+                                            generateInstructionForType(list, stack, S, "LT", 3, 1);
+                                        }
+                                        else if (stack->arrayOfItems[stack->finderOfParenthesis + 3].type == NONE){
+                                            generateInstructionForNones(list, stack, "LT");
+                                        }
+                                    isFirstVariable = false;
+                                    isThirdVariable = false;
+                                }
+                                else if (stack->arrayOfItems[stack->finderOfParenthesis + 3].type == NONE ){
+                                        isThirdVariable = true;
+
+                                        if (stack->arrayOfItems[stack->finderOfParenthesis + 1].type == INTEGER){
+                                            generateInstructionForType(list, stack, I, "LT", 3, 1);
+                                        }
+                                        else if (stack->arrayOfItems[stack->finderOfParenthesis + 1].type == FLOAT){
+                                            generateInstructionForType(list, stack, F, "LT", 3, 1);
+                                        }
+                                        else if (stack->arrayOfItems[stack->finderOfParenthesis + 1].type == STRING){
+                                            generateInstructionForType(list, stack, S, "LT", 3, 1);
+                                        }
+                                    isFirstVariable = false;
+                                    isThirdVariable = false;
+                                }
+
+                                else if ((stack->arrayOfItems[stack->finderOfParenthesis + 1].type == STRING) &&
                                     (stack->arrayOfItems[stack->finderOfParenthesis + 3].type == STRING)) {
 
                                     if(stack->arrayOfItems[stack->finderOfParenthesis + 3].isVariable){ isThirdVariable = true; }
@@ -1512,6 +1637,7 @@ expr_return parse_expr(LocalMap* lMap, tList* list, bool is_bool){
                                     isThirdVariable = false;
                                 } else if ((stack->arrayOfItems[stack->finderOfParenthesis + 1].type == INTEGER) &&
                                            (stack->arrayOfItems[stack->finderOfParenthesis + 3].type == INTEGER)) {
+
                                     if(stack->arrayOfItems[stack->finderOfParenthesis + 3].isVariable){ isThirdVariable = true; }
                                     else{ isThirdVariable = false; }
 

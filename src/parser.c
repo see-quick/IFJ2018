@@ -708,22 +708,19 @@ int check_input(){
 			instr1.type = LF;
 		}
 
-		// lData.type = INTEGER;
-		lData.type = NONE;
+		lData.type = INTEGER;
 		local_map_put(localMap, variable_name, lData);
 	 
 	 	instr1.value.s = variable_name;
 		instr_type = INSTRUCT_INPUT_I;
 		insert_item(ilist, &instr_type, &instr1, &instr2, &instr3);
-
 		// prirazeni typu promenne
 	}
 	else if ( (strcmp(call_name, "inputf") == 0 ) ) {
 		if (local_map_contain(localMap, variable_name)) { instr1.type = LF;}
 		else {instr1.type = LF;}
 
-		//lData.type = FLOAT;
-		lData.type = NONE;
+		lData.type = FLOAT;
 		local_map_put(localMap, variable_name, lData);
 
 		instr1.value.s = variable_name;
@@ -734,8 +731,8 @@ int check_input(){
 		if (local_map_contain(localMap, variable_name)) { instr1.type = LF;}
 		else {instr1.type = LF;}
 
-		//lData.type = STRING;
-		lData.type = NONE;
+		lData.type = STRING;
+		//lData.type = NONE;
 		local_map_put(localMap, variable_name, lData);
 
 		instr1.value.s = variable_name;
