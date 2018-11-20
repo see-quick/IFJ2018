@@ -149,10 +149,10 @@ TESTNUMBER=$(echo $OUTPUT | cut -c8-10)
 SUCCTESTS=$(echo $OUTPUT | cut -c26-29)
 
 #test if we have number
-re='^[0-9]+$'
-if ! [[ $SUCCTESTS =~ $re ]]; then
-  SUCCTESTS=0
-fi
+#re='^[0-9]+$'
+#if ! [[ $SUCCTESTS =~ $re ]]; then
+#  SUCCTESTS=0
+#fi
 FAILEDTESTS=$((TESTNUMBER-SUCCTESTS))
 
 TOTALTESTSGEN=$((TESTNUMBER+TOTALTESTSGEN))

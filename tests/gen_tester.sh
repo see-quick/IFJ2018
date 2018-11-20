@@ -88,7 +88,7 @@ function testRunner() {
         if [[ "$silent" == "-s" ]]; then
           timeout 1 sudo ./ic18int test.code > /dev/null 2>&1
         else
-          timeout 1 sudo ./ic18int test.code
+          timeout 1 sudo ./ic18int test.code 1>/dev/null 
         fi
         retval=$(echo $?)
         if [ "$retval" -eq "124" ]; then
