@@ -1,5 +1,5 @@
 a = 5
-b = b
+b = 12
 
 if a != b then
 	a = 6

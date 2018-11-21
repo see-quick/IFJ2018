@@ -1436,21 +1436,19 @@ expr_return parse_expr(LocalMap* lMap, tList* list, bool is_bool){
                                     }
                                     else { instr3.type = I;
                                         instr3.value.i = stack->arrayOfItems[stack->finderOfParenthesis + 3].value.i;
+                                        if (instr3.value.i == 0){
+                                            resultOfPrece.result = ERR_DIVISION;
+                                            resultOfPrece.bool_result = false;
+                                            return resultOfPrece;
+                                        }
                                     }
                                     dataIDF.type = INTEGER;
                                     setFirstAndSecondVariableToGenerate(INSTRUCT_IDIV);
 
-                                    if (instr3.value.i == 0){
-                                        resultOfPrece.result = ERR_DIVISION;
-                                        resultOfPrece.bool_result = false;
-                                        return resultOfPrece;
-                                    }
-                                    else{
-                                        dataIDF.value.i = stack->arrayOfItems[stack->finderOfParenthesis + 1].value.i / stack->arrayOfItems[stack->finderOfParenthesis + 3].value.i;
-                                        insert_item(list, &instr_type, &instr1, &instr2, &instr3);
-                                        //generovanie IDIV %s@%s %s@%s %s@%s
-                                        isThirdVariable = false;
-                                    }
+                                    dataIDF.value.i = stack->arrayOfItems[stack->finderOfParenthesis + 1].value.i / stack->arrayOfItems[stack->finderOfParenthesis + 3].value.i;
+                                    insert_item(list, &instr_type, &instr1, &instr2, &instr3);
+                                    //generovanie IDIV %s@%s %s@%s %s@%s
+                                    isThirdVariable = false;
 
                                 } else if ((stack->arrayOfItems[stack->finderOfParenthesis + 1].type == INTEGER) &&
                                            (stack->arrayOfItems[stack->finderOfParenthesis + 3].type == FLOAT)) {
@@ -1477,7 +1475,6 @@ expr_return parse_expr(LocalMap* lMap, tList* list, bool is_bool){
                                     }
                                     else {
                                         if (isThirdVariable == true ){
-                                            printf("here\n");
                                             instr3.type = LF;
                                             instr3.value.s = stack->arrayOfItems[stack->finderOfParenthesis + 3].nameOfTheVariable;
                                         }
@@ -1556,20 +1553,19 @@ expr_return parse_expr(LocalMap* lMap, tList* list, bool is_bool){
                                     }
                                     else{ instr3.type = F;
                                         instr3.value.f = stack->arrayOfItems[stack->finderOfParenthesis + 3].value.f;
+                                        if (instr3.value.f == 0.0){
+                                            resultOfPrece.result = ERR_DIVISION;
+                                            resultOfPrece.bool_result = false;
+                                            return resultOfPrece;
+                                        }
                                     }
                                     dataIDF.type = FLOAT;
                                     setFirstAndSecondVariableToGenerate(INSTRUCT_DIV);
 
-                                    if (instr3.value.f == 0.0){
-                                        resultOfPrece.result = ERR_DIVISION;
-                                        resultOfPrece.bool_result = false;
-                                        return resultOfPrece;
-                                    }
-                                    else{
-                                        dataIDF.value.f = stack->arrayOfItems[stack->finderOfParenthesis + 1].value.f * stack->arrayOfItems[stack->finderOfParenthesis + 3].value.f;
-                                        insert_item(list, &instr_type, &instr1, &instr2, &instr3);
-                                        // generovanie  DIV %s@%s %s@%s %s@%s
-                                    }
+                                    dataIDF.value.f = stack->arrayOfItems[stack->finderOfParenthesis + 1].value.f * stack->arrayOfItems[stack->finderOfParenthesis + 3].value.f;
+                                    insert_item(list, &instr_type, &instr1, &instr2, &instr3);
+                                    // generovanie  DIV %s@%s %s@%s %s@%s
+
 
 
                                 } else {   //printf("semanticky error BOOL \n");
@@ -1672,8 +1668,7 @@ expr_return parse_expr(LocalMap* lMap, tList* list, bool is_bool){
                                     if(stack->arrayOfItems[stack->finderOfParenthesis + 3].isVariable){ isThirdVariable = true; }
                                     else{ isThirdVariable = false; }
 
-                                    if (isFirstVariable){
-                                        instr2.type = LF;
+                                    if (isThirdVariable){
                                         instr2.value.s = stack->arrayOfItems[stack->finderOfParenthesis + 3].nameOfTheVariable;
                                     }
                                     else { instr2.type = F;
@@ -1714,7 +1709,7 @@ expr_return parse_expr(LocalMap* lMap, tList* list, bool is_bool){
                                     if(stack->arrayOfItems[stack->finderOfParenthesis + 3].isVariable){ isThirdVariable = true; }
                                     else{ isThirdVariable = false; }
 
-                                    if (isThirdVariable){
+                                    if (isFirstVariable){
                                         instr2.type = LF;
                                         instr2.value.s = stack->arrayOfItems[stack->finderOfParenthesis + 1].nameOfTheVariable;
                                     }
@@ -1857,13 +1852,12 @@ expr_return parse_expr(LocalMap* lMap, tList* list, bool is_bool){
                                     else{ isThirdVariable = false; }
                                     // v pripade ze sa je o prve spracovanie tak nechavame
 
-                                    if (isFirstVariable){
-                                        instr2.type = LF;
-                                        instr2.value.s = stack->arrayOfItems[stack->finderOfParenthesis + 3].nameOfTheVariable;
-                                    }
-                                    else { instr2.type = F;
-                                        instr2.value.f = stack->arrayOfItems[stack->finderOfParenthesis + 3].value.f;
-                                    }
+                                     if (isThirdVariable){
+                                         instr2.value.s = stack->arrayOfItems[stack->finderOfParenthesis + 3].nameOfTheVariable;
+                                     }
+                                     else { instr2.type = F;
+                                         instr2.value.f = stack->arrayOfItems[stack->finderOfParenthesis + 3].value.f;
+                                     }
 
                                     instr_type = INSTRUCT_FLOAT2INT;
                                     instr1.value.s = "$result\0";        // generovanie UNIQUE // generate non Term -> Unikatny nazov
@@ -1900,7 +1894,7 @@ expr_return parse_expr(LocalMap* lMap, tList* list, bool is_bool){
                                     if(stack->arrayOfItems[stack->finderOfParenthesis + 3].isVariable){ isThirdVariable = true; }
                                     else{ isThirdVariable = false; }
 
-                                    if (isThirdVariable){
+                                    if (isFirstVariable){
                                         instr2.type = LF;
                                         instr2.value.s = stack->arrayOfItems[stack->finderOfParenthesis + 1].nameOfTheVariable;
                                     }
@@ -2074,8 +2068,7 @@ expr_return parse_expr(LocalMap* lMap, tList* list, bool is_bool){
                                     if(stack->arrayOfItems[stack->finderOfParenthesis + 3].isVariable){ isThirdVariable = true; }
                                     else{ isThirdVariable = false; }
 
-                                    if (isFirstVariable){
-                                        instr2.type = LF;
+                                    if (isThirdVariable){
                                         instr2.value.s = stack->arrayOfItems[stack->finderOfParenthesis + 3].nameOfTheVariable;
                                     }
                                     else { instr2.type = F;
@@ -2132,7 +2125,7 @@ expr_return parse_expr(LocalMap* lMap, tList* list, bool is_bool){
                                     if(stack->arrayOfItems[stack->finderOfParenthesis + 3].isVariable){ isThirdVariable = true; }
                                     else{ isThirdVariable = false; }
 
-                                    if (isThirdVariable){
+                                    if (isFirstVariable){
                                         instr2.type = LF;
                                         instr2.value.s = stack->arrayOfItems[stack->finderOfParenthesis + 1].nameOfTheVariable;
                                     }
@@ -2332,8 +2325,7 @@ expr_return parse_expr(LocalMap* lMap, tList* list, bool is_bool){
                                     else{ isFirstVariable = false; }
                                     if(stack->arrayOfItems[stack->finderOfParenthesis + 3].isVariable){ isThirdVariable = true; }
                                     else{ isThirdVariable = false; }
-                                    if (isFirstVariable){
-                                        instr2.type = LF;
+                                    if (isThirdVariable){
                                         instr2.value.s = stack->arrayOfItems[stack->finderOfParenthesis + 3].nameOfTheVariable;
                                     }
                                     else { instr2.type = F;
@@ -2388,7 +2380,7 @@ expr_return parse_expr(LocalMap* lMap, tList* list, bool is_bool){
                                     if(stack->arrayOfItems[stack->finderOfParenthesis + 3].isVariable){ isThirdVariable = true; }
                                     else{ isThirdVariable = false; }
 
-                                    if (isThirdVariable){
+                                    if (isFirstVariable){
                                         instr2.type = LF;
                                         instr2.value.s = stack->arrayOfItems[stack->finderOfParenthesis + 1].nameOfTheVariable;
                                     }
@@ -2556,8 +2548,7 @@ expr_return parse_expr(LocalMap* lMap, tList* list, bool is_bool){
                                     else{ isFirstVariable = false; }
                                     if(stack->arrayOfItems[stack->finderOfParenthesis + 3].isVariable){ isThirdVariable = true; }
                                     else{ isThirdVariable = false; }
-                                    if (isFirstVariable){
-                                        instr2.type = LF;
+                                    if (isThirdVariable){
                                         instr2.value.s = stack->arrayOfItems[stack->finderOfParenthesis + 3].nameOfTheVariable;
                                     }
                                     else { instr2.type = F;
@@ -2598,7 +2589,7 @@ expr_return parse_expr(LocalMap* lMap, tList* list, bool is_bool){
                                     if(stack->arrayOfItems[stack->finderOfParenthesis + 3].isVariable){ isThirdVariable = true; }
                                     else{ isThirdVariable = false; }
 
-                                    if (isThirdVariable){
+                                    if (isFirstVariable){
                                         instr2.type = LF;
                                         instr2.value.s = stack->arrayOfItems[stack->finderOfParenthesis + 1].nameOfTheVariable;
                                     }

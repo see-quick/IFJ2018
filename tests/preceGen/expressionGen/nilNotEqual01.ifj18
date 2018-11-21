@@ -1,5 +1,5 @@
-a = a
-b = b
+a = 1
+b = 15
 
 if a != b then
 	a = b
