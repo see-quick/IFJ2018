@@ -112,16 +112,16 @@ void insert_build_in_functions(){
 }
 
 
-char * generate_param(char *string, int d){
+char * generate_param(char *string, unsigned short d){
 	char c;
-	sprintf(&c, "%d", d+1);
+    sprintf(&c, "%hu", (unsigned short)d+1);
 	size_t length = strlen(string);
 	char *generate = malloc(length + 1 + 1);
 	strcpy(generate, string);
 	generate[length] = c;
 	generate[length + 1] = '\0';
 	return generate;
-	free(generate);
+//	free(generate);
 }
 
 void instruction_exit(int ret_val){
@@ -1387,10 +1387,11 @@ int stat(){
 						else {
 							if (is_LF){
 								return_type = tmp->returnType;
-							}
+                            }
 						}
 					}
 					in_stat = false;
+					break;
 
 				default:
 					instruction_exit(SYN_ERR);

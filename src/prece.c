@@ -344,7 +344,9 @@ void generatingConcreteInstruction(tList* list, tStack *stack, int type, char * 
     }else if (strcmp(instruction_type, "MUL") == 0){
         setFirstAndSecondVariableToGenerate(INSTRUCT_MUL);
     }else if (strcmp(instruction_type, "DIV") == 0){
-        setFirstAndSecondVariableToGenerate(INSTRUCT_MUL);
+        setFirstAndSecondVariableToGenerate(INSTRUCT_DIV);
+    }else if (strcmp(instruction_type, "IDIV") == 0){
+        setFirstAndSecondVariableToGenerate(INSTRUCT_IDIV);
     }
     else setFirstAndSecondVariableToGenerate(INSTRUCT_ADD);
 
@@ -442,6 +444,24 @@ void generateInstructionForType(tList* list, tStack *stack, int type, char * ins
     // ZISKANIE KONKRETNEHO TYPU INSTRUKCIE
     // generating concrete instructions f.e. ADD, SUB etc...
     generatingConcreteInstruction(list, stack, type, instruction_type, positionForConcreteInstruction);
+}
+
+
+
+void generateIntDivisionError(tList * list, tStack *stack, int positionForConcreteInstruction){
+    instr_type = INSTRUCT_JUMPIFEQ;
+    instr1.value.s = "$label_err_9";
+    instr2.type = LF;
+    instr2.value.s =  stack->arrayOfItems[stack->finderOfParenthesis + positionForConcreteInstruction].nameOfTheVariable;
+    instr3.type = I;
+    instr3.value.i = 0;
+    insert_item(list,&instr_type, &instr1, &instr2, &instr3);
+    // LABEL ERR 9
+    instr_type = INSTRUCT_LABEL;
+    instr1.value.s = "$label_err_9";
+    insert_item(list,&instr_type, &instr1, &instr2, &instr3);
+    // INSTRUCTION_EXIT
+    instruction_exit(ERR_DIVISION);
 }
 
 
@@ -1414,7 +1434,8 @@ expr_return parse_expr(LocalMap* lMap, tList* list, bool is_bool){
                                         isFirstVariable = true;
 
                                         if (stack->arrayOfItems[stack->finderOfParenthesis + 3].type == INTEGER){
-                                            generateInstructionForType(list, stack, I, "DIV", 3, 1);
+                                            generateIntDivisionError(list, stack, 1);
+                                            generateInstructionForType(list, stack, I, "IDIV", 3, 1);
                                         }
                                         else if (stack->arrayOfItems[stack->finderOfParenthesis + 3].type == FLOAT){
                                             // pridat pretypovani int2float
@@ -1436,7 +1457,8 @@ expr_return parse_expr(LocalMap* lMap, tList* list, bool is_bool){
                                         isThirdVariable = true;
 
                                         if (stack->arrayOfItems[stack->finderOfParenthesis + 1].type == INTEGER){
-                                            generateInstructionForType(list, stack, I, "DIV", 3, 1);
+                                            generateIntDivisionError(list, stack, 3);
+                                            generateInstructionForType(list, stack, I, "IDIV", 3, 1);
                                         }
                                         else if (stack->arrayOfItems[stack->finderOfParenthesis + 1].type == FLOAT){
                                             generateInstructionForType(list, stack, F, "DIV", 3, 1);
@@ -1472,7 +1494,7 @@ expr_return parse_expr(LocalMap* lMap, tList* list, bool is_bool){
                                         instr3.value.i = stack->arrayOfItems[stack->finderOfParenthesis + 3].value.i;
                                     }
                                     dataIDF.type = INTEGER;
-                                    setFirstAndSecondVariableToGenerate(INSTRUCT_DIV);
+                                    setFirstAndSecondVariableToGenerate(INSTRUCT_IDIV);
 
                                     if (instr3.value.i == 0){
                                         //fprintf(stderr, "Deleni nulou, radek cislo %d\n",gToken.row);
