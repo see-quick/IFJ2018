@@ -1299,7 +1299,7 @@ expr_return parse_expr(LocalMap* lMap, tList* list, bool is_bool){
                                     insert_item(list, &instr_type, &instr1, &instr2, &instr3);
                                     // generovanie  INT2FLOAT %s@%s %s@%s
                                     // generovanie  MUL %s@%s %s@%s %s@%s
-                                    is_result = false;
+                                    is_result = true;
                                     isFirstVariable = false;
                                     isThirdVariable = false;
                                 } else if ((stack->arrayOfItems[stack->finderOfParenthesis + 1].type == FLOAT) &&
@@ -1340,7 +1340,7 @@ expr_return parse_expr(LocalMap* lMap, tList* list, bool is_bool){
                                     insert_item(list, &instr_type, &instr1, &instr2, &instr3);
                                     // generovanie INT@FLOAT %s@%s %s@%s
                                     // generovanie MUL %s@%s %s@%s %s@%s
-                                    is_result = true;
+                                    is_result = false;
                                     isFirstVariable = false;
                                     isThirdVariable = false;
 
@@ -1477,6 +1477,7 @@ expr_return parse_expr(LocalMap* lMap, tList* list, bool is_bool){
                                     }
                                     else {
                                         if (isThirdVariable == true ){
+                                            printf("here\n");
                                             instr3.type = LF;
                                             instr3.value.s = stack->arrayOfItems[stack->finderOfParenthesis + 3].nameOfTheVariable;
                                         }
