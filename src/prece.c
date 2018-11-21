@@ -199,6 +199,29 @@ void setFirstAndSecondVariableToGenerate(int instruction_type){
     instr2.value.s = "$result\0";
 }
 
+void setFirstAndSecondForBoolean(tList*list, tStack* stack, tInstructionTypes instruction_type, int positionForConcreteInstruction){
+    instr_type = instruction_type;
+    instr1.type = GF;
+    instr1.value.s = "$$EXPR1";
+    instr2.type = GF;
+    instr2.value.s = "$result";
+    instr3.type = LF;
+    instr3.value.s = stack->arrayOfItems[stack->finderOfParenthesis + positionForConcreteInstruction].nameOfTheVariable;
+    insert_item(list, &instr_type, &instr1, &instr2, &instr3);
+
+
+    instr_type = INSTRUCT_EQ;
+    instr1.value.s = "$$EXPR2\0";
+    insert_item(list, &instr_type, &instr1, &instr2, &instr3);
+
+    instr_type = INSTRUCT_OR;
+    instr1.value.s = "$result\0";
+    instr2.value.s = "$$EXPR1\0";
+    instr3.type = GF;
+    instr3.value.s = "$$EXPR2\0";
+    insert_item(list, &instr_type, &instr1, &instr2, &instr3);
+}
+
 void generateType(tList* list, tStack * stack){
     instr_type = INSTRUCT_TYPE;
     instr1.type = GF;
@@ -347,6 +370,8 @@ void generatingConcreteInstruction(tList* list, tStack *stack, int type, char * 
         setFirstAndSecondVariableToGenerate(INSTRUCT_DIV);
     }else if (strcmp(instruction_type, "IDIV") == 0){
         setFirstAndSecondVariableToGenerate(INSTRUCT_IDIV);
+    }else if (strcmp(instruction_type, "EQ") == 0){
+        setFirstAndSecondVariableToGenerate(INSTRUCT_EQ);
     }
     else setFirstAndSecondVariableToGenerate(INSTRUCT_ADD);
 
@@ -1054,7 +1079,6 @@ expr_return parse_expr(LocalMap* lMap, tList* list, bool is_bool){
                                         else if (stack->arrayOfItems[stack->finderOfParenthesis + 3].type == STRING){
                                             resultOfPrece.result = ERR_INCOMPATIBLE_TYPE;
                                             resultOfPrece.bool_result = false;
-                                            //instruction_exit(ERR_INCOMPATIBLE_TYPE);
                                             return resultOfPrece;
                                         }
                                         else if (stack->arrayOfItems[stack->finderOfParenthesis + 3].type == NONE){
@@ -1693,6 +1717,9 @@ expr_return parse_expr(LocalMap* lMap, tList* list, bool is_bool){
                                         else if (stack->arrayOfItems[stack->finderOfParenthesis + 1].type == STRING){
                                             generateInstructionForType(list, stack, S, "LT", 3, 1);
                                         }
+                                        else if (stack->arrayOfItems[stack->finderOfParenthesis + 1].type == NONE){
+                                            generateInstructionForNones(list, stack, "LT");
+                                        }
                                     isFirstVariable = false;
                                     isThirdVariable = false;
                                 }
@@ -1872,7 +1899,7 @@ expr_return parse_expr(LocalMap* lMap, tList* list, bool is_bool){
                                             generateInstructionForType(list, stack, S, "GT", 3, 1);
                                         }
                                         else if (stack->arrayOfItems[stack->finderOfParenthesis + 3].type == NONE){
-
+                                            generateInstructionForNones(list, stack, "GT");
                                         }
 
                                 }
@@ -1884,7 +1911,7 @@ expr_return parse_expr(LocalMap* lMap, tList* list, bool is_bool){
                                         else if (stack->arrayOfItems[stack->finderOfParenthesis + 1].type == STRING)
                                             generateInstructionForType(list, stack, S, "GT", 1, 3);
                                         else if (stack->arrayOfItems[stack->finderOfParenthesis + 1].type == NONE){
-
+                                            generateInstructionForNones(list, stack, "GT");
                                         }
 
 
@@ -2054,7 +2081,37 @@ expr_return parse_expr(LocalMap* lMap, tList* list, bool is_bool){
                             // PRAVIDLO E -> E <= E
                         case eLEQUAL: // <=
                             if ((stack->arrayOfNumbers[stack->finderOfParenthesis + 3]) != EMPTY_CHAR) {
-                                if ((stack->arrayOfItems[stack->finderOfParenthesis + 1].type == STRING) &&
+                                if (stack->arrayOfItems[stack->finderOfParenthesis + 1].type == NONE ){
+
+                                        if (stack->arrayOfItems[stack->finderOfParenthesis + 3].type == INTEGER){
+                                            setFirstAndSecondForBoolean(list, stack, INSTRUCT_LT, 1);
+                                        }
+                                        else if (stack->arrayOfItems[stack->finderOfParenthesis + 3].type == FLOAT)
+                                            // pridat pretypovani int2float
+                                           setFirstAndSecondForBoolean(list, stack, INSTRUCT_LT, 1);
+                                        else if (stack->arrayOfItems[stack->finderOfParenthesis + 3].type == STRING){
+                                            setFirstAndSecondForBoolean(list, stack, INSTRUCT_LT, 1);
+                                        }
+                                        else if (stack->arrayOfItems[stack->finderOfParenthesis + 3].type == NONE){
+                                            generateInstructionForNones(list, stack, "LT");
+                                        }
+
+                                }
+                                else if (stack->arrayOfItems[stack->finderOfParenthesis + 3].type == NONE ){
+                                        if (stack->arrayOfItems[stack->finderOfParenthesis + 1].type == INTEGER)
+                                            setFirstAndSecondForBoolean(list, stack, INSTRUCT_LT, 3);
+                                        else if (stack->arrayOfItems[stack->finderOfParenthesis + 1].type == FLOAT)
+                                            setFirstAndSecondForBoolean(list, stack, INSTRUCT_LT, 3);
+                                        else if (stack->arrayOfItems[stack->finderOfParenthesis + 1].type == STRING)
+                                            setFirstAndSecondForBoolean(list, stack, INSTRUCT_LT, 3);
+                                        else if (stack->arrayOfItems[stack->finderOfParenthesis + 1].type == NONE){
+                                            generateInstructionForNones(list, stack, "LT");
+                                        }
+
+
+                                }
+
+                                else if ((stack->arrayOfItems[stack->finderOfParenthesis + 1].type == STRING) &&
                                     (stack->arrayOfItems[stack->finderOfParenthesis + 3].type == STRING)) {
 
                                     if(stack->arrayOfItems[stack->finderOfParenthesis + 3].isVariable){ isThirdVariable = true; }
@@ -2292,7 +2349,36 @@ expr_return parse_expr(LocalMap* lMap, tList* list, bool is_bool){
                             // PRAVIDLO E -> E >= E
                         case eGEQUAL: // >=
                             if ((stack->arrayOfNumbers[stack->finderOfParenthesis + 3]) != EMPTY_CHAR) {
-                                if ((stack->arrayOfItems[stack->finderOfParenthesis + 1].type == STRING) &&
+                                if (stack->arrayOfItems[stack->finderOfParenthesis + 1].type == NONE ){
+
+                                        if (stack->arrayOfItems[stack->finderOfParenthesis + 3].type == INTEGER){
+                                            setFirstAndSecondForBoolean(list, stack, INSTRUCT_GT, 1);
+                                        }
+                                        else if (stack->arrayOfItems[stack->finderOfParenthesis + 3].type == FLOAT)
+                                            // pridat pretypovani int2float
+                                           setFirstAndSecondForBoolean(list, stack, INSTRUCT_GT, 1);
+                                        else if (stack->arrayOfItems[stack->finderOfParenthesis + 3].type == STRING){
+                                            setFirstAndSecondForBoolean(list, stack, INSTRUCT_GT, 1);
+                                        }
+                                        else if (stack->arrayOfItems[stack->finderOfParenthesis + 3].type == NONE){
+                                            generateInstructionForNones(list, stack, "GT");
+                                        }
+
+                                }
+                                else if (stack->arrayOfItems[stack->finderOfParenthesis + 3].type == NONE ){
+                                        if (stack->arrayOfItems[stack->finderOfParenthesis + 1].type == INTEGER)
+                                            setFirstAndSecondForBoolean(list, stack, INSTRUCT_GT, 3);
+                                        else if (stack->arrayOfItems[stack->finderOfParenthesis + 1].type == FLOAT)
+                                            setFirstAndSecondForBoolean(list, stack, INSTRUCT_GT, 3);
+                                        else if (stack->arrayOfItems[stack->finderOfParenthesis + 1].type == STRING)
+                                            setFirstAndSecondForBoolean(list, stack, INSTRUCT_GT, 3);
+                                        else if (stack->arrayOfItems[stack->finderOfParenthesis + 1].type == NONE){
+                                            generateInstructionForNones(list, stack, "GT");
+                                        }
+
+
+                                } 
+                                else if ((stack->arrayOfItems[stack->finderOfParenthesis + 1].type == STRING) &&
                                     (stack->arrayOfItems[stack->finderOfParenthesis + 3].type == STRING)) {
 
                                     if(stack->arrayOfItems[stack->finderOfParenthesis + 3].isVariable){ isThirdVariable = true; }
@@ -2530,7 +2616,37 @@ expr_return parse_expr(LocalMap* lMap, tList* list, bool is_bool){
                             // PRAVIDLO E -> E == E
                         case eEQUAL: // ==
                             if ((stack->arrayOfNumbers[stack->finderOfParenthesis + 3]) != EMPTY_CHAR) {
-                                if ((stack->arrayOfItems[stack->finderOfParenthesis + 1].type == STRING) &&
+                                if (stack->arrayOfItems[stack->finderOfParenthesis + 1].type == NONE ){
+
+                                        if (stack->arrayOfItems[stack->finderOfParenthesis + 3].type == INTEGER){
+                                            generateInstructionForType(list, stack, I, "EQ", 3, 1);
+                                        }
+                                        else if (stack->arrayOfItems[stack->finderOfParenthesis + 3].type == FLOAT)
+                                            // pridat pretypovani int2float
+                                            generateInstructionForType(list, stack, F, "EQ", 3, 1);
+                                        else if (stack->arrayOfItems[stack->finderOfParenthesis + 3].type == STRING){
+                                            generateInstructionForType(list, stack, S, "EQ", 3, 1);
+                                        }
+                                        else if (stack->arrayOfItems[stack->finderOfParenthesis + 3].type == NONE){
+                                            generateInstructionForNones(list, stack, "EQ");
+                                        }
+
+                                }
+                                else if (stack->arrayOfItems[stack->finderOfParenthesis + 3].type == NONE ){
+                                        if (stack->arrayOfItems[stack->finderOfParenthesis + 1].type == INTEGER)
+                                            generateInstructionForType(list, stack, I, "EQ", 1, 3);
+                                        else if (stack->arrayOfItems[stack->finderOfParenthesis + 1].type == FLOAT)
+                                            generateInstructionForType(list, stack, F, "EQ", 1, 3);
+                                        else if (stack->arrayOfItems[stack->finderOfParenthesis + 1].type == STRING)
+                                            generateInstructionForType(list, stack, S, "EQ", 1, 3);
+                                        else if (stack->arrayOfItems[stack->finderOfParenthesis + 1].type == NONE){
+                                            generateInstructionForNones(list, stack, "EQ");
+                                        }
+
+
+                                }
+
+                                else if ((stack->arrayOfItems[stack->finderOfParenthesis + 1].type == STRING) &&
                                     (stack->arrayOfItems[stack->finderOfParenthesis + 3].type == STRING)) {
                                     if(stack->arrayOfItems[stack->finderOfParenthesis + 3].isVariable){ isThirdVariable = true; }
                                     else{ isThirdVariable = false; }
@@ -2691,7 +2807,43 @@ expr_return parse_expr(LocalMap* lMap, tList* list, bool is_bool){
                             // PRAVIDLO E -> E != E
                         case eNEQUAL: // !=
                             if ((stack->arrayOfNumbers[stack->finderOfParenthesis + 3]) != EMPTY_CHAR) {
-                                if ((stack->arrayOfItems[stack->finderOfParenthesis + 1].type == STRING) &&
+                                if (stack->arrayOfItems[stack->finderOfParenthesis + 1].type == NONE ){
+
+                                        if (stack->arrayOfItems[stack->finderOfParenthesis + 3].type == INTEGER){
+                                            generateInstructionForType(list, stack, I, "EQ", 3, 1);
+                                        }
+                                        else if (stack->arrayOfItems[stack->finderOfParenthesis + 3].type == FLOAT)
+                                            // pridat pretypovani int2float
+                                            generateInstructionForType(list, stack, F, "EQ", 3, 1);
+                                        else if (stack->arrayOfItems[stack->finderOfParenthesis + 3].type == STRING){
+                                            generateInstructionForType(list, stack, S, "EQ", 3, 1);
+                                        }
+                                        else if (stack->arrayOfItems[stack->finderOfParenthesis + 3].type == NONE){
+                                            generateInstructionForNones(list, stack, "EQ");
+                                        }
+
+                                        instr_type = INSTRUCT_NOT;
+                                        instr2.value.s = "$result\0";
+                                        insert_item(list, &instr_type, &instr1, &instr2, &instr3);
+
+                                }
+                                else if (stack->arrayOfItems[stack->finderOfParenthesis + 3].type == NONE ){
+                                        if (stack->arrayOfItems[stack->finderOfParenthesis + 1].type == INTEGER)
+                                            generateInstructionForType(list, stack, I, "EQ", 1, 3);
+                                        else if (stack->arrayOfItems[stack->finderOfParenthesis + 1].type == FLOAT)
+                                            generateInstructionForType(list, stack, F, "EQ", 1, 3);
+                                        else if (stack->arrayOfItems[stack->finderOfParenthesis + 1].type == STRING)
+                                            generateInstructionForType(list, stack, S, "EQ", 1, 3);
+                                        else if (stack->arrayOfItems[stack->finderOfParenthesis + 1].type == NONE){
+                                            generateInstructionForNones(list, stack, "EQ");
+                                        }
+
+                                        instr_type = INSTRUCT_NOT;
+                                        instr2.value.s = "$result\0";
+                                        insert_item(list, &instr_type, &instr1, &instr2, &instr3);
+                                }
+                                
+                                else if ((stack->arrayOfItems[stack->finderOfParenthesis + 1].type == STRING) &&
                                     (stack->arrayOfItems[stack->finderOfParenthesis + 3].type == STRING)) {
 
                                     if(stack->arrayOfItems[stack->finderOfParenthesis + 3].isVariable){ isThirdVariable = true; }
