@@ -4,11 +4,6 @@ int solved;
 int errflg;
 
 void DLError() {
-/*
-** Vytiskne upozornění na to, že došlo k chybě.
-** Tato funkce bude volána z některých dále implementovaných operací.
-**/	
-    printf ("*ERROR* The program has performed an illegal operation.\n");
     errflg = TRUE;            
     return;
 }

@@ -89,7 +89,7 @@ char* instruct_type(tDatType instruction) {
       break;
   }
 
-  return NULL;  //else -> ERROR
+  return NULL; 
 }
 /*
  * Printuje symbol na zaklade jeho typu(int,id,float..)
@@ -100,7 +100,7 @@ void print_symb(tInstructionData instr_operand)  {
     printf("%d",instr_operand.value.i);
   }
   else if (instr_operand.type == F) printf("%a",instr_operand.value.f);
-  else  //je to tu nepekne poriesene ale ak chcete mozem to hodit do funkcie a ubrat niekolko riadkov
+  else
   {
      //escape seq ---- > \000
      //handle '\n' and others
@@ -194,12 +194,6 @@ void print_arit_instr(tNode *act_instr) {
   printf("%s@", instruct_type(act_instr->data.address3.type));
   print_symb(act_instr->data.address3);
   printf("\n");
-
-
-  // printf("MOVE %s@",instruct_type(act_instr->data.address1.type));
-  //         print_symb(act_instr->data.address1);
-  //         printf("%s@",instruct_type(act_instr->data.address2.type));
-  //         print_symb(act_instr->data.address2);
 }
 
 
@@ -220,7 +214,6 @@ void append_list(tList* root, tList* list) {
         insert_item(root, &data.type, &data.address1, &data.address2, &data.address3);
     }
 }
-
 
 
 /*

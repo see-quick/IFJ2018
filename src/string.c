@@ -56,8 +56,6 @@ int strAdd (tString *s, char c)
 
 int strFree (tString *s)
 {
-  // if (s->str)
-  //   free(s->str);  -- UVOLNIT AZ NA KONCI, TOTO DELALO NEJVETSI PROBLEMY
   s->str = NULL;
   s->memory = 0;
   s->length = 0;
@@ -87,7 +85,6 @@ int strClear (tString *s)
   if (s->str){
     free(s->str);
   }
-   //s->str[0] = '\0';
    s->memory = 0;
    s->length = 0;
 
@@ -108,37 +105,6 @@ int strCopy (tString *s, char *array)
   return SUCCESS;
 }
 
-
-//int strCopyStr(tString *s1, tString *s2){
-//   int new_length = s2->length;
-//   if (new_length >= s1->memory){
-//      if ((s1->str = (char*) realloc(s1->str, new_length + 1)) == NULL)
-//         return INT_ERR;
-//      s1->memory = new_length + 1;
-//   }
-//
-//   strcpy(s1->str, s2->str);
-//   s1->length = new_length;
-//   return SUCCESS;
-//}
-
 int strCompare(tString *s1, tString *s2){
   return (strcmp(s1->str, s2->str));
 }
-
-
-//int strCopyArr(tString *s, char array[]){
-//   strClear(s);
-//   int length = strlen(array);
-//   for(int i = 0; i < length; i++) {
-//      if(strAdd(s, array[i]) != SUCCESS)
-//         return INT_ERR;
-//   }
-//   return SUCCESS;
-//}
-
-
-//char *getStr(tString *s){
-//  return s->str;
-//}
-

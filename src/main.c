@@ -81,16 +81,14 @@ int main() {
   }
 
 
-  // if(result == SUCCESS) {
 
-    reverse(&(function_statements_list->first));
-      set_active(function_statements_list);
-      parse_instructions(function_statements_list);      
+  reverse(&(function_statements_list->first));
+  set_active(function_statements_list);
+  parse_instructions(function_statements_list);      
 
-      reverse(&(list->first));
-      set_active(list);
-      parse_instructions(list);
-  // }
+  reverse(&(list->first));
+  set_active(list);
+  parse_instructions(list);
 
   global_map_free(globalMap);
 
