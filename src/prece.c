@@ -222,7 +222,7 @@ void generateLabelJumps(tList* list, int type){
 //            insert_item(list, &instr_type, &instr1, &instr2, &instr3);
 
             instr_type = INSTRUCT_JUMPIFEQ;
-            instr1.value.s = "ADD_int";
+            instr1.value.s = "MATH_OPERATION";
             instr2.type = GF;
             instr2.value.s = "$type";
             instr3.type = S;
@@ -234,7 +234,7 @@ void generateLabelJumps(tList* list, int type){
             instr3.value.s = "float"; // tady muze byt string , float, integer, none
 
             instr_type = INSTRUCT_JUMPIFEQ;
-            instr1.value.s = "ADD_int";
+            instr1.value.s = "MATH_OPERATION";
             instr2.type = GF;
             instr2.value.s = "$type";
             instr3.type = S;
@@ -242,7 +242,7 @@ void generateLabelJumps(tList* list, int type){
             insert_item(list, &instr_type, &instr1, &instr2, &instr3);
 
             instr_type = INSTRUCT_JUMPIFEQ;
-            instr1.value.s = "ADD_float";
+            instr1.value.s = "MATH_OPERATION";
             instr2.type = GF;
             instr2.value.s = "$type";
             instr3.type = S;
@@ -255,7 +255,7 @@ void generateLabelJumps(tList* list, int type){
 //            insert_item(list, &instr_type, &instr1, &instr2, &instr3);
 
             instr_type = INSTRUCT_JUMPIFEQ;
-            instr1.value.s = "ADD_string";
+            instr1.value.s = "MATH_OPERATION_FOR_STRING";
             instr2.type = GF;
             instr2.value.s = "$type";
             instr3.type = S;
@@ -273,7 +273,7 @@ void generateLabelJumps(tList* list, int type){
  */
 void generatingFloatLabel(tList* list){
     instr_type = INSTRUCT_LABEL;
-    instr1.value.s = "ADD_float"; // SUB, MUL
+    instr1.value.s = "MATH_OPERATION"; // SUB, MUL
     insert_item(list, &instr_type, &instr1, &instr2, &instr3);
 }
 
@@ -283,7 +283,7 @@ void generatingFloatLabel(tList* list){
  */
 void generatingIntLabel(tList* list){
     instr_type = INSTRUCT_LABEL;
-    instr1.value.s = "ADD_int"; // SUB, MUL
+    instr1.value.s = "MATH_OPERATION"; // SUB, MUL
     insert_item(list, &instr_type, &instr1, &instr2, &instr3);
 }
 
@@ -293,7 +293,7 @@ void generatingIntLabel(tList* list){
  */
 void generatingStringLabel(tList* list){
     instr_type = INSTRUCT_LABEL;
-    instr1.value.s = "ADD_string"; // SUB, MUL
+    instr1.value.s = "MATH_OPERATION_FOR_STRING"; // SUB, MUL
     insert_item(list, &instr_type, &instr1, &instr2, &instr3);
 }
 

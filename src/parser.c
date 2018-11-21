@@ -121,7 +121,6 @@ char * generate_param(char *string, unsigned short d){
 	generate[length] = c;
 	generate[length + 1] = '\0';
 	return generate;
-//	free(generate);
 }
 
 void instruction_exit(int ret_val){
