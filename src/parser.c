@@ -2405,10 +2405,6 @@ int parse(GlobalMap* globalMap, tList *list) {
 		instr_type =  INSTRUCT_PUSHFRAME;
 		insert_item(ilist, &instr_type, &instr1, &instr2, &instr3);
 		
-		// instr_type = INSTRUCT_CHR;
-		// insert_item(ilist, &instr_type, &instr1, &instr2, &instr3);
-		// instr_type = INSTRUCT_ORD;
-		// insert_item(ilist, &instr_type, &instr1, &instr2, &instr3);
 
 		result = prog();
 	}

@@ -550,6 +550,7 @@ void parse_instructions(tList *instr_list)  {
           printf("LABEL chr\n");
           printf("PUSHFRAME\n");
           printf("DEFVAR LF@%%retval\n");
+          printf("MOVE LF@%%retval nil@nil\n");
           printf("INT2CHAR  LF@%%retval LF@%%1\n");
           printf("POPFRAME\n");
           printf("RETURN\n");
@@ -557,12 +558,22 @@ void parse_instructions(tList *instr_list)  {
 
       case INSTRUCT_ORD:
           printf("LABEL ord\n");
-          printf("STRLEN $$var_integer LF@_param1\n");
-          printf("LT GF@$$var_double GF@$$var_integer LF@_param2\n");
+          printf("PUSHFRAME\n");
+          printf("DEFVAR LF@%%retval\n");
+          printf("MOVE LF@%%retval nil@nil\n");
+          printf("JUMPIFEQ $nil_ret LF@%%2 int@0\n");
+          printf("JUMP $ord\n");
+          printf("LABEL $nil_ret\n");
+          printf("MOVE LF@%%retval nil@nil\n");
+          printf("POPFRAME\n");
+          printf("RETURN\n");
+          printf("LABEL $ord\n");
+          printf("STRLEN GF@$$var_integer LF@%%1\n");
+          printf("LT GF@$$var_double GF@$$var_integer LF@%%2\n");
           printf("JUMPIFEQ label_ord bool@true GF@$$var_double\n");
 
-          printf("SUB LF@_param2 LF@_param2 int@1\n");
-          printf("GETCHAR GF@$$var_string LF@_param1 LF@_param2\n");
+          printf("SUB LF@%%2 LF@%%2 int@1\n");
+          printf("GETCHAR GF@$$var_string LF@%%1 LF@%%2\n");
           printf("STRI2INT GF@$$var_integer GF@$$var_string int@0\n");
 
           printf("JUMP label_end_ord\n");
@@ -571,6 +582,7 @@ void parse_instructions(tList *instr_list)  {
           printf("MOVE GF@$$var_integer int@0\n");
           printf("LABEL label_end_ord\n");
           printf("MOVE GF@$$var_double float@0x0p+0\n");
+          printf("POPFRAME\n");
           printf("RETURN\n");
 
       break;

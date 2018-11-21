@@ -1,5 +1,42 @@
 .IFJcode18
 JUMP $$main
+LABEL length
+PUSHFRAME
+DEFVAR LF@%retval
+STRLEN LF@%retval LF@%1
+POPFRAME
+RETURN
+LABEL chr
+PUSHFRAME
+DEFVAR LF@%retval
+MOVE LF@%retval nil@nil
+INT2CHAR  LF@%retval LF@%1
+POPFRAME
+RETURN
+LABEL ord
+PUSHFRAME
+DEFVAR LF@%retval
+MOVE LF@%retval nil@nil
+JUMPIFEQ $nil_ret LF@%2 int@0
+JUMP $ord
+LABEL $nil_ret
+MOVE LF@%retval nil@nil
+POPFRAME
+RETURN
+LABEL $ord
+STRLEN GF@$$var_integer LF@%1
+LT GF@$$var_double GF@$$var_integer LF@%2
+JUMPIFEQ label_ord bool@true GF@$$var_double
+SUB LF@%2 LF@%2 int@1
+GETCHAR GF@$$var_string LF@%1 LF@%2
+STRI2INT GF@$$var_integer GF@$$var_string int@0
+JUMP label_end_ord
+LABEL label_ord
+MOVE GF@$$var_integer int@0
+LABEL label_end_ord
+MOVE GF@$$var_double float@0x0p+0
+POPFRAME
+RETURN
 LABEL $$main
 DEFVAR GF@$$var_integer
 MOVE GF@$$var_integer int@0
@@ -19,10 +56,22 @@ DEFVAR GF@$type1
 DEFVAR GF@$type2
 CREATEFRAME
 PUSHFRAME
-DEFVAR LF@str1
-MOVE GF@$result int@15
-MOVE LF@str1 GF@$result
-CREATEFRAME
-READ LF@str1 int
-WRITE LF@str1
+DEFVAR LF@a
+MOVE GF@$result int@5
+MOVE LF@a GF@$result
+MOVE GF@$result LF@a
+GT GF@$$EXPR1 GF@$result int@6
+EQ GF@$$EXPR2 GF@$result int@6
+OR GF@$result GF@$$EXPR1 GF@$$EXPR2
+JUMPIFEQ if_label_then1 GF@$result bool@true
+JUMP if_label_else1
+LABEL if_label_then1
+MOVE GF@$result int@6
+MOVE LF@a GF@$result
+JUMP if_label1_end
+LABEL if_label_else1
+MOVE GF@$result int@7
+MOVE LF@a GF@$result
+JUMP if_label1_end
+LABEL if_label1_end
 EXIT int@0
