@@ -663,7 +663,7 @@ expr_return parse_expr(LocalMap* lMap, tList* list, bool is_bool){
 
     /* INICIALIZACIA STRUKTUR */
     expr_return resultOfPrece = {.result=SUCCESS, .bool_result=false};
-    tStack* stack = stack_init(100);
+    tStack* stack = stack_init(20);
     int actTokenIndexToPreceTable = 0;
     int stackTopTokenIndexToPreceTable = 0;
 
@@ -792,6 +792,38 @@ expr_return parse_expr(LocalMap* lMap, tList* list, bool is_bool){
                 if ((stack->arrayOfNumbers[stack->finderOfParenthesis + 1]) == eIDENT) {
                     dataIDF = stack->arrayOfItems[stack->finderOfParenthesis];
                     dataIDF.nameOfTheNonTerminal =  "$result\0";      // generovanie UNIQUE
+                    // toto je v pripade ze pride a = (10+20) napriklad
+                    if(stack->arrayOfNumbers[stack->finderOfParenthesis - 1] == 11){
+                        instr_type = INSTRUCT_MOVE;
+                        instr1.type = GF;
+                        instr1.value.s = "$result\0";
+                        if(stack->arrayOfItems[stack->finderOfParenthesis + 1].isVariable){ isFirstVariable = true; }
+
+                        if (isFirstVariable == true ){
+                            instr2.type = LF;
+                            instr2.value.s = stack->arrayOfItems[stack->finderOfParenthesis + 1].nameOfTheVariable;
+                        }
+                        else{
+                            switch(stack->arrayOfItems[stack->finderOfParenthesis + 1].type){
+                                case INTEGER:
+                                    instr2.type = I;
+                                    instr2.value.i = stack->arrayOfItems[stack->finderOfParenthesis + 1].value.i;
+                                    break;
+                                case FLOAT:
+                                    instr2.type = F;
+                                    instr2.value.f = stack->arrayOfItems[stack->finderOfParenthesis + 1].value.f;
+                                    break;
+                                case STRING:
+                                    instr2.type = S;
+                                    instr2.value.s =  stack->arrayOfItems[stack->finderOfParenthesis + 1].value.string.str;
+                                    break;
+                                default:
+                                    break;
+                            }
+                        }
+                        insert_item(list, &instr_type, &instr1, &instr2, &instr3);
+                    }
+                    isFirstVariable = false;
                     stack_pop(stack);
                     stack_pop(stack);
                     stack_push(stack, E, dataIDF);
@@ -2857,8 +2889,9 @@ expr_return parse_expr(LocalMap* lMap, tList* list, bool is_bool){
                             resultOfPrece.bool_result = true;
                             STACK_POP4;
                             stack_push(stack, E, dataIDF);
-                        break;
+                            break;
                             // tato podmienka je kvoli prikladu a = ++ ....
+
                         default:
                             resultOfPrece.result = SYN_ERR;
                             resultOfPrece.bool_result = false;
@@ -2867,18 +2900,20 @@ expr_return parse_expr(LocalMap* lMap, tList* list, bool is_bool){
                 }
             break;
             case Err:
-                if(actTokenIndexToPreceTable == eDOLAR){
+                if(actTokenIndexToPreceTable == eDOLAR && stackTopTokenIndexToPreceTable == eDOLAR){
                     /* v pripade ak prijde vyraz a = then  v preklade $$ medzi nimi nebude nic ziaden nontermian(E) tak to vychodi syntakticku chybu */
                     if(stack->top == 0){
                         resultOfPrece.result = SYN_ERR;
                         return resultOfPrece;
                     }
+
                     resultOfPrece.result = SUCCESS;                                                         // vratenie navratovej hodnoty
                     resultOfPrece.uniqueID->str = stack_top_token_data(stack)->nameOfTheNonTerminal;        // vratenie UNIQUE nazvu identifikatora
                     resultOfPrece.data_type = stack_top_token_data(stack)->type;                        // vratenie typu identificatora
                     stack_free(stack);
                     return resultOfPrece;
                 }
+                resultOfPrece.result = SYN_ERR;
                 return resultOfPrece;
         }
     }while(1);
