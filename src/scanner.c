@@ -263,8 +263,7 @@ int getToken(){
                     state = S_COMMENT_END_E;
                 }
                 else{
-                    ungetc(c, stdin);
-                    return ERROR_LEX;
+                    state = S_COMMENT_END;
                 }
             break;
 
@@ -277,11 +276,22 @@ int getToken(){
             break;
 
             case S_COMMENT_END_N:
-                if (c == 'd'){state = S_START;}
-                    else{
-                        ungetc(c, stdin);
-                        return ERROR_LEX;
-                    }
+                if (c == 'd'){
+                    state = S_IGNORE_END_COMMENT;
+                }
+                else{
+                    ungetc(c, stdin);
+                    return ERROR_LEX;
+                }
+            break;
+
+            case S_IGNORE_END_COMMENT:
+                if (c == '\n'){
+                    state = S_START;
+                }
+                else {
+                    state = S_IGNORE_END_COMMENT;
+                }
             break;
 
             case S_EQUAL:

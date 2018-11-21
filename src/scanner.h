@@ -127,6 +127,7 @@
 #define    S_COMMENT_BLOCK_IN_N 84
 #define    S_COMMENT_BLOCK_N_NEWLINE   85
 #define    S_NEG_NUMBER         86
+#define    S_IGNORE_END_COMMENT 87
 
 
 
