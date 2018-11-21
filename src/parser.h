@@ -60,6 +60,7 @@ int term_list2(bool);
 int func();
 void insert_build_in_functions();
 void instruction_exit(int);
+char * generate_param(char *, unsigned short );
 
 #endif
 
