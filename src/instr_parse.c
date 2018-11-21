@@ -43,7 +43,7 @@ void replace_str(char **str, char *orig, char *rep) {
   sprintf(buffer+(p-(*str)), "%s%s", rep, p+strlen(orig));
   buffer[strlen(buffer)] = '\0';
 
-  free((*str));
+  // free((*str));
   *str = buffer;
 }
 
