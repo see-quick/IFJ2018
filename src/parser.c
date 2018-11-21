@@ -353,6 +353,14 @@ int check_chr_build_in(){
 												instr1.value.s = "$label_true_chr";
 
 												insert_item(ilist, &instr_type, &instr1, &instr2, &instr3);
+
+												instr_type = INSTRUCT_MOVE;
+												instr1.type = GF;
+												instr1.value.s = "$tmp2";
+												instr2.type = LF;
+												instr2.value.s = gToken.data.str;
+												insert_item(ilist, &instr_type, &instr1, &instr2, &instr3);
+
 										}
 										else {
 											instruction_exit(ERR_INCOMPATIBLE_TYPE);
