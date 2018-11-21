@@ -95,7 +95,7 @@ echo "Test data for syntaxData: TESTED $TESTNUMBER tests, PASSED: $SUCCTESTS, FA
 #TESTDATA
 OUTPUT=$(bash tester.sh ifj testData 2>/dev/null | tail -n 5)
 TESTNUMBER=$(echo $OUTPUT | cut -c8-10)
-SUCCTESTS=$(echo $OUTPUT | cut -c26-27)
+SUCCTESTS=$(echo $OUTPUT | cut -c26-29)
 FAILEDTESTS=$((TESTNUMBER-SUCCTESTS))
 
 TOTALTESTS=$((TESTNUMBER+TOTALTESTS))
