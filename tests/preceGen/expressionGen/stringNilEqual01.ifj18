@@ -1,5 +1,5 @@
 a = "HEllo"
-b = b
+b = "cau"
 
 if a == b then
 	a = "Yes"

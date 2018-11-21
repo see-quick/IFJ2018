@@ -26,8 +26,6 @@ extern bool is_LF;
  * @return -1 on error
  */
 int list_error() {
-
-    //fprintf (stderr, "*ERROR* The program has performed an illegal operation.\n");
   instruction_exit(INT_ERR);
   return INT_ERR;
 }
@@ -46,8 +44,6 @@ tList* list_init ()  {
   instr_list->first = NULL;
   instr_list->last = NULL;
   instr_list->act = NULL;
-  //instr_list->stream = NULL;
-
   return instr_list;
 }
 
@@ -59,24 +55,20 @@ tList* list_init ()  {
  * @param addr2 adresa druheho operandu(neterminalu) instrukcie
  * @param addr3 adresa tretieho operandu(neterminalu) instrukcie
  */
-void insert_item (tList *instr_list, tInstructionTypes *instr_name , tInstructionData *addr1, tInstructionData *addr2, tInstructionData *addr3)  {
+void insert_item(tList *instr_list, tInstructionTypes *instr_name , tInstructionData *addr1, tInstructionData *addr2, tInstructionData *addr3)  {
 
   tNode *new_instr = NULL;
   if((new_instr = (tNode*)malloc(sizeof(tNode))) == NULL ) {
     list_error();
   }
   else {
-
     new_instr->data.type = *instr_name;
     new_instr->data.address1.type = addr1->type;
     new_instr->data.address1.value = addr1->value;
-    //printf("Test2: %s\n", new_instr->data.address1.value.s);
     new_instr->data.address2.type = addr2->type;
     new_instr->data.address2.value = addr2->value;
     new_instr->data.address3.type = addr3->type;
     new_instr->data.address3.value = addr3->value;
-
-    //new_instr->next = instr_list->first
 
     if (is_LF){
         new_instr->next = function_statements_list->first;  //do ukazatela na dalsi dame aktualne prvy v prvok v zozname
@@ -90,15 +82,6 @@ void insert_item (tList *instr_list, tInstructionTypes *instr_name , tInstructio
     }
   }
 }
-
-
-
-// doplnit defaultni hodnoty!!!!!!!!!!!!!]
-// spravne alokovat pamet
-
-
-
-
 
 
 /**
@@ -129,7 +112,6 @@ tNode* return_instruct(tList *instr_list) {
     return instr_list->act;
   }
   else  {
-    //fprintf (stderr, "*ERROR* The program has performed an illegal operation.\n");
     return NULL;
   }
 }

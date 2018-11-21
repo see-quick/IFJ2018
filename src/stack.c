@@ -26,7 +26,6 @@
  * @return -1 -> like error
  */
 int stack_error(){
-    printf("Something went wrong with using stack\n");
     return -1;
 }
 
@@ -104,7 +103,6 @@ void stack_push ( tStack *stack, int tokenNumber, tDataIDF tokenData){
     stack->finderOfParenthesis++;
     stack->arrayOfNumbers[stack->top] = tokenNumber;
     stack->arrayOfItems[stack->top] = tokenData;
-    //printf("%d <-- Pushed to stack\n", (token));
 }
 
 /**
@@ -119,10 +117,6 @@ void stack_pop(tStack *stack){
         stack->top--;
         stack->finderOfParenthesis--;
     }
-    else{
-        printf("Popping empty stack\n");
-    }
-
 }
 /**
  * Funckia, ktora sa vyuziva pri popovani poloziek ktore su nam pri redukcii uz nepotrebne napriklad  $<i   polozka < nepotrebne tak stack_pop_free, i je potrebne takze dame stack_pop
@@ -147,19 +141,6 @@ void  stack_pop_free(tStack *stack){
 int stack_get_size(tStack *stack){
     return stack->memory;
 }
-
-/**
- * Pomocna debugovacia funkcia pre precedencnu analyzu
- * @param stack konkretny stack
- */
-//void stack_print_prece(tStack *stack){
-//    printf("[------------> STACK PRECE BEGIN <-------------]\n");
-//    for(int i = 0; i < stack_get_size(stack); i++){
-//        printf("Current stack item is -> %s\n", convert_to_char(stack->arrayOfNumbers[i]));
-//    }
-//    printf("[-------------> STACK PRECE END <--------------]\n");
-//}
-
 
 void stack_print_prece(tStack *stack){
     printf("[------------> STACK PRECE BEGIN <-------------]\n");
@@ -205,31 +186,9 @@ void stack_free(tStack *stack)
     stack->top = -1;
 
      if (item != NULL){
-    //     free(&item->token_data.value.string);
-    //     free(&item->token_data.value);
-    //     free(&item->token_data);
          free(item);
      }
-//     if(tempItemForPositionOne != NULL){
-//         free(&tempItemForPositionOne->token_data.value.string);
-//         free(&tempItemForPositionOne->token_data.value);
-//         free(&tempItemForPositionOne->token_data);
-//         free(tempItemForPositionOne);
-//     }
 
-//     if (tempItemForPositionThree != NULL){
-//         free(&tempItemForPositionThree->token_data.value.string);
-//         free(&tempItemForPositionThree->token_data.value);
-//         free(&tempItemForPositionThree->token_data);
-//         free(tempItemForPositionThree);
-//     }
-
-//    if (tempItemForPositionOne != NULL){
-//        free(tempItemForPositionOne);
-//    }
-//    if (tempItemForPositionThree != NULL){
-//        free(tempItemForPositionThree);
-//    }
 
     free(stack->arrayOfNumbers);
     free(stack->arrayOfItems);
@@ -238,7 +197,6 @@ void stack_free(tStack *stack)
 
 /**
  * Funckia, pomocou ktorej sa bude hladat znamienko <, na redukovanie pravidiel E -> E + E a podobne
- * WORKS !!!
  * @param stack konkretny stack
  */
 void stack_search_for_theorem(tStack *stack) {
