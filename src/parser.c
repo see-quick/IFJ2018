@@ -1040,6 +1040,7 @@ int sth(){
 		case LEX_NUMBER:
 		case LEX_STRING:
 		case LEX_REAL_NUMBER:
+		case LEX_L_BRACKET:
 
 			if (token == LEX_NUMBER || token == LEX_REAL_NUMBER || token == LEX_STRING || token == LEX_ID){
 				instr_type = INSTRUCT_MOVE;

@@ -1473,6 +1473,7 @@ expr_return parse_expr(LocalMap* lMap, tList* list, bool is_bool){
                                     }
                                     dataIDF.type = INTEGER;
                                     setFirstAndSecondVariableToGenerate(INSTRUCT_DIV);
+
                                     if (instr3.value.i == 0){
                                         //fprintf(stderr, "Deleni nulou, radek cislo %d\n",gToken.row);
                                         resultOfPrece.result = ERR_DIVISION;
