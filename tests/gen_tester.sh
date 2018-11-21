@@ -88,7 +88,7 @@ function testRunner() {
         if [[ "$silent" == "-s" ]]; then
           timeout 1 sudo ./ic18int test.code > /dev/null 2>&1
         else
-          timeout 1 sudo ./ic18int test.code
+          timeout 1 sudo ./ic18int test.code 1>/dev/null 
         fi
         retval=$(echo $?)
         if [ "$retval" -eq "124" ]; then
@@ -173,8 +173,10 @@ for ((n=0; n<$lines;n++)); do #loop over test dir
         cmp  $tmpout $testpath/$currentdir/$outfile
         ret=$(echo $?)
         if [[ "$ret" -eq "1" ]]; then
-          ((testfail++));
-          ((testsucc--));
+          if [[ "$retval" -eq "0" ]]; then
+            ((testfail++));
+            ((testsucc--));
+           fi
           echo "${red}[TEST FAILED]${reset} Outputs aren't the same!";
         fi
       fi

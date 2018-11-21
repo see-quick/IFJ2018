@@ -147,6 +147,12 @@ echo "Testing code generation, this might take few seconds..."
 OUTPUT=$(sudo bash gen_tester.sh -n 2>/dev/null | tail -n 1)
 TESTNUMBER=$(echo $OUTPUT | cut -c8-10)
 SUCCTESTS=$(echo $OUTPUT | cut -c26-29)
+
+#test if we have number
+#re='^[0-9]+$'
+#if ! [[ $SUCCTESTS =~ $re ]]; then
+#  SUCCTESTS=0
+#fi
 FAILEDTESTS=$((TESTNUMBER-SUCCTESTS))
 
 TOTALTESTSGEN=$((TESTNUMBER+TOTALTESTSGEN))

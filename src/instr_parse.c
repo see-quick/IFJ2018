@@ -28,21 +28,23 @@ int arg_count;
  * @param str nas retazec s ktorym pracujeme
  * @param orig retazec ktory hladame
  * @param rep retaec za ktory ho vymenime
- * @return novy retazec bez orig -> vymeneny za rep
+ * Je na uzivateli pak uvolneni str.
 */
-char *replace_str(char *str, char *orig, char *rep) {
-  static char buffer[4096];
+void replace_str(char **str, char *orig, char *rep) {
+  if (*str == NULL || orig == NULL || rep == NULL) return;
   char *p;
+  if ((p = strstr(*str, orig)) == NULL) return;
+  char *buffer = malloc(strlen(*str) - strlen(orig) + strlen(rep) + 1);
+  memset(buffer, '\0', strlen(buffer));
 
-  if(!(p = strstr(str, orig)))
-    return str;
+  strncpy(buffer, *str, p-(*str));
+  buffer[p-(*str)] = '\0';
 
-  strncpy(buffer, str, p-str);
-  buffer[p-str] = '\0';
+  sprintf(buffer+(p-(*str)), "%s%s", rep, p+strlen(orig));
+  buffer[strlen(buffer)] = '\0';
 
-  sprintf(buffer+(p-str), "%s%s", rep, p+strlen(orig));
-
-  return buffer;
+  free((*str));
+  *str = buffer;
 }
 
 /**
@@ -102,83 +104,40 @@ void print_symb(tInstructionData instr_operand)  {
   {
      //escape seq ---- > \000
      //handle '\n' and others
-      // if(strstr(instr_operand.value.s, "\n") != NULL)
-      // {
-      //   char * new_data;
-
-      //   while((strstr(instr_operand.value.s, "\n") != NULL))
-      //   {
-      //     new_data = malloc(strlen(instr_operand.value.s)+1+2);
-      //     strcpy(new_data, instr_operand.value.s);
-
-
-      //     new_data=replace_str(new_data, "\n", "\\010");
-      //     strcpy(instr_operand.value.s, new_data);
-
-      //     free(new_data);
-      //   }
-      // }
-      // else if(strstr(instr_operand.value.s, "\t") != NULL)
-      // {
-      //   char * new_data;
-
-      //   while((strstr(instr_operand.value.s, "\t") != NULL))
-      //   {
-      //     new_data = malloc(strlen(instr_operand.value.s)+1+2);
-      //     strcpy(new_data, instr_operand.value.s);
-
-      //     new_data=replace_str(new_data, "\t", "\\009");
-      //     strcpy(instr_operand.value.s, new_data);
-
-      //     free(new_data);
-      //   }
-      // }
-      // else if(strstr(instr_operand.value.s, "\v") != NULL)
-      // {
-      //   char * new_data;
-
-      //   while(strstr(instr_operand.value.s, "\v") != NULL)
-      //   {
-      //     new_data = malloc(strlen(instr_operand.value.s)+1+2);
-      //     strcpy(new_data, instr_operand.value.s);
-
-      //     new_data=replace_str(new_data, "\v", "\\011");
-      //     strcpy(instr_operand.value.s, new_data);
-
-      //     free(new_data);
-      //   }
-      // }
-      // else if(strstr(instr_operand.value.s, "\f") != NULL)
-      // {
-      //   char * new_data;
-
-      //   while(strstr(instr_operand.value.s, "\f") != NULL)
-      //   {
-      //     new_data = malloc(strlen(instr_operand.value.s)+1+2);
-      //     strcpy(new_data, instr_operand.value.s);
-
-      //     new_data=replace_str(new_data, "\f", "\\012");
-      //     strcpy(instr_operand.value.s, new_data);
-
-      //     free(new_data);
-      //   }
-      // }
-      // else if(strstr(instr_operand.value.s, "\r") != NULL)
-      // {
-      //   char * new_data;
-
-      //   while(strstr(instr_operand.value.s, "\r") != NULL)
-      //   {
-      //     new_data = malloc(strlen(instr_operand.value.s)+1+2);
-      //     strcpy(new_data, instr_operand.value.s);
-
-      //     new_data=replace_str(new_data, "\r", "\\013");
-      //     strcpy(instr_operand.value.s, new_data);
-
-      //     free(new_data);
-      //   }
-      // }
-     printf("%s",instr_operand.value.s);
+    if (instr_operand.value.s == NULL){
+        return;
+    }
+    if (strstr(instr_operand.value.s, "\n") != NULL) {
+      while((strstr(instr_operand.value.s, "\n") != NULL)) {
+        replace_str(&instr_operand.value.s, "\n", "\\010");
+      }
+    }     
+    if (strstr(instr_operand.value.s, "\t") != NULL) {
+      while ((strstr(instr_operand.value.s, "\t") != NULL)) {
+        replace_str(&instr_operand.value.s, "\t", "\\009");
+      }
+    }
+    if (strstr(instr_operand.value.s, "\v") != NULL) {
+      while(strstr(instr_operand.value.s, "\v") != NULL) {
+        replace_str(&instr_operand.value.s, "\v", "\\011");
+      }
+    }
+    if (strstr(instr_operand.value.s, "\f") != NULL) {
+      while(strstr(instr_operand.value.s, "\f") != NULL) {
+        replace_str(&instr_operand.value.s, "\f", "\\012");
+      }
+    }
+    if (strstr(instr_operand.value.s, "\r") != NULL) {
+      while(strstr(instr_operand.value.s, "\r") != NULL) {
+        replace_str(&instr_operand.value.s, "\r", "\\013");
+      }
+    }
+    if (strstr(instr_operand.value.s, " ") != NULL) {
+      while(strstr(instr_operand.value.s, " ") != NULL) {
+        replace_str(&instr_operand.value.s, " ", "\\032");
+      }
+    }
+    printf("%s",instr_operand.value.s);
   }
 }
 
@@ -297,6 +256,10 @@ void parse_instructions(tList *instr_list)  {
           printf("MOVE GF@$$EXPR2 int@0\n");
           printf("DEFVAR GF@$result\n");
           printf("DEFVAR GF@$type\n");
+          printf("DEFVAR GF@$tmp\n");
+          printf("DEFVAR GF@$tmp2\n");
+          printf("DEFVAR GF@$type1\n");
+          printf("DEFVAR GF@$type2\n");
       break;
 
       case INSTRUCT_CREATEFREAME:
@@ -566,7 +529,10 @@ void parse_instructions(tList *instr_list)  {
 
       case INSTRUCT_LENGTH:
           printf("LABEL length\n");
-          printf("STRLEN GF$$var_integer LF@_param1\n");
+          printf("PUSHFRAME\n");
+          printf("DEFVAR LF@%%retval\n");
+          printf("STRLEN LF@%%retval LF@%%1\n");
+          printf("POPFRAME\n");
           printf("RETURN\n");
       break;
 
@@ -589,7 +555,10 @@ void parse_instructions(tList *instr_list)  {
 
       case INSTRUCT_CHR:
           printf("LABEL chr\n");
-          printf("INT2CHAR GF@$$var_string LF@_param1\n");
+          printf("PUSHFRAME\n");
+          printf("DEFVAR LF@%%retval\n");
+          printf("INT2CHAR  LF@%%retval LF@%%1\n");
+          printf("POPFRAME\n");
           printf("RETURN\n");
       break;
 
@@ -625,23 +594,24 @@ void parse_instructions(tList *instr_list)  {
 
       case INSTRUCT_SUBSTR:
           printf("LABEL substr\n");
-          printf("STRLEN $$var_integer LF@_param2\n");
-          printf("LT GF@$$var_double GF@$$var_integer LF@_param1\n"); // i out of 0 - length(s)
+          printf("PUSHFRAME\n");
+          printf("STRLEN $$var_integer LF@%%2\n");
+          printf("LT GF@$$var_double GF@$$var_integer LF@%%1\n"); // i out of 0 - length(s)
           printf("JUMPIFEQ label_substr bool@true GF@$$var_double\n");
 
           printf("MOVE GF@$$var_integer int@0\n");
-          printf("LT GF@$$var_integer LF@_param3 GF@$$var_integer\n");  // n < 0
+          printf("LT GF@$$var_integer LF@%%3 GF@$$var_integer\n");  // n < 0
           printf("JUMPIFEQ label_substr bool@true GF@$$var_integer\n");
           printf("MOVE GF@$$var_integer int@0\n");  // GF@var_int = 0
 
-          printf("SUB LF@_param2 LF@_param2 int@1\n");  //index 0
+          printf("SUB LF@%%2 LF@%%2 int@1\n");  //index 0
 
           printf("LABEL label_substr_read\n");
-          printf("EQ GF@$$var_integer LF@_param3 int@0\n"); // while n == 0 -> end of loop
-            printf("JUMPIFEQ label_substr bool@true GF@$$var_integer\n");
-            printf("GETCHAR GF@$$var_string LF@_param1 LF@_param2\n");
-            printf("CONCAT GF@$result GF@$result GF@$$var_string\n");
-            printf("SUB LF@_param3 LF@_param3 int@1\n");  //n--
+          printf("EQ GF@$$var_integer LF@%%3 int@0\n"); // while n == 0 -> end of loop
+          printf("JUMPIFEQ label_substr bool@true GF@$$var_integer\n");
+          printf("GETCHAR GF@$$var_string LF@%%1 LF@%%2\n");
+          printf("CONCAT GF@$result GF@$result GF@$$var_string\n");
+          printf("SUB LF@%%3 LF@%%3 int@1\n");  //n--
           printf("JUMP label_substr_read\n");
 
           printf("LABEL label_substr\n");
@@ -650,6 +620,7 @@ void parse_instructions(tList *instr_list)  {
           printf("LABEl label_end_substr\n");
           printf("MOVE GF@$$var_double float@0x0p+0\n");
           printf("MOVE GF@$$var_string string@\n");
+          printf("POPFRAME\n");
           printf("RETURN\n");
       break;
 
