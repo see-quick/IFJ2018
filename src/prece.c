@@ -37,6 +37,9 @@ int labelCounter = 0;
 
 extern bool is_LF;
 
+unsigned short labelCounter = 0;
+
+
 // PRECENDENCE TABLE
 
 prece_states prece_table [SIZEOFTABLE][SIZEOFTABLE] = {
@@ -239,7 +242,7 @@ void generateLabelJumps(tList* list, int type){
             instr3.value.s = "int"; // tady muze byt string , float, integer, none
 
             instr_type = INSTRUCT_JUMPIFEQ;
-            instr1.value.s = "MATH_OPERATION";
+            instr1.value.s = generate_param("MATH_OPERATION", labelCounter);
             instr2.type = GF;
             instr2.value.s = "$type";
             instr3.type = S;
@@ -251,7 +254,7 @@ void generateLabelJumps(tList* list, int type){
             instr3.value.s = "float"; // tady muze byt string , float, integer, none
 
             instr_type = INSTRUCT_JUMPIFEQ;
-            instr1.value.s = "MATH_OPERATION";
+            instr1.value.s = generate_param("MATH_OPERATION", labelCounter++);
             instr2.type = GF;
             instr2.value.s = "$type";
             instr3.type = S;
@@ -259,19 +262,20 @@ void generateLabelJumps(tList* list, int type){
             insert_item(list, &instr_type, &instr1, &instr2, &instr3);
 
             instr_type = INSTRUCT_JUMPIFEQ;
-            instr1.value.s = "MATH_OPERATION";
+            instr1.value.s = generate_param("MATH_OPERATION", labelCounter);
             instr2.type = GF;
             instr2.value.s = "$type";
             instr3.type = S;
             instr3.value.s = "float";
             insert_item(list, &instr_type, &instr1, &instr2, &instr3);
 
+            labelCounter--;
             break;
         case S:
             instr3.value.s = "string"; // tady muze byt string , float, integer, none
 
             instr_type = INSTRUCT_JUMPIFEQ;
-            instr1.value.s = "MATH_OPERATION_FOR_STRING";
+            instr1.value.s = generate_param("MATH_OPERATION_FOR_STRING", labelCounter);
             instr2.type = GF;
             instr2.value.s = "$type";
             instr3.type = S;
@@ -289,7 +293,7 @@ void generateLabelJumps(tList* list, int type){
  */
 void generatingFloatLabel(tList* list){
     instr_type = INSTRUCT_LABEL;
-    instr1.value.s = "MATH_OPERATION"; // SUB, MUL
+    instr1.value.s = generate_param("MATH_OPERATION", labelCounter++); // SUB, MUL
     insert_item(list, &instr_type, &instr1, &instr2, &instr3);
 }
 
@@ -299,7 +303,7 @@ void generatingFloatLabel(tList* list){
  */
 void generatingIntLabel(tList* list){
     instr_type = INSTRUCT_LABEL;
-    instr1.value.s = "MATH_OPERATION"; // SUB, MUL
+    instr1.value.s = generate_param("MATH_OPERATION", labelCounter++); // SUB, MUL
     insert_item(list, &instr_type, &instr1, &instr2, &instr3);
 }
 
@@ -309,7 +313,7 @@ void generatingIntLabel(tList* list){
  */
 void generatingStringLabel(tList* list){
     instr_type = INSTRUCT_LABEL;
-    instr1.value.s = "MATH_OPERATION_FOR_STRING"; // SUB, MUL
+    instr1.value.s = generate_param("MATH_OPERATION_FOR_STRING", labelCounter++); // SUB, MUL
     insert_item(list, &instr_type, &instr1, &instr2, &instr3);
 }
 
@@ -816,6 +820,7 @@ expr_return parse_expr(LocalMap* lMap, tList* list, bool is_bool){
                                         isFirstVariable = true;
 
                                         if (stack->arrayOfItems[stack->finderOfParenthesis + 3].type == INTEGER){
+//                                            printf("Som tu...\n");
                                             generateInstructionForType(list, stack, I, "ADD", 3, 1);
                                         }
                                         else if (stack->arrayOfItems[stack->finderOfParenthesis + 3].type == FLOAT){
