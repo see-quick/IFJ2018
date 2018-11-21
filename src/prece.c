@@ -2750,8 +2750,8 @@ expr_return parse_expr(LocalMap* lMap, tList* list, bool is_bool){
                                     else{ isFirstVariable = false; }
                                     if(stack->arrayOfItems[stack->finderOfParenthesis + 3].isVariable){ isThirdVariable = true; }
                                     else{ isThirdVariable = false; }
-                                    if (isFirstVariable){
-                                        instr2.type = LF;
+
+                                    if (isThirdVariable){
                                         instr2.value.s = stack->arrayOfItems[stack->finderOfParenthesis + 3].nameOfTheVariable;
                                     }
                                     else { instr2.type = F;
@@ -2796,7 +2796,7 @@ expr_return parse_expr(LocalMap* lMap, tList* list, bool is_bool){
                                     else{ isFirstVariable = false; }
                                     if(stack->arrayOfItems[stack->finderOfParenthesis + 3].isVariable){ isThirdVariable = true; }
                                     else{ isThirdVariable = false; }
-                                    if (isThirdVariable){
+                                    if (isFirstVariable){
                                         instr2.type = LF;
                                         instr2.value.s = stack->arrayOfItems[stack->finderOfParenthesis + 1].nameOfTheVariable;
                                     }

@@ -216,9 +216,9 @@ else
   testRunner "$testDIR"
 
   #inbuild
-  testDIR="genData"
-  filegen="-n"
-  genTester "$testDIR"
+ # testDIR="genData"
+ # filegen="-n"
+ # genTester "$testDIR"
 fi
 
 
