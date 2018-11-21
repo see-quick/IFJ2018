@@ -1,5 +1,5 @@
 a = 5.2
-b = b
+b = 2.1
 
 if a == b then
 	a = 6.3

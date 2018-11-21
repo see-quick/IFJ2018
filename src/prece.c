@@ -18,12 +18,8 @@
 #include "stack.h"
 #include "string.h"
 #include "parser.h"
-//#include "parser.c" // zobratie globalnej mapy
 
-// #define RULE_OF_OPERATORS stack_pops(4, stack);stack_push(stack, E, dataIDF);stack_print_prece(stack);break
-// #define RULE_OF_IDENTIFICATOR stack_pops(2, stack);stack_push(stack, E, *dataIDF);stack_print_prece(stack)
 #define STACK_POP4 stack_pops(4, stack)
-//#define GLOBAL_OR_LOCAL_FRAME
 
 extern char * function_name;
 
@@ -38,7 +34,11 @@ tInstructionData instr3;
 extern tDataFunction gData;
 
 extern bool is_LF;
-int DEBUG = 0;  /* premenna na debugovanie  0 --> pre ziadnej vypis, 1 --> pre vypis */
+
+unsigned short labelCounter = 0;
+
+
+// PRECENDENCE TABLE
 
 prece_states prece_table [SIZEOFTABLE][SIZEOFTABLE] = {
 /*        +    -    *    /    <    >   <=   >=   ==   !=   i    (    )    $   ,   f          <------- ACT TOKEN */
@@ -106,10 +106,6 @@ int indexerOfPreceTable (int indexer, LocalMap* lMap)
                 }
             }
             else{
-                // nie je to ani fce ani identificator
-                //printf("ERROR\n");
-
-                // TODO SEMANTICKA CHYBA
                 return eSEMERROR;
             }
             break;
@@ -242,10 +238,9 @@ void generateLabelJumps(tList* list, int type){
     switch(type){
         case I:
             instr3.value.s = "int"; // tady muze byt string , float, integer, none
-//            insert_item(list, &instr_type, &instr1, &instr2, &instr3);
 
             instr_type = INSTRUCT_JUMPIFEQ;
-            instr1.value.s = "MATH_OPERATION";
+            instr1.value.s = generate_param("MATH_OPERATION", labelCounter);
             instr2.type = GF;
             instr2.value.s = "$type";
             instr3.type = S;
@@ -257,7 +252,7 @@ void generateLabelJumps(tList* list, int type){
             instr3.value.s = "float"; // tady muze byt string , float, integer, none
 
             instr_type = INSTRUCT_JUMPIFEQ;
-            instr1.value.s = "MATH_OPERATION";
+            instr1.value.s = generate_param("MATH_OPERATION", labelCounter++);
             instr2.type = GF;
             instr2.value.s = "$type";
             instr3.type = S;
@@ -265,20 +260,20 @@ void generateLabelJumps(tList* list, int type){
             insert_item(list, &instr_type, &instr1, &instr2, &instr3);
 
             instr_type = INSTRUCT_JUMPIFEQ;
-            instr1.value.s = "MATH_OPERATION";
+            instr1.value.s = generate_param("MATH_OPERATION", labelCounter);
             instr2.type = GF;
             instr2.value.s = "$type";
             instr3.type = S;
             instr3.value.s = "float";
             insert_item(list, &instr_type, &instr1, &instr2, &instr3);
 
+            labelCounter--;
             break;
         case S:
             instr3.value.s = "string"; // tady muze byt string , float, integer, none
-//            insert_item(list, &instr_type, &instr1, &instr2, &instr3);
 
             instr_type = INSTRUCT_JUMPIFEQ;
-            instr1.value.s = "MATH_OPERATION_FOR_STRING";
+            instr1.value.s = generate_param("MATH_OPERATION_FOR_STRING", labelCounter);
             instr2.type = GF;
             instr2.value.s = "$type";
             instr3.type = S;
@@ -296,7 +291,7 @@ void generateLabelJumps(tList* list, int type){
  */
 void generatingFloatLabel(tList* list){
     instr_type = INSTRUCT_LABEL;
-    instr1.value.s = "MATH_OPERATION"; // SUB, MUL
+    instr1.value.s = generate_param("MATH_OPERATION", labelCounter++); // SUB, MUL
     insert_item(list, &instr_type, &instr1, &instr2, &instr3);
 }
 
@@ -306,7 +301,7 @@ void generatingFloatLabel(tList* list){
  */
 void generatingIntLabel(tList* list){
     instr_type = INSTRUCT_LABEL;
-    instr1.value.s = "MATH_OPERATION"; // SUB, MUL
+    instr1.value.s = generate_param("MATH_OPERATION", labelCounter++); // SUB, MUL
     insert_item(list, &instr_type, &instr1, &instr2, &instr3);
 }
 
@@ -316,7 +311,7 @@ void generatingIntLabel(tList* list){
  */
 void generatingStringLabel(tList* list){
     instr_type = INSTRUCT_LABEL;
-    instr1.value.s = "MATH_OPERATION_FOR_STRING"; // SUB, MUL
+    instr1.value.s = generate_param("MATH_OPERATION_FOR_STRING", labelCounter++); // SUB, MUL
     insert_item(list, &instr_type, &instr1, &instr2, &instr3);
 }
 
@@ -464,8 +459,7 @@ void generateInstructionForType(tList* list, tStack *stack, int type, char * ins
     else{
         generatingStringLabel(list);
     }
-    // TODO: type == N (NIL)
-    
+
     // ZISKANIE KONKRETNEHO TYPU INSTRUKCIE
     // generating concrete instructions f.e. ADD, SUB etc...
     generatingConcreteInstruction(list, stack, type, instruction_type, positionForConcreteInstruction);
@@ -663,17 +657,13 @@ void generateInstructionForNones(tList* list, tStack *stack, char * instruction_
     insert_item(list, &instr_type, &instr1, &instr2, &instr3);
 }
 
-
-
-
-
 // @varName pravidlo id = <sth>
 // @lMap je lokalni Mapa
 expr_return parse_expr(LocalMap* lMap, tList* list, bool is_bool){
 
     /* INICIALIZACIA STRUKTUR */
     expr_return resultOfPrece = {.result=SUCCESS, .bool_result=false};
-    tStack* stack = stack_init(100);
+    tStack* stack = stack_init(20);
     int actTokenIndexToPreceTable = 0;
     int stackTopTokenIndexToPreceTable = 0;
 
@@ -681,13 +671,10 @@ expr_return parse_expr(LocalMap* lMap, tList* list, bool is_bool){
     /* ZACIATOK PRECEDENCNEJ ANALYZY */
     stack_push(stack, eDOLAR, dataIDF);         // pushnutie na stack $
 
-    if(DEBUG)stack_print_prece(stack);
-    if(DEBUG)stack_print(stack);
     setEmptyDataIDF(dataIDF);                   // nastavenie default hodnot
 
     do{
         stack->finderOfParenthesis = stack->top; // vyrovnanie top so finderom
-        //v pripade ze je na vrchole zasobniku non terminal E pozerame sa o 1 miesto nizsie
         if(stack->arrayOfNumbers[stack->top] == E){
             actTokenIndexToPreceTable = indexerOfPreceTable(token, lMap);  // pretypovanie na dany index
             stackTopTokenIndexToPreceTable = stack->arrayOfNumbers[stack->finderOfParenthesis - 1];     // pozerame sa o jedno miesto nizsie
@@ -697,15 +684,10 @@ expr_return parse_expr(LocalMap* lMap, tList* list, bool is_bool){
             stackTopTokenIndexToPreceTable  = stack_top_token_number(stack); // pretypovanie na dany index
         }
 
-        // akonahle sa vo fucnkii indexerOfPreceTable nenajde ziadny znak tak vyhadzujem syntaticku chybu
         if(actTokenIndexToPreceTable == eSYNTERROR) {
             resultOfPrece.result = SYN_ERR;
-            //instruction_exit(SYN_ERR);
             return resultOfPrece;
         }
-        // SEMANTICKA AKCE
-        // pushnuti do stackofItems strukturu pro token, ktery prave prisel od PARSERU
-        // muze byt LEX_ID, LEX_NUMBER, LEX_REAL_NUMBER, LEX_STRING
 
         if (token == LEX_NUMBER){
             dataIDF.type = INTEGER;
@@ -738,8 +720,7 @@ expr_return parse_expr(LocalMap* lMap, tList* list, bool is_bool){
                 dataIDF.value.string.str = gToken.data.str;
                 resultOfPrece.data_type = FUNCTION;
                 resultOfPrece.uniqueID = &gToken.data;
-                return resultOfPrece;       // predavam riadenie parseru
-                // je to funckia
+                return resultOfPrece;
             }
             // ak sa premenna nachadza v lokalnej mape tak
             else if(local_map_contain(lMap, gToken.data.str)){
@@ -765,25 +746,18 @@ expr_return parse_expr(LocalMap* lMap, tList* list, bool is_bool){
             }
             else{
                 // premenna nebola najdena v localnej mape a tym padom sa jedna o semanticku chybu
-                //fprintf(stderr, "Promenna %s neni definovana, radek %d\n", gToken.data.str, gToken.row);
                 resultOfPrece.result = SEM_ERR;
-                //instruction_exit(SEM_ERR);
                 return resultOfPrece;
             }
             dataIDF.defined = true;
         }
 
-        if(DEBUG)printf("This is act token    number -> |%d| and char -> |%s|\n", actTokenIndexToPreceTable, convert_to_char(actTokenIndexToPreceTable));
-        if(DEBUG) printf("This is act stackTop number -> |%d| and char -> |%s|\n", stackTopTokenIndexToPreceTable, convert_to_char(stackTopTokenIndexToPreceTable));
-
         switch(prece_table[stackTopTokenIndexToPreceTable][actTokenIndexToPreceTable]) {
             case EQ:
-                if (DEBUG)printf("CASE: |=| (equal)\n");
                 stack->finderOfParenthesis = stack->top;
                 stack_search_for_theorem(stack);
                 stack_push(stack, actTokenIndexToPreceTable, dataIDF);
-                if (DEBUG)stack_print_prece(stack);
-                token = getToken();     //zavolanie si noveho tokenu
+                token = getToken();
                 if(!error_lex()){
                     resultOfPrece.result =  ERROR_LEX;
                     return resultOfPrece;
@@ -793,20 +767,17 @@ expr_return parse_expr(LocalMap* lMap, tList* list, bool is_bool){
                 }
                 break;
             case L:
-                if (DEBUG)printf("CASE: |<| (shifting)\n");
                 if (stack_top_token_number(stack) == E) {
                     dataIDF = stack->arrayOfItems[stack->finderOfParenthesis];
                     stack_pop(stack);
                     stack_push(stack, eSOLVING_RULE, dataIDF);
                     stack_push(stack, E, dataIDF);
                     stack_push(stack, actTokenIndexToPreceTable, dataIDF);
-                    if (DEBUG)stack_print_prece(stack);
                 } else {
                     stack_push(stack, eSOLVING_RULE, dataIDF);
                     stack_push(stack, actTokenIndexToPreceTable, dataIDF);
-                    if (DEBUG)stack_print_prece(stack);
                 }
-                token = getToken();     //zavolanie si noveho tokenu
+                token = getToken();
                 if(!error_lex()){
                     resultOfPrece.result =  ERROR_LEX;
                     return resultOfPrece;
@@ -816,18 +787,46 @@ expr_return parse_expr(LocalMap* lMap, tList* list, bool is_bool){
                 }
                 break;
             case G:
-                if (DEBUG)printf("CASE: |>| (reduction)\n");
                 stack_search_for_theorem(stack);
                 /** PRAVIDLO E -> i **/
                 if ((stack->arrayOfNumbers[stack->finderOfParenthesis + 1]) == eIDENT) {
                     dataIDF = stack->arrayOfItems[stack->finderOfParenthesis];
                     dataIDF.nameOfTheNonTerminal =  "$result\0";      // generovanie UNIQUE
+                    // toto je v pripade ze pride a = (10+20) napriklad
+                    if(stack->arrayOfNumbers[stack->finderOfParenthesis - 1] == 11){
+                        instr_type = INSTRUCT_MOVE;
+                        instr1.type = GF;
+                        instr1.value.s = "$result\0";
+                        if(stack->arrayOfItems[stack->finderOfParenthesis + 1].isVariable){ isFirstVariable = true; }
+
+                        if (isFirstVariable == true ){
+                            instr2.type = LF;
+                            instr2.value.s = stack->arrayOfItems[stack->finderOfParenthesis + 1].nameOfTheVariable;
+                        }
+                        else{
+                            switch(stack->arrayOfItems[stack->finderOfParenthesis + 1].type){
+                                case INTEGER:
+                                    instr2.type = I;
+                                    instr2.value.i = stack->arrayOfItems[stack->finderOfParenthesis + 1].value.i;
+                                    break;
+                                case FLOAT:
+                                    instr2.type = F;
+                                    instr2.value.f = stack->arrayOfItems[stack->finderOfParenthesis + 1].value.f;
+                                    break;
+                                case STRING:
+                                    instr2.type = S;
+                                    instr2.value.s =  stack->arrayOfItems[stack->finderOfParenthesis + 1].value.string.str;
+                                    break;
+                                default:
+                                    break;
+                            }
+                        }
+                        insert_item(list, &instr_type, &instr1, &instr2, &instr3);
+                    }
+                    isFirstVariable = false;
                     stack_pop(stack);
                     stack_pop(stack);
                     stack_push(stack, E, dataIDF);
-                    if (DEBUG) printf("StackTop NUMBER -> %s\n", convert_to_char(stack_top_token_number(stack)));
-                    if (DEBUG) printf("StackTop DATA -> %d\n", stack_top_token_data(stack)->value.i);
-                    if (DEBUG)stack_print_prece(stack);
                     break;
                 }
                     /** PRAVIDLO E -> (E) **/
@@ -835,16 +834,15 @@ expr_return parse_expr(LocalMap* lMap, tList* list, bool is_bool){
                          ((stack->arrayOfNumbers[stack->finderOfParenthesis + 2]) == E) &&
                          ((stack->arrayOfNumbers[stack->finderOfParenthesis + 3]) == eRBAR)) {
                     dataIDF = stack->arrayOfItems[stack->finderOfParenthesis + 2];
-                    dataIDF.nameOfTheNonTerminal =  "$result\0";      // generovanie UNIQUE
+                    dataIDF.nameOfTheNonTerminal =  "$result\0";
                     STACK_POP4;
-                    stack_push(stack, E, dataIDF);                       // nakoniec pushneme E + datovu strukturu
+                    stack_push(stack, E, dataIDF);
                     break;
                 } else {  // TODO: pravidlo -> E -> f(E), E -> f(E, E), E -> f(E, E , E ), E -> f(E, E, ...)
                     int concreteOperator = stack->arrayOfNumbers[stack->finderOfParenthesis + 2];
                     switch (concreteOperator) {
                         case ePLUS:
                             // PRAVIDLO E -> E + E
-                            if (DEBUG) stack_print_prece(stack);
                              if ((stack->arrayOfNumbers[stack->finderOfParenthesis + 3]) != EMPTY_CHAR) {
 
                                 if (stack->arrayOfItems[stack->finderOfParenthesis + 1].type == NONE ){
@@ -852,6 +850,7 @@ expr_return parse_expr(LocalMap* lMap, tList* list, bool is_bool){
                                         isFirstVariable = true;
 
                                         if (stack->arrayOfItems[stack->finderOfParenthesis + 3].type == INTEGER){
+//                                            printf("Som tu...\n");
                                             generateInstructionForType(list, stack, I, "ADD", 3, 1);
                                         }
                                         else if (stack->arrayOfItems[stack->finderOfParenthesis + 3].type == FLOAT){
@@ -885,10 +884,8 @@ expr_return parse_expr(LocalMap* lMap, tList* list, bool is_bool){
 
                                 else if ((stack->arrayOfItems[stack->finderOfParenthesis + 1].type == STRING) &&
                                      (stack->arrayOfItems[stack->finderOfParenthesis + 3].type == STRING)) {
-                                     // ziskanie zo zasobnika zda je token premenna alebo nie v pripade ak ano tak nastavime isFirst alebo isThird na true...
                                      if(stack->arrayOfItems[stack->finderOfParenthesis + 3].isVariable){ isThirdVariable = true; }
                                      else{ isThirdVariable = false; }
-                                     // v pripade ze sa je o prve spracovanie tak nechavame
                                      if (isThirdVariable == true ){
                                          instr3.type = LF;
                                          instr3.value.s = stack->arrayOfItems[stack->finderOfParenthesis + 3].nameOfTheVariable;
@@ -903,15 +900,11 @@ expr_return parse_expr(LocalMap* lMap, tList* list, bool is_bool){
                                      isThirdVariable = false;
                                  } else if ((stack->arrayOfItems[stack->finderOfParenthesis + 1].type == STRING) &&
                                             (stack->arrayOfItems[stack->finderOfParenthesis + 3].type != STRING)) {
-                                    //fprintf(stderr, "Semanticka chyba typové kompatibility v aritmetických vyrazech, radek %d\n", gToken.row);
-                                     //instruction_exit(ERR_INCOMPATIBLE_TYPE);
                                     resultOfPrece.result = ERR_INCOMPATIBLE_TYPE;
                                     resultOfPrece.bool_result = false;
                                     return resultOfPrece;
                                  } else if ((stack->arrayOfItems[stack->finderOfParenthesis + 1].type != STRING) &&
                                             (stack->arrayOfItems[stack->finderOfParenthesis + 3].type == STRING)) {
-                                    //fprintf(stderr, "Semanticka chyba typové kompatibility v aritmetických vyrazech, radek %d\n", gToken.row);
-                                    //instruction_exit(ERR_INCOMPATIBLE_TYPE);
                                     resultOfPrece.result = ERR_INCOMPATIBLE_TYPE;
                                     resultOfPrece.bool_result = false;
                                     return resultOfPrece;
@@ -937,12 +930,10 @@ expr_return parse_expr(LocalMap* lMap, tList* list, bool is_bool){
                                      isThirdVariable = false;
                                  } else if ((stack->arrayOfItems[stack->finderOfParenthesis + 1].type == INTEGER) &&
                                             (stack->arrayOfItems[stack->finderOfParenthesis + 3].type == FLOAT)) {
-                                     // ziskanie zo zasobnika zda je token premenna alebo nie v pripade ak ano tak nastavime isFirst alebo isThird na true...
                                      if(stack->arrayOfItems[stack->finderOfParenthesis + 1].isVariable){ isFirstVariable = true;}
                                      else{ isFirstVariable = false; }
                                      if(stack->arrayOfItems[stack->finderOfParenthesis + 3].isVariable){ isThirdVariable = true; }
                                      else{ isThirdVariable = false; }
-                                     // v pripade ze sa je o prve spracovanie tak nechavame
 
                                      if (isFirstVariable){
                                          instr2.type = LF;
@@ -953,7 +944,7 @@ expr_return parse_expr(LocalMap* lMap, tList* list, bool is_bool){
                                      }
 
                                      instr_type = INSTRUCT_INT2FLOAT;
-                                     instr1.value.s = "$result\0";        // generovanie UNIQUE // generate non Term -> Unikatny nazov
+                                     instr1.value.s = "$result\0";
                                      insert_item(list, &instr_type, &instr1, &instr2, &instr3);
 
                                      if (is_result) {
@@ -981,14 +972,11 @@ expr_return parse_expr(LocalMap* lMap, tList* list, bool is_bool){
                                      isThirdVariable = false;
                                  } else if ((stack->arrayOfItems[stack->finderOfParenthesis + 1].type == FLOAT) &&
                                             (stack->arrayOfItems[stack->finderOfParenthesis + 3].type == INTEGER)) {
-
-                                     // ziskanie zo zasobnika zda je token premenna alebo nie v pripade ak ano tak nastavime isFirst alebo isThird na true...
                                      if(stack->arrayOfItems[stack->finderOfParenthesis + 1].isVariable){ isFirstVariable = true;}
                                      else{ isFirstVariable = false; }
                                      if(stack->arrayOfItems[stack->finderOfParenthesis + 3].isVariable){ isThirdVariable = true; }
                                      else{ isThirdVariable = false; }
 
-                                     // v pripade ze sa je o prve spracovanie tak nechavame
                                      if (isThirdVariable){
                                          instr2.type = LF;
                                          instr2.value.s = stack->arrayOfItems[stack->finderOfParenthesis + 3].nameOfTheVariable;
@@ -998,7 +986,7 @@ expr_return parse_expr(LocalMap* lMap, tList* list, bool is_bool){
                                      }
 
                                      instr_type = INSTRUCT_INT2FLOAT;
-                                     instr1.value.s = "$result\0";        // generovanie UNIQUE // generate non Term -> Unikatny nazov
+                                     instr1.value.s = "$result\0";
                                      insert_item(list, &instr_type, &instr1, &instr2, &instr3);
                                      if (is_result) {
                                          instr2.type = GF;
@@ -1025,10 +1013,8 @@ expr_return parse_expr(LocalMap* lMap, tList* list, bool is_bool){
                                      isThirdVariable = false;
                                  } else if ((stack->arrayOfItems[stack->finderOfParenthesis + 1].type == FLOAT) &&
                                             (stack->arrayOfItems[stack->finderOfParenthesis + 3].type == FLOAT)) {
-                                     // ziskanie zo zasobnika zda je token premenna alebo nie v pripade ak ano tak nastavime isFirst alebo isThird na true...
                                      if(stack->arrayOfItems[stack->finderOfParenthesis + 3].isVariable){ isThirdVariable = true; }
                                      else{ isThirdVariable = false; }
-                                     // v pripade ze sa je o prve spracovanie tak nechavame
                                      if (isThirdVariable == true ){
                                          instr3.type = LF;
                                          instr3.value.s = stack->arrayOfItems[stack->finderOfParenthesis + 3].nameOfTheVariable;
@@ -1044,17 +1030,14 @@ expr_return parse_expr(LocalMap* lMap, tList* list, bool is_bool){
                                      isThirdVariable = false;
                                  }
                                  else {
-                                    //fprintf(stderr, "Semanticka chyba typové kompatibility v aritmetických vyrazech, radek %d\n", gToken.row);
                                     resultOfPrece.result = ERR_INCOMPATIBLE_TYPE;
-                                     resultOfPrece.bool_result = false;
-                                    //instruction_exit(ERR_INCOMPATIBLE_TYPE);
+                                    resultOfPrece.bool_result = false;
                                     return resultOfPrece;
                                  }
 
                              } else {
                                  resultOfPrece.result = SYN_ERR;
                                  resultOfPrece.bool_result = false;
-                                 //instruction_exit(SYN_ERR);
                                  return resultOfPrece;
                              }
                             resultOfPrece.bool_result = false;
@@ -1099,7 +1082,6 @@ expr_return parse_expr(LocalMap* lMap, tList* list, bool is_bool){
                                         else if (stack->arrayOfItems[stack->finderOfParenthesis + 1].type == STRING){
                                             resultOfPrece.result = ERR_INCOMPATIBLE_TYPE;
                                             resultOfPrece.bool_result = false;
-                                            //instruction_exit(ERR_INCOMPATIBLE_TYPE);
                                             return resultOfPrece;
                                         }
                                     isFirstVariable = false;
@@ -1107,16 +1089,12 @@ expr_return parse_expr(LocalMap* lMap, tList* list, bool is_bool){
                                 }
                                 else if ((stack->arrayOfItems[stack->finderOfParenthesis + 1].type == STRING) ||
                                     (stack->arrayOfItems[stack->finderOfParenthesis + 3].type == STRING)) {
-
-                                    //fprintf(stderr, "Semanticka chyba typové kompatibility v aritmetických vyrazech, radek %d\n", gToken.row);
                                     resultOfPrece.result = ERR_INCOMPATIBLE_TYPE;
                                     resultOfPrece.bool_result = false;
-                                    //instruction_exit(ERR_INCOMPATIBLE_TYPE);
                                     return resultOfPrece;
 
                                 } else if ((stack->arrayOfItems[stack->finderOfParenthesis + 1].type == INTEGER) &&
                                            (stack->arrayOfItems[stack->finderOfParenthesis + 3].type == INTEGER)) {
-                                    // ziskanie zo zasobnika zda je token premenna alebo nie v pripade ak ano tak nastavime isFirst alebo isThird na true...
                                     if(stack->arrayOfItems[stack->finderOfParenthesis + 3].isVariable){ isThirdVariable = true; }
                                     else{ isThirdVariable = false; }
 
@@ -1140,8 +1118,6 @@ expr_return parse_expr(LocalMap* lMap, tList* list, bool is_bool){
                                     else{ isFirstVariable = false; }
                                     if(stack->arrayOfItems[stack->finderOfParenthesis + 3].isVariable){ isThirdVariable = true; }
                                     else{ isThirdVariable = false; }
-                                    // v pripade ze sa je o prve spracovanie tak nechavame
-
                                     if (isFirstVariable){
                                         instr2.type = LF;
                                         instr2.value.s = stack->arrayOfItems[stack->finderOfParenthesis + 1].nameOfTheVariable;
@@ -1151,7 +1127,7 @@ expr_return parse_expr(LocalMap* lMap, tList* list, bool is_bool){
                                     }
 
                                     instr_type = INSTRUCT_INT2FLOAT;
-                                    instr1.value.s = "$result\0";        // generovanie UNIQUE // generate non Term -> Unikatny nazov
+                                    instr1.value.s = "$result\0";
                                     insert_item(list, &instr_type, &instr1, &instr2, &instr3);
 
                                     if (is_result) {
@@ -1179,13 +1155,11 @@ expr_return parse_expr(LocalMap* lMap, tList* list, bool is_bool){
                                     isThirdVariable = false;
                                 } else if ((stack->arrayOfItems[stack->finderOfParenthesis + 1].type == FLOAT) &&
                                            (stack->arrayOfItems[stack->finderOfParenthesis + 3].type == INTEGER)) {
-                                    // ziskanie zo zasobnika zda je token premenna alebo nie v pripade ak ano tak nastavime isFirst alebo isThird na true...
                                     if(stack->arrayOfItems[stack->finderOfParenthesis + 1].isVariable){ isFirstVariable = true;}
                                     else{ isFirstVariable = false; }
                                     if(stack->arrayOfItems[stack->finderOfParenthesis + 3].isVariable){ isThirdVariable = true; }
                                     else{ isThirdVariable = false; }
 
-                                    // v pripade ze sa je o prve spracovanie tak nechavame
                                     if (isThirdVariable){
                                         instr2.type = LF;
                                         instr2.value.s = stack->arrayOfItems[stack->finderOfParenthesis + 3].nameOfTheVariable;
@@ -1195,7 +1169,7 @@ expr_return parse_expr(LocalMap* lMap, tList* list, bool is_bool){
                                     }
 
                                     instr_type = INSTRUCT_INT2FLOAT;
-                                    instr1.value.s = "$result\0";        // generovanie UNIQUE // generate non Term -> Unikatny nazov
+                                    instr1.value.s = "$result\0";
                                     insert_item(list, &instr_type, &instr1, &instr2, &instr3);
                                     if (is_result) {
                                         instr2.type = GF;
@@ -1224,7 +1198,6 @@ expr_return parse_expr(LocalMap* lMap, tList* list, bool is_bool){
                                            (stack->arrayOfItems[stack->finderOfParenthesis + 3].type == FLOAT)) {
                                     if(stack->arrayOfItems[stack->finderOfParenthesis + 3].isVariable){ isThirdVariable = true; }
                                     else{ isThirdVariable = false; }
-                                    // v pripade ze sa je o prve spracovanie tak nechavame
                                     if (isThirdVariable == true ){
                                         instr3.type = LF;
                                         instr3.value.s = stack->arrayOfItems[stack->finderOfParenthesis + 3].nameOfTheVariable;
@@ -1238,23 +1211,18 @@ expr_return parse_expr(LocalMap* lMap, tList* list, bool is_bool){
                                     insert_item(list, &instr_type, &instr1, &instr2, &instr3);
                                     // generovanie  SUB %s@%s %s@%s %s@%s
                                 } else {
-                                    //fprintf(stderr, "Semanticka chyba typové kompatibility v aritmetických vyrazech, radek %d\n", gToken.row);
                                     resultOfPrece.result = ERR_INCOMPATIBLE_TYPE;
                                     resultOfPrece.bool_result = false;
-                                    //instruction_exit(ERR_INCOMPATIBLE_TYPE);
                                     return resultOfPrece;
                                 }
                             } else {
                                 resultOfPrece.result = SYN_ERR;
                                 resultOfPrece.bool_result = false;
-                                //instruction_exit(SYN_ERR);
                                 return resultOfPrece;
                             }
                             resultOfPrece.bool_result = false;
                             STACK_POP4;
                             stack_push(stack, E, dataIDF);                 // nakoniec pushneme E + datovu strukturu
-                            if (DEBUG)
-                                stack_print(stack);
                         break;
                             // PRAVIDLO E -> E * E
                         case eMUL:
@@ -1301,8 +1269,6 @@ expr_return parse_expr(LocalMap* lMap, tList* list, bool is_bool){
 
                                 else if ((stack->arrayOfItems[stack->finderOfParenthesis + 1].type == STRING) ||
                                     (stack->arrayOfItems[stack->finderOfParenthesis + 3].type == STRING)) {
-
-                                    //fprintf(stderr, "Semanticka chyba typové kompatibility v aritmetických vyrazech, radek %d\n", gToken.row);
                                     resultOfPrece.result = ERR_INCOMPATIBLE_TYPE;
                                     resultOfPrece.bool_result = false;
                                     return resultOfPrece;
@@ -1332,7 +1298,6 @@ expr_return parse_expr(LocalMap* lMap, tList* list, bool is_bool){
                                     else{ isFirstVariable = false; }
                                     if(stack->arrayOfItems[stack->finderOfParenthesis + 3].isVariable){ isThirdVariable = true; }
                                     else{ isThirdVariable = false; }
-                                    // v pripade ze sa je o prve spracovanie tak nechavame
 
                                     if (isFirstVariable){
                                         instr2.type = LF;
@@ -1343,7 +1308,7 @@ expr_return parse_expr(LocalMap* lMap, tList* list, bool is_bool){
                                     }
 
                                     instr_type = INSTRUCT_INT2FLOAT;
-                                    instr1.value.s = "$result\0";        // generovanie UNIQUE // generate non Term -> Unikatny nazov
+                                    instr1.value.s = "$result\0";
                                     insert_item(list, &instr_type, &instr1, &instr2, &instr3);
 
                                     if (is_result) {
@@ -1366,18 +1331,16 @@ expr_return parse_expr(LocalMap* lMap, tList* list, bool is_bool){
                                     insert_item(list, &instr_type, &instr1, &instr2, &instr3);
                                     // generovanie  INT2FLOAT %s@%s %s@%s
                                     // generovanie  MUL %s@%s %s@%s %s@%s
-                                    is_result = false;
+                                    is_result = true;
                                     isFirstVariable = false;
                                     isThirdVariable = false;
                                 } else if ((stack->arrayOfItems[stack->finderOfParenthesis + 1].type == FLOAT) &&
                                            (stack->arrayOfItems[stack->finderOfParenthesis + 3].type == INTEGER)) {
-                                    // ziskanie zo zasobnika zda je token premenna alebo nie v pripade ak ano tak nastavime isFirst alebo isThird na true...
                                     if(stack->arrayOfItems[stack->finderOfParenthesis + 1].isVariable){ isFirstVariable = true;}
                                     else{ isFirstVariable = false; }
                                     if(stack->arrayOfItems[stack->finderOfParenthesis + 3].isVariable){ isThirdVariable = true; }
                                     else{ isThirdVariable = false; }
 
-                                    // v pripade ze sa je o prve spracovanie tak nechavame
                                     if (isThirdVariable){
                                         instr2.type = LF;
                                         instr2.value.s = stack->arrayOfItems[stack->finderOfParenthesis + 3].nameOfTheVariable;
@@ -1387,7 +1350,7 @@ expr_return parse_expr(LocalMap* lMap, tList* list, bool is_bool){
                                     }
 
                                     instr_type = INSTRUCT_INT2FLOAT;
-                                    instr1.value.s = "$result\0";        // generovanie UNIQUE // generate non Term -> Unikatny nazov
+                                    instr1.value.s = "$result\0";
                                     insert_item(list, &instr_type, &instr1, &instr2, &instr3);
                                     if (is_result) {
                                         instr2.type = GF;
@@ -1409,7 +1372,7 @@ expr_return parse_expr(LocalMap* lMap, tList* list, bool is_bool){
                                     insert_item(list, &instr_type, &instr1, &instr2, &instr3);
                                     // generovanie INT@FLOAT %s@%s %s@%s
                                     // generovanie MUL %s@%s %s@%s %s@%s
-                                    is_result = true;
+                                    is_result = false;
                                     isFirstVariable = false;
                                     isThirdVariable = false;
 
@@ -1417,7 +1380,6 @@ expr_return parse_expr(LocalMap* lMap, tList* list, bool is_bool){
                                            (stack->arrayOfItems[stack->finderOfParenthesis + 3].type == FLOAT)) {
                                     if(stack->arrayOfItems[stack->finderOfParenthesis + 3].isVariable){ isThirdVariable = true; }
                                     else{ isThirdVariable = false; }
-                                    // v pripade ze sa je o prve spracovanie tak nechavame
                                     if (isThirdVariable == true ){
                                         instr3.type = LF;
                                         instr3.value.s = stack->arrayOfItems[stack->finderOfParenthesis + 3].nameOfTheVariable;
@@ -1431,24 +1393,19 @@ expr_return parse_expr(LocalMap* lMap, tList* list, bool is_bool){
                                     insert_item(list, &instr_type, &instr1, &instr2, &instr3);
                                     //generovanie MUL %s@%s %s@%s %s@%s
                                 } else {
-                                    //fprintf(stderr, "Semanticka chyba typové kompatibility v aritmetických vyrazech, radek %d\n", gToken.row);
                                     resultOfPrece.result = ERR_INCOMPATIBLE_TYPE;
                                     resultOfPrece.bool_result = false;
-                                    //instruction_exit(ERR_INCOMPATIBLE_TYPE);
                                     return resultOfPrece;
                                 }
 
                             } else {
                                 resultOfPrece.result = SYN_ERR;
                                 resultOfPrece.bool_result = false;
-                                //instruction_exit(SYN_ERR);
                                 return resultOfPrece;
                             }
                             resultOfPrece.bool_result = false;
                             STACK_POP4;
                             stack_push(stack, E, dataIDF);                 // nakoniec pushneme E + datovu strukturu
-                            if (DEBUG)
-                                stack_print(stack);
                         break;
                             // PRAVIDLO E -> E / E
                         case eDIV:
@@ -1468,7 +1425,6 @@ expr_return parse_expr(LocalMap* lMap, tList* list, bool is_bool){
                                         else if (stack->arrayOfItems[stack->finderOfParenthesis + 3].type == STRING){
                                             resultOfPrece.result = ERR_INCOMPATIBLE_TYPE;
                                             resultOfPrece.bool_result = false;
-                                            //instruction_exit(ERR_INCOMPATIBLE_TYPE);
                                             return resultOfPrece;
                                         }
                                         else if (stack->arrayOfItems[stack->finderOfParenthesis + 3].type == NONE){
@@ -1490,7 +1446,6 @@ expr_return parse_expr(LocalMap* lMap, tList* list, bool is_bool){
                                         else if (stack->arrayOfItems[stack->finderOfParenthesis + 1].type == STRING){
                                             resultOfPrece.result = ERR_INCOMPATIBLE_TYPE;
                                             resultOfPrece.bool_result = false;
-                                            //instruction_exit(ERR_INCOMPATIBLE_TYPE);
                                             return resultOfPrece;
                                         }
                                     isFirstVariable = false;
@@ -1498,11 +1453,8 @@ expr_return parse_expr(LocalMap* lMap, tList* list, bool is_bool){
                                 }
                                 else if ((stack->arrayOfItems[stack->finderOfParenthesis + 1].type == STRING) ||
                                     (stack->arrayOfItems[stack->finderOfParenthesis + 3].type == STRING)) {
-
-                                    //fprintf(stderr, "Semanticka chyba typové kompatibility v aritmetických vyrazech, radek %d\n", gToken.row);
                                     resultOfPrece.result = ERR_INCOMPATIBLE_TYPE;
                                     resultOfPrece.bool_result = false;
-                                    //instruction_exit(ERR_INCOMPATIBLE_TYPE);
                                     return resultOfPrece;
 
                                 } else if ((stack->arrayOfItems[stack->finderOfParenthesis + 1].type == INTEGER) &&
@@ -1516,23 +1468,19 @@ expr_return parse_expr(LocalMap* lMap, tList* list, bool is_bool){
                                     }
                                     else { instr3.type = I;
                                         instr3.value.i = stack->arrayOfItems[stack->finderOfParenthesis + 3].value.i;
+                                        if (instr3.value.i == 0){
+                                            resultOfPrece.result = ERR_DIVISION;
+                                            resultOfPrece.bool_result = false;
+                                            return resultOfPrece;
+                                        }
                                     }
                                     dataIDF.type = INTEGER;
                                     setFirstAndSecondVariableToGenerate(INSTRUCT_IDIV);
 
-                                    if (instr3.value.i == 0){
-                                        //fprintf(stderr, "Deleni nulou, radek cislo %d\n",gToken.row);
-                                        resultOfPrece.result = ERR_DIVISION;
-                                        resultOfPrece.bool_result = false;
-                                        //instruction_exit(ERR_DIVISION);
-                                        return resultOfPrece;
-                                    }
-                                    else{
-                                        dataIDF.value.i = stack->arrayOfItems[stack->finderOfParenthesis + 1].value.i / stack->arrayOfItems[stack->finderOfParenthesis + 3].value.i;
-                                        insert_item(list, &instr_type, &instr1, &instr2, &instr3);
-                                        //generovanie IDIV %s@%s %s@%s %s@%s
-                                        isThirdVariable = false;
-                                    }
+                                    dataIDF.value.i = stack->arrayOfItems[stack->finderOfParenthesis + 1].value.i / stack->arrayOfItems[stack->finderOfParenthesis + 3].value.i;
+                                    insert_item(list, &instr_type, &instr1, &instr2, &instr3);
+                                    //generovanie IDIV %s@%s %s@%s %s@%s
+                                    isThirdVariable = false;
 
                                 } else if ((stack->arrayOfItems[stack->finderOfParenthesis + 1].type == INTEGER) &&
                                            (stack->arrayOfItems[stack->finderOfParenthesis + 3].type == FLOAT)) {
@@ -1540,7 +1488,6 @@ expr_return parse_expr(LocalMap* lMap, tList* list, bool is_bool){
                                     else{ isFirstVariable = false; }
                                     if(stack->arrayOfItems[stack->finderOfParenthesis + 3].isVariable){ isThirdVariable = true; }
                                     else{ isThirdVariable = false; }
-                                    // v pripade ze sa je o prve spracovanie tak nechavame
 
                                     if (isFirstVariable){
                                         instr2.type = LF;
@@ -1551,7 +1498,7 @@ expr_return parse_expr(LocalMap* lMap, tList* list, bool is_bool){
                                     }
 
                                     instr_type = INSTRUCT_INT2FLOAT;
-                                    instr1.value.s = "$result\0";        // generovanie UNIQUE // generate non Term -> Unikatny nazov
+                                    instr1.value.s = "$result\0";
                                     insert_item(list, &instr_type, &instr1, &instr2, &instr3);
 
                                     if (is_result) {
@@ -1566,10 +1513,8 @@ expr_return parse_expr(LocalMap* lMap, tList* list, bool is_bool){
                                         else{ instr3.type = F;
                                             instr3.value.f = stack->arrayOfItems[stack->finderOfParenthesis + 3].value.f;
                                             if (instr3.value.f == 0.0){
-                                                //fprintf(stderr, "Deleni nulou, radek cislo %d\n",gToken.row);
                                                 resultOfPrece.result = ERR_DIVISION;
                                                 resultOfPrece.bool_result = false;
-                                                //instruction_exit(ERR_DIVISION);
                                                 return resultOfPrece;
                                             }
                                         }
@@ -1586,13 +1531,11 @@ expr_return parse_expr(LocalMap* lMap, tList* list, bool is_bool){
                                     isThirdVariable = false;
                                 } else if ((stack->arrayOfItems[stack->finderOfParenthesis + 1].type == FLOAT) &&
                                            (stack->arrayOfItems[stack->finderOfParenthesis + 3].type == INTEGER)) {
-                                    // ziskanie zo zasobnika zda je token premenna alebo nie v pripade ak ano tak nastavime isFirst alebo isThird na true...
                                     if(stack->arrayOfItems[stack->finderOfParenthesis + 1].isVariable){ isFirstVariable = true;}
                                     else{ isFirstVariable = false; }
                                     if(stack->arrayOfItems[stack->finderOfParenthesis + 3].isVariable){ isThirdVariable = true; }
                                     else{ isThirdVariable = false; }
 
-                                    // v pripade ze sa je o prve spracovanie tak nechavame
                                     if (isThirdVariable){
                                         instr2.type = LF;
                                         instr2.value.s = stack->arrayOfItems[stack->finderOfParenthesis + 3].nameOfTheVariable;
@@ -1600,16 +1543,14 @@ expr_return parse_expr(LocalMap* lMap, tList* list, bool is_bool){
                                     else { instr2.type = I;
                                         instr2.value.i = stack->arrayOfItems[stack->finderOfParenthesis + 3].value.i;
                                         if (instr2.value.i == 0){
-                                            //fprintf(stderr, "Deleni nulou, radek cislo %d\n",gToken.row);
                                             resultOfPrece.result = ERR_DIVISION;
                                             resultOfPrece.bool_result = false;
-                                            //instruction_exit(ERR_DIVISION);
                                             return resultOfPrece;
                                         }
                                     }
 
                                     instr_type = INSTRUCT_INT2FLOAT;
-                                    instr1.value.s = "$result\0";        // generovanie UNIQUE // generate non Term -> Unikatny nazov
+                                    instr1.value.s = "$result\0";
                                     insert_item(list, &instr_type, &instr1, &instr2, &instr3);
                                     if (is_result) {
                                         instr2.type = GF;
@@ -1638,49 +1579,40 @@ expr_return parse_expr(LocalMap* lMap, tList* list, bool is_bool){
                                            (stack->arrayOfItems[stack->finderOfParenthesis + 3].type == FLOAT)) {
                                     if(stack->arrayOfItems[stack->finderOfParenthesis + 3].isVariable){ isThirdVariable = true; }
                                     else{ isThirdVariable = false; }
-                                    // v pripade ze sa je o prve spracovanie tak nechavame
                                     if (isThirdVariable == true ){
                                         instr3.type = LF;
                                         instr3.value.s = stack->arrayOfItems[stack->finderOfParenthesis + 3].nameOfTheVariable;
                                     }
                                     else{ instr3.type = F;
                                         instr3.value.f = stack->arrayOfItems[stack->finderOfParenthesis + 3].value.f;
+                                        if (instr3.value.f == 0.0){
+                                            resultOfPrece.result = ERR_DIVISION;
+                                            resultOfPrece.bool_result = false;
+                                            return resultOfPrece;
+                                        }
                                     }
                                     dataIDF.type = FLOAT;
                                     setFirstAndSecondVariableToGenerate(INSTRUCT_DIV);
 
-                                    if (instr3.value.f == 0.0){
-                                        //fprintf(stderr, "Deleni nulou, radek cislo %d\n",gToken.row);
-                                        resultOfPrece.result = ERR_DIVISION;
-                                        resultOfPrece.bool_result = false;
-                                        //instruction_exit(ERR_DIVISION);
-                                        return resultOfPrece;
-                                    }
-                                    else{
-                                        dataIDF.value.f = stack->arrayOfItems[stack->finderOfParenthesis + 1].value.f * stack->arrayOfItems[stack->finderOfParenthesis + 3].value.f;
-                                        insert_item(list, &instr_type, &instr1, &instr2, &instr3);
-                                        // generovanie  DIV %s@%s %s@%s %s@%s
-                                    }
+                                    dataIDF.value.f = stack->arrayOfItems[stack->finderOfParenthesis + 1].value.f * stack->arrayOfItems[stack->finderOfParenthesis + 3].value.f;
+                                    insert_item(list, &instr_type, &instr1, &instr2, &instr3);
+                                    // generovanie  DIV %s@%s %s@%s %s@%s
+
 
 
                                 } else {   //printf("semanticky error BOOL \n");
-                                    //fprintf(stderr, "Semanticka chyba typové kompatibility v aritmetických vyrazech, radek %d\n", gToken.row);
                                     resultOfPrece.result = ERR_INCOMPATIBLE_TYPE;
                                     resultOfPrece.bool_result = false;
-                                    //instruction_exit(ERR_INCOMPATIBLE_TYPE);
                                     return resultOfPrece;
                                 }
                             } else {
                                 resultOfPrece.result = SYN_ERR;
                                 resultOfPrece.bool_result = false;
-                                //instruction_exit(SYN_ERR);
                                 return resultOfPrece;
                             }
                             resultOfPrece.bool_result = false;
                             STACK_POP4;
-                            stack_push(stack, E, dataIDF);                 // nakoniec pushneme E + datovu strukturu
-                            if (DEBUG)
-                                stack_print(stack);
+                            stack_push(stack, E, dataIDF);
                         break;
                             // PRAVIDLO E -> E < E
                         case eLESS:
@@ -1767,10 +1699,8 @@ expr_return parse_expr(LocalMap* lMap, tList* list, bool is_bool){
                                     else{ isFirstVariable = false; }
                                     if(stack->arrayOfItems[stack->finderOfParenthesis + 3].isVariable){ isThirdVariable = true; }
                                     else{ isThirdVariable = false; }
-                                    // v pripade ze sa je o prve spracovanie tak nechavame
 
-                                    if (isFirstVariable){
-                                        instr2.type = LF;
+                                    if (isThirdVariable){
                                         instr2.value.s = stack->arrayOfItems[stack->finderOfParenthesis + 3].nameOfTheVariable;
                                     }
                                     else { instr2.type = F;
@@ -1778,7 +1708,7 @@ expr_return parse_expr(LocalMap* lMap, tList* list, bool is_bool){
                                     }
 
                                     instr_type = INSTRUCT_FLOAT2INT;
-                                    instr1.value.s = "$result\0";        // generovanie UNIQUE // generate non Term -> Unikatny nazov
+                                    instr1.value.s = "$result\0";
                                     insert_item(list, &instr_type, &instr1, &instr2, &instr3);
 
                                     if (is_result) {
@@ -1806,14 +1736,12 @@ expr_return parse_expr(LocalMap* lMap, tList* list, bool is_bool){
                                     isThirdVariable = false;
                                 } else if ((stack->arrayOfItems[stack->finderOfParenthesis + 1].type == FLOAT) &&
                                            (stack->arrayOfItems[stack->finderOfParenthesis + 3].type == INTEGER)) {
-                                    // ziskanie zo zasobnika zda je token premenna alebo nie v pripade ak ano tak nastavime isFirst alebo isThird na true...
                                     if(stack->arrayOfItems[stack->finderOfParenthesis + 1].isVariable){ isFirstVariable = true;}
                                     else{ isFirstVariable = false; }
                                     if(stack->arrayOfItems[stack->finderOfParenthesis + 3].isVariable){ isThirdVariable = true; }
                                     else{ isThirdVariable = false; }
 
-                                    // v pripade ze sa je o prve spracovanie tak nechavame
-                                    if (isThirdVariable){
+                                    if (isFirstVariable){
                                         instr2.type = LF;
                                         instr2.value.s = stack->arrayOfItems[stack->finderOfParenthesis + 1].nameOfTheVariable;
                                     }
@@ -1822,7 +1750,7 @@ expr_return parse_expr(LocalMap* lMap, tList* list, bool is_bool){
                                     }
 
                                     instr_type = INSTRUCT_FLOAT2INT;
-                                    instr1.value.s = "$result\0";        // generovanie UNIQUE // generate non Term -> Unikatny nazov
+                                    instr1.value.s = "$result\0";
                                     insert_item(list, &instr_type, &instr1, &instr2, &instr3);
                                     if (is_result) {
                                         instr2.type = GF;
@@ -1851,7 +1779,6 @@ expr_return parse_expr(LocalMap* lMap, tList* list, bool is_bool){
                                            (stack->arrayOfItems[stack->finderOfParenthesis + 3].type == FLOAT)) {
                                     if(stack->arrayOfItems[stack->finderOfParenthesis + 3].isVariable){ isThirdVariable = true; }
                                     else{ isThirdVariable = false; }
-                                    // v pripade ze sa je o prve spracovanie tak nechavame
                                     if (isThirdVariable == true ){
                                         instr3.type = LF;
                                         instr3.value.s = stack->arrayOfItems[stack->finderOfParenthesis + 3].nameOfTheVariable;
@@ -1865,23 +1792,18 @@ expr_return parse_expr(LocalMap* lMap, tList* list, bool is_bool){
                                     insert_item(list, &instr_type, &instr1, &instr2, &instr3);
                                     // generovanie LT %s@%s %s@%s %s@%s
                                 } else {
-                                    //fprintf(stderr, "Semanticka chyba typové kompatibility v aritmetických vyrazech, radek %d\n", gToken.row);
                                     resultOfPrece.result = ERR_INCOMPATIBLE_TYPE;
                                     resultOfPrece.bool_result = true;
-                                    //instruction_exit(ERR_INCOMPATIBLE_TYPE);
                                     return resultOfPrece;
                                 }
                             } else {
                                 resultOfPrece.result = SYN_ERR;
                                 resultOfPrece.bool_result = false;
-                                //instruction_exit(SYN_ERR);
                                 return resultOfPrece;
                             }
                             resultOfPrece.bool_result = true;
                             STACK_POP4;
-                            stack_push(stack, E, dataIDF);                 // nakoniec pushneme E + datovu strukturu
-                            if (DEBUG)
-                                stack_print(stack);
+                            stack_push(stack, E, dataIDF);
                         break;
                             // PRAVIDLO E -> E > E
                         case eGREAT:
@@ -1962,13 +1884,12 @@ expr_return parse_expr(LocalMap* lMap, tList* list, bool is_bool){
                                     else{ isThirdVariable = false; }
                                     // v pripade ze sa je o prve spracovanie tak nechavame
 
-                                    if (isFirstVariable){
-                                        instr2.type = LF;
-                                        instr2.value.s = stack->arrayOfItems[stack->finderOfParenthesis + 3].nameOfTheVariable;
-                                    }
-                                    else { instr2.type = F;
-                                        instr2.value.f = stack->arrayOfItems[stack->finderOfParenthesis + 3].value.f;
-                                    }
+                                     if (isThirdVariable){
+                                         instr2.value.s = stack->arrayOfItems[stack->finderOfParenthesis + 3].nameOfTheVariable;
+                                     }
+                                     else { instr2.type = F;
+                                         instr2.value.f = stack->arrayOfItems[stack->finderOfParenthesis + 3].value.f;
+                                     }
 
                                     instr_type = INSTRUCT_FLOAT2INT;
                                     instr1.value.s = "$result\0";        // generovanie UNIQUE // generate non Term -> Unikatny nazov
@@ -2005,8 +1926,7 @@ expr_return parse_expr(LocalMap* lMap, tList* list, bool is_bool){
                                     if(stack->arrayOfItems[stack->finderOfParenthesis + 3].isVariable){ isThirdVariable = true; }
                                     else{ isThirdVariable = false; }
 
-                                    // v pripade ze sa je o prve spracovanie tak nechavame
-                                    if (isThirdVariable){
+                                    if (isFirstVariable){
                                         instr2.type = LF;
                                         instr2.value.s = stack->arrayOfItems[stack->finderOfParenthesis + 1].nameOfTheVariable;
                                     }
@@ -2015,7 +1935,7 @@ expr_return parse_expr(LocalMap* lMap, tList* list, bool is_bool){
                                     }
 
                                     instr_type = INSTRUCT_FLOAT2INT;
-                                    instr1.value.s = "$result\0";        // generovanie UNIQUE // generate non Term -> Unikatny nazov
+                                    instr1.value.s = "$result\0";
                                     insert_item(list, &instr_type, &instr1, &instr2, &instr3);
                                     if (is_result) {
                                         instr2.type = GF;
@@ -2044,7 +1964,6 @@ expr_return parse_expr(LocalMap* lMap, tList* list, bool is_bool){
                                            (stack->arrayOfItems[stack->finderOfParenthesis + 3].type == FLOAT)) {
                                     if(stack->arrayOfItems[stack->finderOfParenthesis + 3].isVariable){ isThirdVariable = true; }
                                     else{ isThirdVariable = false; }
-                                    // v pripade ze sa je o prve spracovanie tak nechavame
                                     if (isThirdVariable == true ){
                                         instr3.type = LF;
                                         instr3.value.s = stack->arrayOfItems[stack->finderOfParenthesis + 3].nameOfTheVariable;
@@ -2058,16 +1977,13 @@ expr_return parse_expr(LocalMap* lMap, tList* list, bool is_bool){
                                     insert_item(list, &instr_type, &instr1, &instr2, &instr3);
                                     // generovanie GT %s@%s %s@%s %s@%s
                                 } else {
-                                    //fprintf(stderr, "Semanticka chyba typové kompatibility v aritmetických vyrazech, radek %d\n", gToken.row);
                                     resultOfPrece.result = ERR_INCOMPATIBLE_TYPE;
                                      resultOfPrece.bool_result = true;
-                                    //instruction_exit(ERR_INCOMPATIBLE_TYPE);
                                     return resultOfPrece;
                                 }
                             } else {
                                 resultOfPrece.result = SYN_ERR;
                                 resultOfPrece.bool_result = false;
-                                //instruction_exit(SYN_ERR);
                                 return resultOfPrece;
                             }
                             resultOfPrece.bool_result = true;
@@ -2075,8 +1991,6 @@ expr_return parse_expr(LocalMap* lMap, tList* list, bool is_bool){
                             isThirdVariable = false;
                             STACK_POP4;
                             stack_push(stack, E, dataIDF);                 // nakoniec pushneme E + datovu strukturu
-                            if (DEBUG)
-                                stack_print(stack);
                         break;
                             // PRAVIDLO E -> E <= E
                         case eLEQUAL: // <=
@@ -2185,10 +2099,8 @@ expr_return parse_expr(LocalMap* lMap, tList* list, bool is_bool){
                                     else{ isFirstVariable = false; }
                                     if(stack->arrayOfItems[stack->finderOfParenthesis + 3].isVariable){ isThirdVariable = true; }
                                     else{ isThirdVariable = false; }
-                                    // v pripade ze sa je o prve spracovanie tak nechavame
 
-                                    if (isFirstVariable){
-                                        instr2.type = LF;
+                                    if (isThirdVariable){
                                         instr2.value.s = stack->arrayOfItems[stack->finderOfParenthesis + 3].nameOfTheVariable;
                                     }
                                     else { instr2.type = F;
@@ -2196,7 +2108,7 @@ expr_return parse_expr(LocalMap* lMap, tList* list, bool is_bool){
                                     }
 
                                     instr_type = INSTRUCT_FLOAT2INT;
-                                    instr1.value.s = "$result\0";        // generovanie UNIQUE // generate non Term -> Unikatny nazov
+                                    instr1.value.s = "$result\0";
                                     insert_item(list, &instr_type, &instr1, &instr2, &instr3);
 
                                     if (is_result) {
@@ -2215,7 +2127,7 @@ expr_return parse_expr(LocalMap* lMap, tList* list, bool is_bool){
                                     dataIDF.type = BOOLEAN;
                                     instr_type = INSTRUCT_LT;
                                     instr1.type = GF;
-                                    instr1.value.s = "$$EXPR1\0";        // generovanie UNIQUE // generate non Term -> Unikatny nazov
+                                    instr1.value.s = "$$EXPR1\0";
                                     instr2.type = GF;
                                     instr2.value.s = "$result\0";
                                     dataIDF.value.f = (float) stack->arrayOfItems[stack->finderOfParenthesis + 1].value.i - stack->arrayOfItems[stack->finderOfParenthesis + 3].value.f;
@@ -2245,8 +2157,7 @@ expr_return parse_expr(LocalMap* lMap, tList* list, bool is_bool){
                                     if(stack->arrayOfItems[stack->finderOfParenthesis + 3].isVariable){ isThirdVariable = true; }
                                     else{ isThirdVariable = false; }
 
-                                    // v pripade ze sa je o prve spracovanie tak nechavame
-                                    if (isThirdVariable){
+                                    if (isFirstVariable){
                                         instr2.type = LF;
                                         instr2.value.s = stack->arrayOfItems[stack->finderOfParenthesis + 1].nameOfTheVariable;
                                     }
@@ -2255,7 +2166,7 @@ expr_return parse_expr(LocalMap* lMap, tList* list, bool is_bool){
                                     }
 
                                     instr_type = INSTRUCT_FLOAT2INT;
-                                    instr1.value.s = "$result\0";        // generovanie UNIQUE // generate non Term -> Unikatny nazov
+                                    instr1.value.s = "$result\0";
                                     insert_item(list, &instr_type, &instr1, &instr2, &instr3);
                                     if (is_result) {
                                         instr2.type = GF;
@@ -2300,7 +2211,6 @@ expr_return parse_expr(LocalMap* lMap, tList* list, bool is_bool){
                                            (stack->arrayOfItems[stack->finderOfParenthesis + 3].type == FLOAT)) {
                                     if(stack->arrayOfItems[stack->finderOfParenthesis + 3].isVariable){ isThirdVariable = true; }
                                     else{ isThirdVariable = false; }
-                                    // v pripade ze sa je o prve spracovanie tak nechavame
                                     if (isThirdVariable == true ){
                                         instr3.type = LF;
                                         instr3.value.s = stack->arrayOfItems[stack->finderOfParenthesis + 3].nameOfTheVariable;
@@ -2328,23 +2238,18 @@ expr_return parse_expr(LocalMap* lMap, tList* list, bool is_bool){
                                     // generovanie LTS %s@%s %s@%s %s@%s
                                     isThirdVariable = false;
                                 } else {
-                                    //fprintf(stderr, "Semanticka chyba typové kompatibility v aritmetických vyrazech, radek %d\n", gToken.row);
                                     resultOfPrece.result = ERR_INCOMPATIBLE_TYPE;
                                     resultOfPrece.bool_result = true;
-                                    //instruction_exit(ERR_INCOMPATIBLE_TYPE);
                                     return resultOfPrece;
                                 }
                             } else {
                                 resultOfPrece.result = SYN_ERR;
                                 resultOfPrece.bool_result = false;
-                                //instruction_exit(SYN_ERR);
                                 return resultOfPrece;
                             }
                             resultOfPrece.bool_result = true;
                             STACK_POP4;
-                            stack_push(stack, E, dataIDF);                 // nakoniec pushneme E + datovu strukturu
-                            if (DEBUG)
-                                stack_print(stack);
+                            stack_push(stack, E, dataIDF);
                         break;
                             // PRAVIDLO E -> E >= E
                         case eGEQUAL: // >=
@@ -2452,10 +2357,7 @@ expr_return parse_expr(LocalMap* lMap, tList* list, bool is_bool){
                                     else{ isFirstVariable = false; }
                                     if(stack->arrayOfItems[stack->finderOfParenthesis + 3].isVariable){ isThirdVariable = true; }
                                     else{ isThirdVariable = false; }
-                                    // v pripade ze sa je o prve spracovanie tak nechavame
-
-                                    if (isFirstVariable){
-                                        instr2.type = LF;
+                                    if (isThirdVariable){
                                         instr2.value.s = stack->arrayOfItems[stack->finderOfParenthesis + 3].nameOfTheVariable;
                                     }
                                     else { instr2.type = F;
@@ -2463,7 +2365,7 @@ expr_return parse_expr(LocalMap* lMap, tList* list, bool is_bool){
                                     }
 
                                     instr_type = INSTRUCT_FLOAT2INT;
-                                    instr1.value.s = "$result\0";        // generovanie UNIQUE // generate non Term -> Unikatny nazov
+                                    instr1.value.s = "$result\0";
                                     insert_item(list, &instr_type, &instr1, &instr2, &instr3);
 
                                     if (is_result) {
@@ -2482,7 +2384,7 @@ expr_return parse_expr(LocalMap* lMap, tList* list, bool is_bool){
                                     dataIDF.type = BOOLEAN;
                                     instr_type = INSTRUCT_GT;
                                     instr1.type = GF;
-                                    instr1.value.s = "$$EXPR1\0";        // generovanie UNIQUE // generate non Term -> Unikatny nazov
+                                    instr1.value.s = "$$EXPR1\0";
                                     instr2.type = GF;
                                     instr2.value.s = "$result\0";
                                     dataIDF.value.f = (float) stack->arrayOfItems[stack->finderOfParenthesis + 1].value.i >= stack->arrayOfItems[stack->finderOfParenthesis + 3].value.f;
@@ -2505,14 +2407,12 @@ expr_return parse_expr(LocalMap* lMap, tList* list, bool is_bool){
                                     isThirdVariable = false;
                                 } else if ((stack->arrayOfItems[stack->finderOfParenthesis + 1].type == FLOAT) &&
                                            (stack->arrayOfItems[stack->finderOfParenthesis + 3].type == INTEGER)) {
-                                    // ziskanie zo zasobnika zda je token premenna alebo nie v pripade ak ano tak nastavime isFirst alebo isThird na true...
                                     if(stack->arrayOfItems[stack->finderOfParenthesis + 1].isVariable){ isFirstVariable = true;}
                                     else{ isFirstVariable = false; }
                                     if(stack->arrayOfItems[stack->finderOfParenthesis + 3].isVariable){ isThirdVariable = true; }
                                     else{ isThirdVariable = false; }
 
-                                    // v pripade ze sa je o prve spracovanie tak nechavame
-                                    if (isThirdVariable){
+                                    if (isFirstVariable){
                                         instr2.type = LF;
                                         instr2.value.s = stack->arrayOfItems[stack->finderOfParenthesis + 1].nameOfTheVariable;
                                     }
@@ -2521,7 +2421,7 @@ expr_return parse_expr(LocalMap* lMap, tList* list, bool is_bool){
                                     }
 
                                     instr_type = INSTRUCT_FLOAT2INT;
-                                    instr1.value.s = "$result\0";        // generovanie UNIQUE // generate non Term -> Unikatny nazov
+                                    instr1.value.s = "$result\0";
                                     insert_item(list, &instr_type, &instr1, &instr2, &instr3);
                                     if (is_result) {
                                         instr2.type = GF;
@@ -2565,7 +2465,6 @@ expr_return parse_expr(LocalMap* lMap, tList* list, bool is_bool){
                                            (stack->arrayOfItems[stack->finderOfParenthesis + 3].type == FLOAT)) {
                                     if(stack->arrayOfItems[stack->finderOfParenthesis + 3].isVariable){ isThirdVariable = true; }
                                     else{ isThirdVariable = false; }
-                                    // v pripade ze sa je o prve spracovanie tak nechavame
                                     if (isThirdVariable == true ){
                                         instr3.type = LF;
                                         instr3.value.s = stack->arrayOfItems[stack->finderOfParenthesis + 3].nameOfTheVariable;
@@ -2595,23 +2494,18 @@ expr_return parse_expr(LocalMap* lMap, tList* list, bool is_bool){
                                     // generovanie OR %s@%s %s@%s %s@%s
                                     isThirdVariable = false;
                                 } else {
-                                    //fprintf(stderr, "Semanticka chyba typové kompatibility v aritmetických vyrazech, radek %d\n", gToken.row);
                                     resultOfPrece.result = ERR_INCOMPATIBLE_TYPE;
                                     resultOfPrece.bool_result = true;
-                                    //instruction_exit(ERR_INCOMPATIBLE_TYPE);
                                     return resultOfPrece;
                                 }
                             } else {
                                 resultOfPrece.result = SYN_ERR;
                                 resultOfPrece.bool_result = false;
-                                //instruction_exit(SYN_ERR);
                                 return resultOfPrece;
                             }
                             resultOfPrece.bool_result = true;
                             STACK_POP4;
-                            stack_push(stack, E, dataIDF);                 // nakoniec pushneme E + datovu strukturu
-                            if (DEBUG)
-                                stack_print(stack);
+                            stack_push(stack, E, dataIDF);
                         break;
                             // PRAVIDLO E -> E == E
                         case eEQUAL: // ==
@@ -2642,8 +2536,6 @@ expr_return parse_expr(LocalMap* lMap, tList* list, bool is_bool){
                                         else if (stack->arrayOfItems[stack->finderOfParenthesis + 1].type == NONE){
                                             generateInstructionForNones(list, stack, "EQ");
                                         }
-
-
                                 }
 
                                 else if ((stack->arrayOfItems[stack->finderOfParenthesis + 1].type == STRING) &&
@@ -2688,10 +2580,7 @@ expr_return parse_expr(LocalMap* lMap, tList* list, bool is_bool){
                                     else{ isFirstVariable = false; }
                                     if(stack->arrayOfItems[stack->finderOfParenthesis + 3].isVariable){ isThirdVariable = true; }
                                     else{ isThirdVariable = false; }
-                                    // v pripade ze sa je o prve spracovanie tak nechavame
-
-                                    if (isFirstVariable){
-                                        instr2.type = LF;
+                                    if (isThirdVariable){
                                         instr2.value.s = stack->arrayOfItems[stack->finderOfParenthesis + 3].nameOfTheVariable;
                                     }
                                     else { instr2.type = F;
@@ -2699,7 +2588,7 @@ expr_return parse_expr(LocalMap* lMap, tList* list, bool is_bool){
                                     }
 
                                     instr_type = INSTRUCT_FLOAT2INT;
-                                    instr1.value.s = "$result\0";        // generovanie UNIQUE // generate non Term -> Unikatny nazov
+                                    instr1.value.s = "$result\0";
                                     insert_item(list, &instr_type, &instr1, &instr2, &instr3);
 
                                     if (is_result) {
@@ -2727,14 +2616,12 @@ expr_return parse_expr(LocalMap* lMap, tList* list, bool is_bool){
                                     // generovanie EQ %s@%s %s@%s %s@%s
                                 } else if ((stack->arrayOfItems[stack->finderOfParenthesis + 1].type == FLOAT) &&
                                            (stack->arrayOfItems[stack->finderOfParenthesis + 3].type == INTEGER)) {
-                                    // ziskanie zo zasobnika zda je token premenna alebo nie v pripade ak ano tak nastavime isFirst alebo isThird na true...
                                     if(stack->arrayOfItems[stack->finderOfParenthesis + 1].isVariable){ isFirstVariable = true;}
                                     else{ isFirstVariable = false; }
                                     if(stack->arrayOfItems[stack->finderOfParenthesis + 3].isVariable){ isThirdVariable = true; }
                                     else{ isThirdVariable = false; }
 
-                                    // v pripade ze sa je o prve spracovanie tak nechavame
-                                    if (isThirdVariable){
+                                    if (isFirstVariable){
                                         instr2.type = LF;
                                         instr2.value.s = stack->arrayOfItems[stack->finderOfParenthesis + 1].nameOfTheVariable;
                                     }
@@ -2743,7 +2630,7 @@ expr_return parse_expr(LocalMap* lMap, tList* list, bool is_bool){
                                     }
 
                                     instr_type = INSTRUCT_FLOAT2INT;
-                                    instr1.value.s = "$result\0";        // generovanie UNIQUE // generate non Term -> Unikatny nazov
+                                    instr1.value.s = "$result\0";
                                     insert_item(list, &instr_type, &instr1, &instr2, &instr3);
                                     if (is_result) {
                                         instr2.type = GF;
@@ -2771,7 +2658,6 @@ expr_return parse_expr(LocalMap* lMap, tList* list, bool is_bool){
                                            (stack->arrayOfItems[stack->finderOfParenthesis + 3].type == FLOAT)) {
                                     if(stack->arrayOfItems[stack->finderOfParenthesis + 3].isVariable){ isThirdVariable = true; }
                                     else{ isThirdVariable = false; }
-                                    // v pripade ze sa je o prve spracovanie tak nechavame
                                     if (isThirdVariable == true ){
                                         instr3.type = LF;
                                         instr3.value.s = stack->arrayOfItems[stack->finderOfParenthesis + 3].nameOfTheVariable;
@@ -2786,23 +2672,18 @@ expr_return parse_expr(LocalMap* lMap, tList* list, bool is_bool){
                                     // generovanie EQ %s@%s %s@%s %s@%s
                                     isThirdVariable = false;
                                 } else {
-                                    //fprintf(stderr, "Semanticka chyba typové kompatibility v aritmetických vyrazech, radek %d\n", gToken.row);
                                     resultOfPrece.result = ERR_INCOMPATIBLE_TYPE;
                                     resultOfPrece.bool_result = true;
-                                    //instruction_exit(ERR_INCOMPATIBLE_TYPE);
                                     return resultOfPrece;
                                 }
                             } else {
                                 resultOfPrece.result = SYN_ERR;
                                 resultOfPrece.bool_result = false;
-                                //instruction_exit(SYN_ERR);
                                 return resultOfPrece;
                             }
                             resultOfPrece.bool_result = true;
                             STACK_POP4;
                             stack_push(stack, E, dataIDF);                 // nakoniec pushneme E + datovu strukturu
-                            if (DEBUG)
-                                stack_print(stack);
                         break;
                             // PRAVIDLO E -> E != E
                         case eNEQUAL: // !=
@@ -2892,10 +2773,8 @@ expr_return parse_expr(LocalMap* lMap, tList* list, bool is_bool){
                                     else{ isFirstVariable = false; }
                                     if(stack->arrayOfItems[stack->finderOfParenthesis + 3].isVariable){ isThirdVariable = true; }
                                     else{ isThirdVariable = false; }
-                                    // v pripade ze sa je o prve spracovanie tak nechavame
 
-                                    if (isFirstVariable){
-                                        instr2.type = LF;
+                                    if (isThirdVariable){
                                         instr2.value.s = stack->arrayOfItems[stack->finderOfParenthesis + 3].nameOfTheVariable;
                                     }
                                     else { instr2.type = F;
@@ -2903,7 +2782,7 @@ expr_return parse_expr(LocalMap* lMap, tList* list, bool is_bool){
                                     }
 
                                     instr_type = INSTRUCT_FLOAT2INT;
-                                    instr1.value.s = "$result\0";        // generovanie UNIQUE // generate non Term -> Unikatny nazov
+                                    instr1.value.s = "$result\0";
                                     insert_item(list, &instr_type, &instr1, &instr2, &instr3);
 
                                     if (is_result) {
@@ -2936,14 +2815,11 @@ expr_return parse_expr(LocalMap* lMap, tList* list, bool is_bool){
                                     // generovanie NOT %s@%s %s@%s %s@%s
                                 } else if ((stack->arrayOfItems[stack->finderOfParenthesis + 1].type == FLOAT) &&
                                            (stack->arrayOfItems[stack->finderOfParenthesis + 3].type == INTEGER)) {
-                                    // ziskanie zo zasobnika zda je token premenna alebo nie v pripade ak ano tak nastavime isFirst alebo isThird na true...
                                     if(stack->arrayOfItems[stack->finderOfParenthesis + 1].isVariable){ isFirstVariable = true;}
                                     else{ isFirstVariable = false; }
                                     if(stack->arrayOfItems[stack->finderOfParenthesis + 3].isVariable){ isThirdVariable = true; }
                                     else{ isThirdVariable = false; }
-
-                                    // v pripade ze sa je o prve spracovanie tak nechavame
-                                    if (isThirdVariable){
+                                    if (isFirstVariable){
                                         instr2.type = LF;
                                         instr2.value.s = stack->arrayOfItems[stack->finderOfParenthesis + 1].nameOfTheVariable;
                                     }
@@ -2952,7 +2828,7 @@ expr_return parse_expr(LocalMap* lMap, tList* list, bool is_bool){
                                     }
 
                                     instr_type = INSTRUCT_FLOAT2INT;
-                                    instr1.value.s = "$result\0";        // generovanie UNIQUE // generate non Term -> Unikatny nazov
+                                    instr1.value.s = "$result\0";
                                     insert_item(list, &instr_type, &instr1, &instr2, &instr3);
                                     if (is_result) {
                                         instr2.type = GF;
@@ -2983,7 +2859,6 @@ expr_return parse_expr(LocalMap* lMap, tList* list, bool is_bool){
                                            (stack->arrayOfItems[stack->finderOfParenthesis + 3].type == FLOAT)) {
                                     if(stack->arrayOfItems[stack->finderOfParenthesis + 3].isVariable){ isThirdVariable = true; }
                                     else{ isThirdVariable = false; }
-                                    // v pripade ze sa je o prve spracovanie tak nechavame
                                     if (isThirdVariable == true ){
                                         instr3.type = LF;
                                         instr3.value.s = stack->arrayOfItems[stack->finderOfParenthesis + 3].nameOfTheVariable;
@@ -3001,51 +2876,44 @@ expr_return parse_expr(LocalMap* lMap, tList* list, bool is_bool){
                                     // generovanie EQ %s@%s %s@%s %s@%s
 
                                 } else {
-                                    //fprintf(stderr, "Semanticka chyba typové kompatibility v aritmetických vyrazech, radek %d\n", gToken.row);
                                     resultOfPrece.result = ERR_INCOMPATIBLE_TYPE;
                                     resultOfPrece.bool_result = true;
-                                    //instruction_exit(ERR_INCOMPATIBLE_TYPE);
                                     return resultOfPrece;
                                 }
                             } else {
                                 resultOfPrece.result = SYN_ERR;
                                 resultOfPrece.bool_result = false;
-                                //instruction_exit(SYN_ERR);
 
                                 return resultOfPrece;
                             }
                             resultOfPrece.bool_result = true;
                             STACK_POP4;
-                            stack_push(stack, E, dataIDF);                 // nakoniec pushneme E + datovu strukturu
-                            if (DEBUG)
-                                stack_print(stack);
-                        break;
+                            stack_push(stack, E, dataIDF);
+                            break;
                             // tato podmienka je kvoli prikladu a = ++ ....
+
                         default:
                             resultOfPrece.result = SYN_ERR;
                             resultOfPrece.bool_result = false;
-                            //instruction_exit(SYN_ERR);
                             return resultOfPrece;
                     }
                 }
             break;
             case Err:
-                if(actTokenIndexToPreceTable == eDOLAR){
+                if(actTokenIndexToPreceTable == eDOLAR && stackTopTokenIndexToPreceTable == eDOLAR){
                     /* v pripade ak prijde vyraz a = then  v preklade $$ medzi nimi nebude nic ziaden nontermian(E) tak to vychodi syntakticku chybu */
                     if(stack->top == 0){
                         resultOfPrece.result = SYN_ERR;
-                        //instruction_exit(SYN_ERR);
                         return resultOfPrece;
                     }
-                    if(DEBUG)printf("STATE: $E$ -> EVERYTHING OK\n");
+
                     resultOfPrece.result = SUCCESS;                                                         // vratenie navratovej hodnoty
                     resultOfPrece.uniqueID->str = stack_top_token_data(stack)->nameOfTheNonTerminal;        // vratenie UNIQUE nazvu identifikatora
                     resultOfPrece.data_type = stack_top_token_data(stack)->type;                        // vratenie typu identificatora
                     stack_free(stack);
-                    if(DEBUG)printf("Return exiting value -> |%d|, returning value -> |%s| and returning type -> |%d|\n", resultOfPrece.result, resultOfPrece.uniqueID->str, resultOfPrece.data_type);
                     return resultOfPrece;
                 }
-                if(DEBUG)printf("Error in prece.c\n");
+                resultOfPrece.result = SYN_ERR;
                 return resultOfPrece;
         }
     }while(1);

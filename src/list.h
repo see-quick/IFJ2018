@@ -160,7 +160,6 @@ typedef struct List
     tNode *first;
     tNode *last;
     tNode *act;
-    //FILE *stream;
 } tList;
 
 // Prototypy funkcii

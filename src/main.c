@@ -52,11 +52,15 @@ int main() {
   instr_type = INSTRUCT_HEAD;
   insert_item(pom_list, &instr_type, &instr1, &instr2, &instr3);
 
-  // instr_type = INSTRUCT_LENGTH;
-  // insert_item(pom_list, &instr_type, &instr1, &instr2, &instr3);
+  instr_type = INSTRUCT_LENGTH;
+  insert_item(pom_list, &instr_type, &instr1, &instr2, &instr3);
+  instr_type = INSTRUCT_CHR;
+  insert_item(pom_list, &instr_type, &instr1, &instr2, &instr3);
+  instr_type = INSTRUCT_ORD;
+  insert_item(pom_list, &instr_type, &instr1, &instr2, &instr3);
 
-  // instr_type = INSTRUCT_SUBSTR;
-  // insert_item(pom_list, &instr_type, &instr1, &instr2, &instr3);
+  instr_type = INSTRUCT_SUBSTR;
+  insert_item(pom_list, &instr_type, &instr1, &instr2, &instr3);
 
   // instr_type = INSTRUCT_LABEL;
   // instr1.value.s = "a";
@@ -81,16 +85,14 @@ int main() {
   }
 
 
-  // if(result == SUCCESS) {
 
-    reverse(&(function_statements_list->first));
-      set_active(function_statements_list);
-      parse_instructions(function_statements_list);      
+  reverse(&(function_statements_list->first));
+  set_active(function_statements_list);
+  parse_instructions(function_statements_list);      
 
-      reverse(&(list->first));
-      set_active(list);
-      parse_instructions(list);
-  // }
+  reverse(&(list->first));
+  set_active(list);
+  parse_instructions(list);
 
   global_map_free(globalMap);
 
