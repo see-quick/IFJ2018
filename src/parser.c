@@ -177,6 +177,7 @@ int term(void){
 			instr_type = INSTRUCT_MOVE;
 			instr1.type = TF;
 			instr1.value.s = generate_param("%", argCount);
+			insert_item(ilist, &instr_type, &instr1, &instr2, &instr3);
 
 
 			if (token == LEX_NUMBER){
@@ -579,18 +580,14 @@ int term_list(bool zavorka){
 			if (token == LEX_NUMBER){
 				instr2.type = I; //integer
 				instr2.value.i = atoi(gToken.data.str);
-				insert_item(ilist, &instr_type, &instr1, &instr2, &instr3);
-
 			}
 			else if (token == LEX_REAL_NUMBER){
 				instr2.type = F; //float
 				instr2.value.f = atof(gToken.data.str);
-				insert_item(ilist, &instr_type, &instr1, &instr2, &instr3);
 			}
 			else if (token == LEX_STRING){
 				instr2.type = S; //string
 				instr2.value.s = gToken.data.str;
-				insert_item(ilist, &instr_type, &instr1, &instr2, &instr3);
 			}
 			else if (token == LEX_ID){
 				if (!local_map_contain(localMap, gToken.data.str)){
@@ -609,9 +606,10 @@ int term_list(bool zavorka){
 				else {
 					instr2.type = LF; //string
 					instr2.value.s = gToken.data.str;
-					insert_item(ilist, &instr_type, &instr1, &instr2, &instr3);
 				}
 			}
+
+			insert_item(ilist, &instr_type, &instr1, &instr2, &instr3);
 
 			// zvetsit pocet argumentu
 			argCount++;
