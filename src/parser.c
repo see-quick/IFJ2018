@@ -2245,8 +2245,6 @@ int func(){
 	//uvolneni lokalni mapy z polozky globalni mapy pro funkce
 
 	gData = global_map_get_value(gMap, function_name);
-	local_map_free(gData.lMap);
-
 
 	is_LF = false;
 
