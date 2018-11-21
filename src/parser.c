@@ -526,7 +526,7 @@ int term_list2(bool zavorka){
 			if (zavorka){return SUCCESS;}
 			else {
 				instruction_exit(SYN_ERR);
-					return SYN_ERR;
+				return SYN_ERR;
 			}
 			
 		break;
@@ -737,7 +737,6 @@ int check_input(){
 
 int call_left_bracket(tDataFunction *tmp){
 	int result;
-
 	token = getToken();
 	if(!error_lex()){
 		instruction_exit(ERROR_LEX);
@@ -797,6 +796,8 @@ int call_left_bracket(tDataFunction *tmp){
 			instr2.value.s = "%retval";
 			insert_item(ilist, &instr_type, &instr1, &instr2, &instr3);
 		}
+
+		return_type = tmp->returnType;
 	}
 
 	token = getToken();
@@ -854,14 +855,19 @@ int call_without_bracket(tDataFunction *tmp){
 		insert_item(ilist, &instr_type, &instr1, &instr2, &instr3);
 	}
 
+	return_type = tmp->returnType;
+
 	return SUCCESS;
 }
 
 
-int call_function(tDataFunction * tmp){
+int call_function(){
 	int result;
-	// je funkce					
+	// je funkce	
+	tDataFunction * tmp;				
 	call_name = gToken.data.str;
+	tmp = global_map_get_pointer_to_value(gMap, call_name);
+
 
 	token = getToken();
 	if(!error_lex()){
@@ -901,6 +907,8 @@ int call_function(tDataFunction * tmp){
 			gData = global_map_get_value(gMap, call_name);
 			lData.type = gData.returnType;
 			local_map_put(localMap, variable_name, lData);
+
+			return_type = tmp->returnType;
 		}
 
 
@@ -999,7 +1007,7 @@ int sth(){
 						
 				}
 				else{
-					result = call_function(tmp);
+					result = call_function();
 					if (result != SUCCESS){
 						return result;
 					}
@@ -1552,15 +1560,6 @@ int stat(){
       			set_active(while_list);
 
 				append_list(ilist, while_list);
-				
-				if (result != SUCCESS){
-					instruction_exit(result);
-					return result;
-				}
-				else {
-					instruction_exit(ERR_SEMANTIC);
-					return ERR_SEMANTIC;
-				}
 			}
 
 			if(result != SUCCESS){
@@ -1573,6 +1572,7 @@ int stat(){
 				instruction_exit(SYN_ERR);
 				return SYN_ERR;
 			}
+
 
 			instr_type =  INSTRUCT_IF_THEN;
 			insert_item(ilist, &instr_type, &instr1, &instr2, &instr3);
@@ -1737,26 +1737,19 @@ int stat(){
 
 				append_list(ilist, while_list);
 				
-				if (result != SUCCESS){
-					instruction_exit(result);
-					return result;
-				}
-				else {
-					instruction_exit(ERR_SEMANTIC);
-					return ERR_SEMANTIC;
-				}
 			}
 
 			instr_type = INSTRUCT_WHILE_STATS;
 			insert_item(ilist, &instr_type, &instr1, &instr2, &instr3);
 
 
+			// token nacteny z precedencni analyzy musi byt DO
+
+
 			if(result != SUCCESS){
 				instruction_exit(result);
 				return result;
 			}
-
-			// token nacteny z precedencni analyzy musi byt DO
 
 			if(!checkTokenType(KW_DO)){
 				instruction_exit(SYN_ERR);
@@ -1908,7 +1901,6 @@ int st_list(){
 			} else if (!error_int()){
 				return INT_ERR;
 			}
-
 		
 			return st_list();
 
@@ -2239,6 +2231,8 @@ int func(){
 
 	// ukladani typu navratove hodnoty do globalni mapy
 	gData.returnType = return_type;
+	tDataFunction* tmp = global_map_get_pointer_to_value(gMap, function_name);
+	gData.paramCount = tmp->paramCount;
 	global_map_put(gMap, function_name, gData);
 
 	instr_type = INSTRUCT_POPFRAME;
@@ -2254,6 +2248,7 @@ int func(){
 
 	gData = global_map_get_value(gMap, function_name);
 	local_map_free(gData.lMap);
+
 
 	is_LF = false;
 

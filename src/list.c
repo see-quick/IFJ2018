@@ -55,14 +55,13 @@ tList* list_init ()  {
  * @param addr2 adresa druheho operandu(neterminalu) instrukcie
  * @param addr3 adresa tretieho operandu(neterminalu) instrukcie
  */
-void insert_item (tList *instr_list, tInstructionTypes *instr_name , tInstructionData *addr1, tInstructionData *addr2, tInstructionData *addr3)  {
+void insert_item(tList *instr_list, tInstructionTypes *instr_name , tInstructionData *addr1, tInstructionData *addr2, tInstructionData *addr3)  {
 
   tNode *new_instr = NULL;
   if((new_instr = (tNode*)malloc(sizeof(tNode))) == NULL ) {
     list_error();
   }
   else {
-
     new_instr->data.type = *instr_name;
     new_instr->data.address1.type = addr1->type;
     new_instr->data.address1.value = addr1->value;

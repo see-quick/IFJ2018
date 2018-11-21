@@ -33,6 +33,8 @@ tInstructionData instr3;
 
 extern tDataFunction gData;
 
+int labelCounter = 0;
+
 extern bool is_LF;
 
 // PRECENDENCE TABLE
