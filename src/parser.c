@@ -113,13 +113,14 @@ void insert_build_in_functions(){
 
 
 char * generate_param(char *string, unsigned short d){
-	char c;
-    sprintf(&c, "%hu", (unsigned short)d+1);
+	char *c = (char*)malloc(sizeof(char) * 2);
+    sprintf(c, "%hu", (unsigned short)d+1);
 	size_t length = strlen(string);
 	char *generate = malloc(length + 1 + 1);
 	strcpy(generate, string);
-	generate[length] = c;
+	generate[length] = *c;
 	generate[length + 1] = '\0';
+	free(c);
 	return generate;
 }
 
