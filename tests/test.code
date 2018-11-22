@@ -35,6 +35,7 @@ LABEL label_ord
 MOVE GF@$$var_integer int@0
 LABEL label_end_ord
 MOVE GF@$$var_double float@0x0p+0
+MOVE LF@%retval GF@$$var_double
 POPFRAME
 RETURN
 LABEL substr
@@ -84,21 +85,7 @@ DEFVAR GF@$type2
 CREATEFRAME
 PUSHFRAME
 DEFVAR LF@a
-MOVE GF@$result int@5
+MOVE GF@$result string@Hello
+CONCAT GF@$result GF@$result string@world!
 MOVE LF@a GF@$result
-MOVE GF@$result LF@a
-GT GF@$$EXPR1 GF@$result int@6
-EQ GF@$$EXPR2 GF@$result int@6
-OR GF@$result GF@$$EXPR1 GF@$$EXPR2
-JUMPIFEQ if_label_then1 GF@$result bool@true
-JUMP if_label_else1
-LABEL if_label_then1
-MOVE GF@$result int@6
-MOVE LF@a GF@$result
-JUMP if_label1_end
-LABEL if_label_else1
-MOVE GF@$result int@7
-MOVE LF@a GF@$result
-JUMP if_label1_end
-LABEL if_label1_end
 EXIT int@0
