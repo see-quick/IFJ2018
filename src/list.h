@@ -124,7 +124,6 @@ typedef enum
     N = 708    // napr:nil@nil   <--
 } tDatType;
 
-// zmenil som union na struct
 typedef struct value
 {
     int i;
@@ -138,7 +137,6 @@ typedef struct InstD
     tValue value;
 } tInstructionData;
 
-// Struktura pre instrukcie
 typedef struct Data
 {
     tInstructionTypes type;
@@ -147,14 +145,12 @@ typedef struct Data
     tInstructionData address3;
 } tData;
 
-// Obsahuje instrukcie a ukazatel na dalsiu node v zozname
 typedef struct Node
 {
     tData data;
     struct Node *next;
 } tNode;
 
-// Ukazatele na prvy, aktivny a posledny node v zozname
 typedef struct List
 {
     tNode *first;
