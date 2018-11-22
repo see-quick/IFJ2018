@@ -35,6 +35,7 @@ LABEL label_ord
 MOVE GF@$$var_integer int@0
 LABEL label_end_ord
 MOVE GF@$$var_double float@0x0p+0
+MOVE LF@%retval GF@$$var_double
 POPFRAME
 RETURN
 LABEL substr
