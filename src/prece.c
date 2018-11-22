@@ -663,7 +663,7 @@ expr_return parse_expr(LocalMap* lMap, tList* list, bool is_bool){
 
     /* INICIALIZACIA STRUKTUR */
     expr_return resultOfPrece = {.result=SUCCESS, .bool_result=false};
-    tStack* stack = stack_init(100);
+    tStack* stack = stack_init(200);
     int actTokenIndexToPreceTable = 0;
     int stackTopTokenIndexToPreceTable = 0;
 
