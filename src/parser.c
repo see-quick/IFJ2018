@@ -1194,8 +1194,8 @@ int sth(){
 			return result;
 			break;
 		default:
-				instruction_exit(ERROR_LEX);
-				return ERROR_LEX;
+				instruction_exit(SYN_ERR);
+				return SYN_ERR;
 	} // end switch 
 
 	return result;
