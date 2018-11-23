@@ -170,18 +170,14 @@ for ((n=0; n<$lines;n++)); do #loop over test dir
           echo "  expected return value = 0. Returned value = $retval"
         fi
         echo "" >> $tmpout
-        storeError=$(cmp  $tmpout $testpath/$currentdir/$outfile)
+        storeError=$((cmp $tmpout $testpath/$currentdir/$outfile) 2>&1)
         ret=$(echo $?)
 
-        if [[ ! -z "$storeError" ]]; then
-          echo $storeError
+        if [[ $storeError == *"cmp: EOF"* ]]; then
+         ret="0" #end of file error not error od tests
+        else
+          cmp $tmpout $testpath/$currentdir/$outfile
         fi
-        #elif [[ $storeError != "${storeError/cmd: EOF/}" ]]; then
-        #  $ret=0 #end of file error not error od tests
-        #fi
-        # if [[ "$storeError" ==  ]]; then
-        #   #statements
-        # fi
 
         if [[ "$ret" -eq "1" ]]; then
           if [[ "$retval" -eq "0" ]]; then
