@@ -88,7 +88,7 @@ function testRunner() {
         if [[ "$silent" == "-s" ]]; then
           timeout 1 sudo ./ic18int test.code > /dev/null 2>&1
         else
-          timeout 1 sudo ./ic18int test.code 1>/dev/null 
+          timeout 1 sudo ./ic18int test.code 1>/dev/null
         fi
         retval=$(echo $?)
         if [ "$retval" -eq "124" ]; then
@@ -170,8 +170,19 @@ for ((n=0; n<$lines;n++)); do #loop over test dir
           echo "  expected return value = 0. Returned value = $retval"
         fi
         echo "" >> $tmpout
-        cmp  $tmpout $testpath/$currentdir/$outfile
+        storeError=$(cmp  $tmpout $testpath/$currentdir/$outfile)
         ret=$(echo $?)
+
+        if [[ ! -z "$storeError" ]]; then
+          echo $storeError
+        fi
+        #elif [[ $storeError != "${storeError/cmd: EOF/}" ]]; then
+        #  $ret=0 #end of file error not error od tests
+        #fi
+        # if [[ "$storeError" ==  ]]; then
+        #   #statements
+        # fi
+
         if [[ "$ret" -eq "1" ]]; then
           if [[ "$retval" -eq "0" ]]; then
             ((testfail++));
@@ -197,30 +208,30 @@ elif [[ "$1" == "-g" ]]; then
   genTester "$testDIR"
 else
   #TESTS FOR testData
-  testDIR="testData"
-  testRunner "$testDIR"
-
-  #TESTS FOR syntaxData
-  testDIR="syntaxData"
-  testRunner "$testDIR"
-
-  #TESTS FOR semanticData
-  testDIR="semanticData"
-  testRunner "$testDIR"
-
-  #TESTS FOR expressionsData
-  testDIR="expressionsData"
-  testRunner "$testDIR"
-
-  #TESTS FOR prece
-  testDIR="preceGen"
-  filegen="-n"
-  testRunner "$testDIR"
+  # testDIR="testData"
+  # testRunner "$testDIR"
+  #
+  # #TESTS FOR syntaxData
+  # testDIR="syntaxData"
+  # testRunner "$testDIR"
+  #
+  # #TESTS FOR semanticData
+  # testDIR="semanticData"
+  # testRunner "$testDIR"
+  #
+  # #TESTS FOR expressionsData
+  # testDIR="expressionsData"
+  # testRunner "$testDIR"
+  #
+  # #TESTS FOR prece
+  # testDIR="preceGen"
+  # filegen="-n"
+  # testRunner "$testDIR"
 
   #inbuild
- # testDIR="genData"
- # filegen="-n"
- # genTester "$testDIR"
+  testDIR="genData"
+  filegen="-n"
+   genTester "$testDIR"
 fi
 
 

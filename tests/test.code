@@ -85,21 +85,9 @@ DEFVAR GF@$type2
 CREATEFRAME
 PUSHFRAME
 DEFVAR LF@a
-MOVE GF@$result int@5
-MOVE LF@a GF@$result
+READ LF@a int
+WRITE LF@a
 MOVE GF@$result LF@a
-GT GF@$$EXPR1 GF@$result int@6
-EQ GF@$$EXPR2 GF@$result int@6
-OR GF@$result GF@$$EXPR1 GF@$$EXPR2
-JUMPIFEQ if_label_then1 GF@$result bool@true
-JUMP if_label_else1
-LABEL if_label_then1
-MOVE GF@$result int@6
+IDIV GF@$result GF@$result int@5
 MOVE LF@a GF@$result
-JUMP if_label1_end
-LABEL if_label_else1
-MOVE GF@$result int@7
-MOVE LF@a GF@$result
-JUMP if_label1_end
-LABEL if_label1_end
 EXIT int@0
