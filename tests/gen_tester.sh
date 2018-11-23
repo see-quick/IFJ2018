@@ -207,26 +207,26 @@ elif [[ "$1" == "-g" ]]; then
   filegen="-n"
   genTester "$testDIR"
 else
-  #TESTS FOR testData
-  # testDIR="testData"
-  # testRunner "$testDIR"
-  #
-  # #TESTS FOR syntaxData
-  # testDIR="syntaxData"
-  # testRunner "$testDIR"
-  #
-  # #TESTS FOR semanticData
-  # testDIR="semanticData"
-  # testRunner "$testDIR"
-  #
-  # #TESTS FOR expressionsData
-  # testDIR="expressionsData"
-  # testRunner "$testDIR"
-  #
-  # #TESTS FOR prece
-  # testDIR="preceGen"
-  # filegen="-n"
-  # testRunner "$testDIR"
+  TESTS FOR testData
+  testDIR="testData"
+  testRunner "$testDIR"
+
+  #TESTS FOR syntaxData
+  testDIR="syntaxData"
+  testRunner "$testDIR"
+
+  #TESTS FOR semanticData
+  testDIR="semanticData"
+  testRunner "$testDIR"
+
+  #TESTS FOR expressionsData
+  testDIR="expressionsData"
+  testRunner "$testDIR"
+
+  #TESTS FOR prece
+  testDIR="preceGen"
+  filegen="-n"
+  testRunner "$testDIR"
 
   #inbuild
   testDIR="genData"
