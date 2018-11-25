@@ -3,19 +3,20 @@ CC=gcc
 CFLAGS=-std=c99 -Wall -Wextra -g -pedantic
 EXE=ifj
 
-
 ALL: $(SRC)
-	$(CC) -o $(EXE) $^ $(CFLAGS)
 
+	$(CC) -o $(EXE) $^ $(CFLAGS)
 
 memory:
 	valgrind ./$(EXE) -v
 
-clean: 
+clean:
 	rm $(EXE)
 
 interpret:
 	$(ALL)
-	./$(EXE) < vstup.code > vystupny.code 
+	./$(EXE) < vstup.code > vystupny.code
 	sudo ./ic18int vystupny.code > interpret.out
-
+	
+test:
+	@cd ../tests/; sudo bash succ.sh; cd ../src/

@@ -88,7 +88,7 @@ function testRunner() {
         if [[ "$silent" == "-s" ]]; then
           timeout 1 sudo ./ic18int test.code > /dev/null 2>&1
         else
-          timeout 1 sudo ./ic18int test.code 1>/dev/null 
+          timeout 1 sudo ./ic18int test.code 1>/dev/null
         fi
         retval=$(echo $?)
         if [ "$retval" -eq "124" ]; then
@@ -170,8 +170,15 @@ for ((n=0; n<$lines;n++)); do #loop over test dir
           echo "  expected return value = 0. Returned value = $retval"
         fi
         echo "" >> $tmpout
-        cmp  $tmpout $testpath/$currentdir/$outfile
+        storeError=$((cmp $tmpout $testpath/$currentdir/$outfile) 2>&1)
         ret=$(echo $?)
+
+        if [[ $storeError == *"cmp: EOF"* ]]; then
+         ret="0" #end of file error not error od tests
+        else
+          cmp $tmpout $testpath/$currentdir/$outfile
+        fi
+
         if [[ "$ret" -eq "1" ]]; then
           if [[ "$retval" -eq "0" ]]; then
             ((testfail++));
@@ -196,7 +203,7 @@ elif [[ "$1" == "-g" ]]; then
   filegen="-n"
   genTester "$testDIR"
 else
-  #TESTS FOR testData
+  TESTS FOR testData
   testDIR="testData"
   testRunner "$testDIR"
 
@@ -218,9 +225,9 @@ else
   testRunner "$testDIR"
 
   #inbuild
- # testDIR="genData"
- # filegen="-n"
- # genTester "$testDIR"
+  testDIR="genData"
+  filegen="-n"
+   genTester "$testDIR"
 fi
 
 
