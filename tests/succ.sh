@@ -59,7 +59,7 @@ echo "Test data for expressions: TESTED $TESTNUMBER tests, PASSED: $SUCCTESTS, F
 #SEMANTICDATA
 OUTPUT=$(bash tester.sh ifj semanticData 2>/dev/null | tail -n 5)
 TESTNUMBER=$(echo $OUTPUT | cut -c8-10)
-SUCCTESTS=$(echo $OUTPUT | cut -c26-27)
+SUCCTESTS=$(echo $OUTPUT | cut -c26-28)
 FAILEDTESTS=$((TESTNUMBER-SUCCTESTS))
 
 TOTALTESTS=$((TESTNUMBER+TOTALTESTS))
