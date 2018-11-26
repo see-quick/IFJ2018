@@ -178,7 +178,6 @@ int term(void){
 			instr_type = INSTRUCT_MOVE;
 			instr1.type = TF;
 			instr1.value.s = generate_param("%", argCount);
-			insert_item(ilist, &instr_type, &instr1, &instr2, &instr3);
 
 
 			if (token == LEX_NUMBER){
@@ -1569,6 +1568,7 @@ int stat(){
 			}
 
 			if(result != SUCCESS){
+				//printf("i m here\n");
 				instruction_exit(result);
 				return result;
 			}
