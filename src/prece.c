@@ -2725,7 +2725,7 @@ expr_return parse_expr(LocalMap* lMap, tList* list, bool is_bool){
                                 else if (stack->arrayOfItems[stack->finderOfParenthesis + 3].type == NONE ){
                                     isThirdVariable = true;
                                         if (stack->arrayOfItems[stack->finderOfParenthesis + 1].type == INTEGER){
-                                            printf("Som tu...\n");
+                                            //printf("Som tu...\n");
                                             generateInstructionForType(list, stack, I, "EQ", 1, 3);
                                         }
                                         else if (stack->arrayOfItems[stack->finderOfParenthesis + 1].type == FLOAT)
