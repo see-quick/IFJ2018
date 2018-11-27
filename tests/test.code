@@ -65,60 +65,6 @@ MOVE GF@$$var_string string@
 MOVE LF@%retval GF@$$var_string
 POPFRAME
 RETURN
-LABEL foo
-PUSHFRAME
-DEFVAR LF@%retval
-MOVE LF@%retval nil@nil
-DEFVAR LF@a
-MOVE LF@a LF@%1
-LABEL while_label1
-MOVE GF@$result LF@a
-TYPE GF@$type LF@a
-JUMPIFEQ MATH_OPERATION1 GF@$type string@int
-EXIT int@4
-LABEL MATH_OPERATION1
-EQ GF@$result GF@$result int@3
-NOT GF@$result GF@$result
-JUMPIFEQ while_label1_end GF@$result bool@false
-MOVE GF@$result LF@a
-TYPE GF@$type GF@$result
-JUMPIFEQ MATH_OPERATION2 GF@$type string@int
-EXIT int@4
-LABEL MATH_OPERATION2
-ADD GF@$result GF@$result int@1
-MOVE LF@a GF@$result
-CREATEFRAME
-DEFVAR TF@%1
-MOVE TF@%1 GF@$result
-WRITE TF@%1
-MOVE GF@$result LF@a
-LT GF@$result GF@$result int@10
-JUMPIFEQ if_label_then1 GF@$result bool@true
-JUMP if_label_else1
-LABEL if_label_then1
-MOVE GF@$result LF@a
-SUB GF@$result GF@$result int@25
-MOVE LF@a GF@$result
-CREATEFRAME
-DEFVAR TF@%1
-MOVE TF@%1 GF@$result
-WRITE TF@%1
-JUMP if_label1_end
-LABEL if_label_else1
-MOVE GF@$result LF@a
-SUB GF@$result GF@$result int@30
-MOVE LF@a GF@$result
-CREATEFRAME
-DEFVAR TF@%1
-MOVE TF@%1 GF@$result
-WRITE TF@%1
-JUMP if_label1_end
-LABEL if_label1_end
-JUMP while_label1
-LABEL while_label1_end
-MOVE LF@%retval GF@$result
-POPFRAME
-RETURN
 LABEL $$main
 DEFVAR GF@$$var_integer
 MOVE GF@$$var_integer int@0
@@ -139,16 +85,9 @@ DEFVAR GF@$type2
 CREATEFRAME
 PUSHFRAME
 DEFVAR LF@a
-MOVE GF@$result int@1
+READ LF@a int
+WRITE LF@a
+MOVE GF@$result LF@a
+IDIV GF@$result GF@$result int@5
 MOVE LF@a GF@$result
-DEFVAR LF@b
-CREATEFRAME
-DEFVAR TF@%1
-MOVE TF@%1 LF@a
-CALL foo
-MOVE LF@b TF@%retval
-CREATEFRAME
-DEFVAR TF@%1
-MOVE TF@%1 LF@b
-WRITE TF@%1
 EXIT int@0
