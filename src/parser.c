@@ -978,12 +978,29 @@ int sth(){
 						}
 					}
 
-					instr_type = INSTRUCT_MOVE;
-					instr1.type = GF;
-					instr1.value.s = "$result\0";
-					instr2.type = LF;
-					instr2.value.s = gToken.data.str;
-					insert_item(ilist, &instr_type, &instr1, &instr2, &instr3);
+					if (strcmp(variable_name, gToken.data.str) == 0){
+						instr_type = INSTRUCT_MOVE;
+						instr1.type = LF;
+						instr1.value.s = gToken.data.str;
+						instr2.type = N;
+						instr2.value.s = "nil";
+						insert_item(ilist, &instr_type, &instr1, &instr2, &instr3);
+
+						instr_type = INSTRUCT_MOVE;
+						instr1.type = GF;
+						instr1.value.s = "$result\0";
+						instr2.type = LF;
+						instr2.value.s = gToken.data.str;
+						insert_item(ilist, &instr_type, &instr1, &instr2, &instr3);
+					}
+					else {
+						instr_type = INSTRUCT_MOVE;
+						instr1.type = GF;
+						instr1.value.s = "$result\0";
+						instr2.type = LF;
+						instr2.value.s = gToken.data.str;
+						insert_item(ilist, &instr_type, &instr1, &instr2, &instr3);
+					}
 
 					// je to promenna prirazenu typu a = b
 					res = parse_expr(localMap, ilist, false);
