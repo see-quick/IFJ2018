@@ -2287,17 +2287,26 @@ int func(){
 
 	// konec funkce
 
-	if (return_type != -1){
-		if (call_name == NULL){
-				instr_type = INSTRUCT_MOVE;
-				instr1.type = LF;
-				instr1.value.s = "%retval";
-				instr2.type = TF;
-				instr2.value.s = "%retval";
+	if (strcmp(call_name, "") != 0){
+		if (return_type != -1){
+			instr_type = INSTRUCT_MOVE;
+			instr1.type = LF;
+			instr1.value.s = "%retval";
+			instr2.type = TF;
+			instr2.value.s = "%retval";
 
-				insert_item(ilist, &instr_type, &instr1, &instr2, &instr3);
+			insert_item(ilist, &instr_type, &instr1, &instr2, &instr3);
 		}
+	}else {
+		instr_type = INSTRUCT_MOVE;
+		instr1.type = LF;
+		instr1.value.s = "%retval";
+		instr2.type = GF;
+		instr2.value.s = "$result";
+
+		insert_item(ilist, &instr_type, &instr1, &instr2, &instr3);
 	}
+
 
 	// ukladani typu navratove hodnoty do globalni mapy
 	gData.returnType = return_type;
