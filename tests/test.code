@@ -85,9 +85,8 @@ DEFVAR GF@$type2
 CREATEFRAME
 PUSHFRAME
 DEFVAR LF@a
-READ LF@a int
-WRITE LF@a
-MOVE GF@$result LF@a
-IDIV GF@$result GF@$result int@5
+MOVE GF@$result float@0x1.c28f5c28f5c29p-4
 MOVE LF@a GF@$result
+READ LF@a float
+WRITE LF@a
 EXIT int@0

@@ -1466,9 +1466,12 @@ expr_return parse_expr(LocalMap* lMap, tList* list, bool is_bool){
                                     if(stack->arrayOfItems[stack->finderOfParenthesis + 3].isVariable){ isThirdVariable = true; }
                                     else{ isThirdVariable = false; }
 
+        
+
                                     if (isThirdVariable == true ){
                                         instr3.type = LF;
                                         instr3.value.s = stack->arrayOfItems[stack->finderOfParenthesis + 3].nameOfTheVariable;
+                                        generateIntDivisionError(list, stack, 3);
                                     }
                                     else { instr3.type = I;
                                         instr3.value.i = stack->arrayOfItems[stack->finderOfParenthesis + 3].value.i;
