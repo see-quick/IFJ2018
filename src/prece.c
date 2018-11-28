@@ -2739,6 +2739,9 @@ expr_return parse_expr(LocalMap* lMap, tList* list, bool is_bool){
                                         }
 
                                         instr_type = INSTRUCT_NOT;
+                                        instr1.type = GF;
+                                        instr1.value.s = "$result\0";
+                                        instr2.type = GF;
                                         instr2.value.s = "$result\0";
                                         insert_item(list, &instr_type, &instr1, &instr2, &instr3);
                                     isFirstVariable = false;
@@ -2757,6 +2760,9 @@ expr_return parse_expr(LocalMap* lMap, tList* list, bool is_bool){
                                             generateInstructionForType(list, stack, S, "EQ", 1, 3);
 
                                         instr_type = INSTRUCT_NOT;
+                                        instr1.type = GF;
+                                        instr1.value.s = "$result\0";
+                                        instr2.type = GF;
                                         instr2.value.s = "$result\0";
                                         insert_item(list, &instr_type, &instr1, &instr2, &instr3);
                                     isFirstVariable = false;
