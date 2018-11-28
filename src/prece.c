@@ -479,12 +479,21 @@ void generateIntDivisionError(tList * list, tStack *stack, int positionForConcre
     instr3.type = I;
     instr3.value.i = 0;
     insert_item(list,&instr_type, &instr1, &instr2, &instr3);
+
+    instr_type = INSTRUCT_JUMP;
+    instr1.value.s = generate_param("MATH_OPERATION", labelCounter);
+    insert_item(list,&instr_type, &instr1, &instr2, &instr3);
+
     // LABEL ERR 9
     instr_type = INSTRUCT_LABEL;
     instr1.value.s = "$label_err_9";
     insert_item(list,&instr_type, &instr1, &instr2, &instr3);
     // INSTRUCTION_EXIT
     instruction_exit(ERR_DIVISION);
+
+    instr_type = INSTRUCT_LABEL;
+    instr1.value.s = generate_param("MATH_OPERATION", labelCounter);
+    insert_item(list,&instr_type, &instr1, &instr2, &instr3);
 }
 
 
@@ -1461,19 +1470,23 @@ expr_return parse_expr(LocalMap* lMap, tList* list, bool is_bool){
                                     resultOfPrece.bool_result = false;
                                     return resultOfPrece;
 
+
+
                                 } else if ((stack->arrayOfItems[stack->finderOfParenthesis + 1].type == INTEGER) &&
                                            (stack->arrayOfItems[stack->finderOfParenthesis + 3].type == INTEGER)) {
+
                                     if(stack->arrayOfItems[stack->finderOfParenthesis + 3].isVariable){ isThirdVariable = true; }
                                     else{ isThirdVariable = false; }
-
         
 
                                     if (isThirdVariable == true ){
+                                        generateIntDivisionError(list, stack, 3);
                                         instr3.type = LF;
                                         instr3.value.s = stack->arrayOfItems[stack->finderOfParenthesis + 3].nameOfTheVariable;
-                                        generateIntDivisionError(list, stack, 3);
+                                        
                                     }
-                                    else { instr3.type = I;
+                                    else { 
+                                        instr3.type = I;
                                         instr3.value.i = stack->arrayOfItems[stack->finderOfParenthesis + 3].value.i;
                                         if (instr3.value.i == 0){
                                             resultOfPrece.result = ERR_DIVISION;
@@ -1484,7 +1497,7 @@ expr_return parse_expr(LocalMap* lMap, tList* list, bool is_bool){
                                     dataIDF.type = INTEGER;
                                     setFirstAndSecondVariableToGenerate(INSTRUCT_IDIV);
 
-                                    dataIDF.value.i = stack->arrayOfItems[stack->finderOfParenthesis + 1].value.i / stack->arrayOfItems[stack->finderOfParenthesis + 3].value.i;
+                                    //dataIDF.value.i = stack->arrayOfItems[stack->finderOfParenthesis + 1].value.i / stack->arrayOfItems[stack->finderOfParenthesis + 3].value.i;
                                     insert_item(list, &instr_type, &instr1, &instr2, &instr3);
                                     //generovanie IDIV %s@%s %s@%s %s@%s
                                     isThirdVariable = false;
