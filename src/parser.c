@@ -703,7 +703,13 @@ int check_input(){
 		}
 
 		lData.type = INTEGER;
-		local_map_put(localMap, variable_name, lData);
+		if (!is_LF){
+			local_map_put(localMap, variable_name, lData);
+		}else {
+			gData = global_map_get_value(gMap, function_name);
+			local_map_put(gData.lMap, variable_name, lData);
+		}
+		
 	 
 	 	instr1.value.s = variable_name;
 		instr_type = INSTRUCT_INPUT_I;
@@ -715,7 +721,12 @@ int check_input(){
 		else {instr1.type = LF;}
 
 		lData.type = FLOAT;
-		local_map_put(localMap, variable_name, lData);
+		if (!is_LF){
+			local_map_put(localMap, variable_name, lData);
+		}else {
+			gData = global_map_get_value(gMap, function_name);
+			local_map_put(gData.lMap, variable_name, lData);
+		}
 
 		instr1.value.s = variable_name;
 		instr_type = INSTRUCT_INPUT_F;
@@ -727,7 +738,12 @@ int check_input(){
 
 		lData.type = STRING;
 		//lData.type = NONE;
-		local_map_put(localMap, variable_name, lData);
+		if (!is_LF){
+			local_map_put(localMap, variable_name, lData);
+		}else {
+			gData = global_map_get_value(gMap, function_name);
+			local_map_put(gData.lMap, variable_name, lData);
+		}
 
 		instr1.value.s = variable_name;
 		instr_type = INSTRUCT_INPUT_S;
@@ -978,20 +994,29 @@ int sth(){
 						}
 					}
 
-					if (strcmp(variable_name, gToken.data.str) == 0){
-						instr_type = INSTRUCT_MOVE;
-						instr1.type = LF;
-						instr1.value.s = gToken.data.str;
-						instr2.type = N;
-						instr2.value.s = "nil";
-						insert_item(ilist, &instr_type, &instr1, &instr2, &instr3);
+					if (!is_LF){
+						lData = local_map_get_value(localMap, variable_name);
+					}else {
+						gData = global_map_get_value(gMap, function_name);
+						lData = local_map_get_value(gData.lMap, variable_name);
+					}
+					
+					if (strcmp(variable_name, gToken.data.str) == 0 && lData.type == NONE){
+						
+							instr_type = INSTRUCT_MOVE;
+							instr1.type = LF;
+							instr1.value.s = gToken.data.str;
+							instr2.type = N;
+							instr2.value.s = "nil";
+							insert_item(ilist, &instr_type, &instr1, &instr2, &instr3);
 
-						instr_type = INSTRUCT_MOVE;
-						instr1.type = GF;
-						instr1.value.s = "$result\0";
-						instr2.type = LF;
-						instr2.value.s = gToken.data.str;
-						insert_item(ilist, &instr_type, &instr1, &instr2, &instr3);
+							instr_type = INSTRUCT_MOVE;
+							instr1.type = GF;
+							instr1.value.s = "$result\0";
+							instr2.type = LF;
+							instr2.value.s = gToken.data.str;
+							insert_item(ilist, &instr_type, &instr1, &instr2, &instr3);
+					
 					}
 					else {
 						instr_type = INSTRUCT_MOVE;
