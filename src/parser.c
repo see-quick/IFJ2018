@@ -36,7 +36,7 @@ bool in_while = false;
 int while_counter = 0;
 int function_counter = 0;
 int return_type = -1;
-bool in_stat = false;
+bool in_stat = false; // false - volani fuknce bez prirazeni, true - s prirazenim
 bool in_print = false;
 
 
@@ -807,9 +807,17 @@ int call_left_bracket(tDataFunction *tmp){
 		insert_item(ilist, &instr_type, &instr1, &instr2, &instr3);
 
 		if (!in_stat){
+			// dynamick prirazeni promenne typu navratove hodnoty
 			gData = global_map_get_value(gMap, call_name);
 			lData.type = gData.returnType;
-			local_map_put(localMap, variable_name, lData);
+			if (!is_LF){
+				local_map_put(localMap, variable_name, lData);
+			} else {
+				gData = global_map_get_value(gMap, function_name);
+				local_map_put(gData.lMap, variable_name, lData);
+			}
+			
+
 
 			instr_type = INSTRUCT_MOVE;
 			instr1.type = LF;
@@ -865,9 +873,15 @@ int call_without_bracket(tDataFunction *tmp){
 	insert_item(ilist, &instr_type, &instr1, &instr2, &instr3);
 
 	if (!in_stat){
+		// dynamick prirazeni promenne typu navratove hodnoty
 		gData = global_map_get_value(gMap, call_name);
 		lData.type = gData.returnType;
-		local_map_put(localMap, variable_name, lData);
+		if (!is_LF){
+			local_map_put(localMap, variable_name, lData);
+		} else {
+			gData = global_map_get_value(gMap, function_name);
+			local_map_put(gData.lMap, variable_name, lData);
+		}
 
 		instr_type = INSTRUCT_MOVE;
 		instr1.type = LF;
@@ -928,7 +942,13 @@ int call_function(){
 			// dynamick prirazeni promenne typu navratove hodnoty
 			gData = global_map_get_value(gMap, call_name);
 			lData.type = gData.returnType;
-			local_map_put(localMap, variable_name, lData);
+			if (!is_LF){
+				local_map_put(localMap, variable_name, lData);
+			} else {
+				gData = global_map_get_value(gMap, function_name);
+				local_map_put(gData.lMap, variable_name, lData);
+			}
+			
 
 			return_type = tmp->returnType;
 		}
@@ -2268,13 +2288,15 @@ int func(){
 	// konec funkce
 
 	if (return_type != -1){
-		instr_type = INSTRUCT_MOVE;
-		instr1.type = LF;
-		instr1.value.s = "%retval";
-		instr2.type = GF;
-		instr2.value.s = "$result";
+		if (call_name == NULL){
+				instr_type = INSTRUCT_MOVE;
+				instr1.type = LF;
+				instr1.value.s = "%retval";
+				instr2.type = TF;
+				instr2.value.s = "%retval";
 
-		insert_item(ilist, &instr_type, &instr1, &instr2, &instr3);
+				insert_item(ilist, &instr_type, &instr1, &instr2, &instr3);
+		}
 	}
 
 	// ukladani typu navratove hodnoty do globalni mapy

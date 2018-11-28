@@ -524,6 +524,7 @@ void parse_instructions(tList *instr_list)  {
           printf("LABEL length\n");
           printf("PUSHFRAME\n");
           printf("DEFVAR LF@%%retval\n");
+          printf("MOVE LF@%%retval nil@nil\n");
           printf("STRLEN LF@%%retval LF@%%1\n");
           printf("POPFRAME\n");
           printf("RETURN\n");
@@ -625,7 +626,7 @@ void parse_instructions(tList *instr_list)  {
           printf("LABEL label_substr\n");
 
           printf("MOVE GF@$$var_integer int@0\n");
-          printf("LABEl label_end_substr\n");
+          printf("LABEL label_end_substr\n");
           printf("MOVE GF@$$var_double float@0x0p+0\n");
           printf("MOVE GF@$$var_string string@\n");
           printf("MOVE LF@%%retval GF@$$var_string\n");
