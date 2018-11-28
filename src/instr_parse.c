@@ -654,7 +654,11 @@ void parse_instructions(tList *instr_list)  {
 
       case INSTRUCT_WHILE_END:
           printf("JUMP while_label%d\n", while_count);
-          printf("LABEL while_label%d_end\n",while_count--);
+          if (while_count == 1){
+            printf("LABEL while_label1_end\n");
+          }else {
+            printf("LABEL while_label%d_end\n",while_count--);
+          }  
       break;
 
       case INSTRUCT_IF_THEN:
@@ -672,7 +676,11 @@ void parse_instructions(tList *instr_list)  {
       break;
 
       case INSTRUCT_ENDIF:
-          printf("LABEL if_label%d_end\n", if_count--);
+          if (if_count == 1){
+            printf("LABEL if_label1_end\n");
+          }else {
+            printf("LABEL if_label%d_end\n",if_count--);
+          }  
       break;
 
 

@@ -36,7 +36,15 @@ extern tDataFunction gData;
 extern bool is_LF;
 
 unsigned short labelCounter = 0;
-
+unsigned short divCounter = 0;
+unsigned short int2floatCounter1 = 0;
+unsigned short int2floatCounter2 = 0;
+unsigned short int2floatCounter3 = 0;
+unsigned short int2floatCounter4 = 0;
+unsigned short ifstringCounter = 0;
+unsigned short label2Counter2 = 0;
+unsigned short label3Counter3 = 0;
+unsigned short nilEndCounter = 0;
 
 // PRECENDENCE TABLE
 
@@ -473,7 +481,7 @@ void generateInstructionForType(tList* list, tStack *stack, int type, char * ins
 
 void generateIntDivisionError(tList * list, tStack *stack, int positionForConcreteInstruction){
     instr_type = INSTRUCT_JUMPIFEQ;
-    instr1.value.s = "$label_err_9";
+    instr1.value.s = generate_param("$label_err_9", divCounter++);
     instr2.type = LF;
     instr2.value.s =  stack->arrayOfItems[stack->finderOfParenthesis + positionForConcreteInstruction].nameOfTheVariable;
     instr3.type = I;
@@ -486,13 +494,13 @@ void generateIntDivisionError(tList * list, tStack *stack, int positionForConcre
 
     // LABEL ERR 9
     instr_type = INSTRUCT_LABEL;
-    instr1.value.s = "$label_err_9";
+    instr1.value.s = generate_param("$label_err_9", divCounter);
     insert_item(list,&instr_type, &instr1, &instr2, &instr3);
     // INSTRUCTION_EXIT
     instruction_exit(ERR_DIVISION);
 
     instr_type = INSTRUCT_LABEL;
-    instr1.value.s = generate_param("MATH_OPERATION", labelCounter);
+    instr1.value.s = generate_param("MATH_OPERATION", labelCounter++);
     insert_item(list,&instr_type, &instr1, &instr2, &instr3);
 }
 
@@ -517,7 +525,7 @@ void generateInstructionForNones(tList* list, tStack *stack, tInstructionTypes i
 
 
     instr_type = INSTRUCT_JUMPIFEQ;
-    instr1.value.s = "$if_string";
+    instr1.value.s = generate_param("$if_string", ++ifstringCounter);
     instr2.type = GF;
     instr2.value.s = "$type1";
     instr3.type = GF;
@@ -525,7 +533,7 @@ void generateInstructionForNones(tList* list, tStack *stack, tInstructionTypes i
     insert_item(list, &instr_type, &instr1, &instr2, &instr3);
 
     instr_type = INSTRUCT_JUMPIFEQ;
-    instr1.value.s = "$int_2_float2";
+    instr1.value.s = generate_param("$int_2_float2", ++int2floatCounter2);
     instr2.type = GF;
     instr2.value.s = "$type1";
     instr3.type = S;
@@ -533,7 +541,7 @@ void generateInstructionForNones(tList* list, tStack *stack, tInstructionTypes i
     insert_item(list, &instr_type, &instr1, &instr2, &instr3);
 
     instr_type = INSTRUCT_JUMPIFEQ;
-    instr1.value.s = "$int_2_float4";
+    instr1.value.s = generate_param("$int_2_float4", ++int2floatCounter4);
     instr2.type = GF;
     instr2.value.s = "$type1";
     instr3.type = S;
@@ -543,11 +551,11 @@ void generateInstructionForNones(tList* list, tStack *stack, tInstructionTypes i
     instruction_exit(ERR_INCOMPATIBLE_TYPE);
 
     instr_type = INSTRUCT_LABEL;
-    instr1.value.s = "$int_2_float4";
+    instr1.value.s = generate_param("$int_2_float4", int2floatCounter4);
     insert_item(list, &instr_type, &instr1, &instr2, &instr3);
 
     instr_type = INSTRUCT_JUMPIFEQ;
-    instr1.value.s = "$int_2_float3";
+    instr1.value.s = generate_param("$int_2_float3", ++int2floatCounter3);
     instr2.type = GF;
     instr2.value.s = "$type2";
     instr3.type = S;
@@ -556,7 +564,7 @@ void generateInstructionForNones(tList* list, tStack *stack, tInstructionTypes i
 
 
     instr_type = INSTRUCT_JUMPIFEQ;
-    instr1.value.s = "$label_3";
+    instr1.value.s = generate_param("$label_3", ++label3Counter3);
     instr2.type = GF;
     instr2.value.s = "$type2";
     instr3.type = S;
@@ -566,7 +574,7 @@ void generateInstructionForNones(tList* list, tStack *stack, tInstructionTypes i
     instruction_exit(ERR_INCOMPATIBLE_TYPE);
 
     instr_type = INSTRUCT_LABEL;
-    instr1.value.s = "$int_2_float1";
+    instr1.value.s = generate_param("$int_2_float1", ++int2floatCounter1);
     insert_item(list, &instr_type, &instr1, &instr2, &instr3);
 
     instr_type = INSTRUCT_INT2FLOAT;
@@ -577,15 +585,15 @@ void generateInstructionForNones(tList* list, tStack *stack, tInstructionTypes i
     insert_item(list, &instr_type, &instr1, &instr2, &instr3);
 
     instr_type = INSTRUCT_JUMP;
-    instr1.value.s = "$label_3";
+    instr1.value.s = generate_param("$label_3", label3Counter3);
     insert_item(list, &instr_type, &instr1, &instr2, &instr3);
 
     instr_type = INSTRUCT_LABEL;
-    instr1.value.s = "$if_string";
+    instr1.value.s = generate_param("$if_string", ifstringCounter);
     insert_item(list, &instr_type, &instr1, &instr2, &instr3);
 
     instr_type = INSTRUCT_JUMPIFEQ;
-    instr1.value.s = "$label_2";
+    instr1.value.s = generate_param("$label_2", ++label2Counter2);
     instr2.type = GF;
     instr2.value.s = "$type1";
     instr3.type = S;
@@ -593,7 +601,7 @@ void generateInstructionForNones(tList* list, tStack *stack, tInstructionTypes i
     insert_item(list, &instr_type, &instr1, &instr2, &instr3);
 
     instr_type = INSTRUCT_JUMPIFEQ;
-    instr1.value.s = "$label_3";
+    instr1.value.s = generate_param("$label_3", label3Counter3);
     instr2.type = GF;
     instr2.value.s = "$type1";
     instr3.type = S;
@@ -601,7 +609,7 @@ void generateInstructionForNones(tList* list, tStack *stack, tInstructionTypes i
     insert_item(list, &instr_type, &instr1, &instr2, &instr3);
 
     instr_type = INSTRUCT_JUMPIFEQ;
-    instr1.value.s = "$label_3";
+    instr1.value.s = generate_param("$label_3", label3Counter3);
     instr2.type = GF;
     instr2.value.s = "$type1";
     instr3.type = S;
@@ -609,7 +617,7 @@ void generateInstructionForNones(tList* list, tStack *stack, tInstructionTypes i
     insert_item(list, &instr_type, &instr1, &instr2, &instr3);
 
     instr_type = INSTRUCT_LABEL;
-    instr1.value.s = "$label_2";
+    instr1.value.s = generate_param("$label_2", label2Counter2);
     insert_item(list, &instr_type, &instr1, &instr2, &instr3);
 
     instr_type = INSTRUCT_CONCAT;
@@ -622,12 +630,12 @@ void generateInstructionForNones(tList* list, tStack *stack, tInstructionTypes i
     insert_item(list, &instr_type, &instr1, &instr2, &instr3);
 
     instr_type = INSTRUCT_JUMP;
-    instr1.value.s = "$nil_end";
+    instr1.value.s = generate_param("$nil_end", ++nilEndCounter);
     insert_item(list, &instr_type, &instr1, &instr2, &instr3);
 
 
     instr_type = INSTRUCT_LABEL;
-    instr1.value.s = "$label_3";
+    instr1.value.s =  generate_param("$label_3", label3Counter3);
     insert_item(list, &instr_type, &instr1, &instr2, &instr3);
 
     instr_type = instruction_type;
@@ -641,15 +649,15 @@ void generateInstructionForNones(tList* list, tStack *stack, tInstructionTypes i
     insert_item(list, &instr_type, &instr1, &instr2, &instr3);
 
     instr_type = INSTRUCT_JUMP;
-    instr1.value.s = "$nil_end";
+    instr1.value.s = generate_param("$nil_end", nilEndCounter);
     insert_item(list, &instr_type, &instr1, &instr2, &instr3);
 
     instr_type = INSTRUCT_LABEL;
-    instr1.value.s = "$int_2_float2";
+    instr1.value.s = generate_param("$int_2_float2", int2floatCounter2);
     insert_item(list, &instr_type, &instr1, &instr2, &instr3);
 
     instr_type = INSTRUCT_JUMPIFEQ;
-    instr1.value.s = "$int_2_float1";
+    instr1.value.s = generate_param("$int_2_float1", int2floatCounter1);
     instr2.type = GF;
     instr2.value.s = "$type2";
     instr3.type = S;
@@ -667,7 +675,7 @@ void generateInstructionForNones(tList* list, tStack *stack, tInstructionTypes i
     instruction_exit(ERR_INCOMPATIBLE_TYPE);
 
     instr_type = INSTRUCT_LABEL;
-    instr1.value.s = "$int_2_float3";
+    instr1.value.s = generate_param("$int_2_float3", int2floatCounter3);
     insert_item(list, &instr_type, &instr1, &instr2, &instr3);
 
     instr_type = INSTRUCT_INT2FLOAT;
@@ -678,11 +686,11 @@ void generateInstructionForNones(tList* list, tStack *stack, tInstructionTypes i
     insert_item(list, &instr_type, &instr1, &instr2, &instr3);
 
     instr_type = INSTRUCT_JUMP;
-    instr1.value.s = "$label_3";
+    instr1.value.s =  generate_param("$label_3", label3Counter3);
     insert_item(list, &instr_type, &instr1, &instr2, &instr3);
 
     instr_type = INSTRUCT_LABEL;
-    instr1.value.s = "$nil_end";
+    instr1.value.s = generate_param("$nil_end", nilEndCounter);
     insert_item(list, &instr_type, &instr1, &instr2, &instr3);
 
 }

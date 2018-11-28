@@ -55,6 +55,10 @@ GlobalMap* gMap;		     // globalni tabulka symbolu
 tDataFunction gData;
 int paramCount = 0;          // pocet parametru funkce
 int argCount = 0;            // pocet argumentu pri volani funkce
+unsigned short labelCountOrd = 0;
+unsigned short labelCountChr = 0;
+unsigned short labelSubstrCount1 = 0;
+unsigned short labelSubstrCount2= 0;
 
 /*********************************************************************/
 
@@ -115,12 +119,19 @@ void insert_build_in_functions(){
 char * generate_param(char *string, unsigned short d){
 	char *c = (char*)malloc(sizeof(char) * 2);
     sprintf(c, "%hu", (unsigned short)d+1);
-	size_t length = strlen(string);
-	char *generate = malloc(length + 1 + 1);
+	// size_t length = strlen(string);
+	char *generate = malloc(strlen(string) + strlen(c) + 1);
 	strcpy(generate, string);
-	generate[length] = *c;
-	generate[length + 1] = '\0';
-	free(c);
+	strcat(generate, c);
+
+	//generate[length] = *c;
+
+	// printf("!!!!!!!!!!!!!!!!!! %s\n", generate);
+	// printf("%s\n", c);
+	// printf("%s\n", generate);
+
+	// generate[length + 1] = '\0';
+	// free(c);
 	return generate;
 }
 
@@ -175,6 +186,7 @@ int term(void){
 			instr1.value.s = generate_param("%", argCount);
 
 			insert_item(ilist, &instr_type, &instr1, &instr2, &instr3);
+
 			instr_type = INSTRUCT_MOVE;
 			instr1.type = TF;
 			instr1.value.s = generate_param("%", argCount);
@@ -215,7 +227,6 @@ int term(void){
 					insert_item(ilist, &instr_type, &instr1, &instr2, &instr3);
 				}
 			}
-	
 			token = getToken();
 			if(!error_lex()){
 				instruction_exit(ERROR_LEX);
@@ -281,7 +292,7 @@ int check_length_substr_ord_build_in(){
 									insert_item(ilist, &instr_type, &instr1, &instr2, &instr3);
 
 									instr_type = INSTRUCT_JUMPIFEQ;
-									instr1.value.s = "$label_true";
+									instr1.value.s = generate_param("$label_true", ++labelCountOrd);
 									instr2.type = GF;
 									instr2.value.s = "$tmp2";
 									instr3.type = S;
@@ -291,7 +302,7 @@ int check_length_substr_ord_build_in(){
 									instruction_exit(ERR_INCOMPATIBLE_TYPE);
 
 									instr_type = INSTRUCT_LABEL;
-									instr1.value.s = "$label_true";
+									instr1.value.s = generate_param("$label_true", labelCountOrd);
 
 									insert_item(ilist, &instr_type, &instr1, &instr2, &instr3);
 								}
@@ -340,7 +351,7 @@ int check_chr_build_in(){
 												insert_item(ilist, &instr_type, &instr1, &instr2, &instr3);
 
 												instr_type = INSTRUCT_JUMPIFEQ;
-												instr1.value.s = "$label_true_chr";
+												instr1.value.s = generate_param("$label_true_chr", ++labelCountChr);
 												instr2.type = GF;
 												instr2.value.s = "$tmp2";
 												instr3.type = S;
@@ -350,7 +361,7 @@ int check_chr_build_in(){
 												instruction_exit(ERR_INCOMPATIBLE_TYPE);
 
 												instr_type = INSTRUCT_LABEL;
-												instr1.value.s = "$label_true_chr";
+												instr1.value.s = generate_param("$label_true_chr", labelCountChr);
 
 												insert_item(ilist, &instr_type, &instr1, &instr2, &instr3);
 
@@ -441,7 +452,7 @@ int check_substr_ord_build_in(int param){
 													switch(param){
 														case 1:
 															instr_type = INSTRUCT_JUMPIFEQ;
-															instr1.value.s = "$label_true_2";
+															instr1.value.s = generate_param("$label_true_2", ++labelSubstrCount1);
 															instr2.type = GF;
 															instr2.value.s = "$tmp2";
 															instr3.type = S;
@@ -451,14 +462,14 @@ int check_substr_ord_build_in(int param){
 															instruction_exit(ERR_INCOMPATIBLE_TYPE);
 
 															instr_type = INSTRUCT_LABEL;
-															instr1.value.s = "$label_true_2";
+															instr1.value.s = generate_param("$label_true_2", labelSubstrCount1);
 
 															insert_item(ilist, &instr_type, &instr1, &instr2, &instr3);
 														break;
 
 														case 2:
 															instr_type = INSTRUCT_JUMPIFEQ;
-															instr1.value.s = "$label_true_3";
+															instr1.value.s = generate_param("$label_true_3", ++labelSubstrCount2);
 															instr2.type = GF;
 															instr2.value.s = "$tmp2";
 															instr3.type = S;
@@ -468,12 +479,11 @@ int check_substr_ord_build_in(int param){
 															instruction_exit(ERR_INCOMPATIBLE_TYPE);
 
 															instr_type = INSTRUCT_LABEL;
-															instr1.value.s = "$label_true_3";
+															instr1.value.s = generate_param("$label_true_3", labelSubstrCount2);
 
 															insert_item(ilist, &instr_type, &instr1, &instr2, &instr3);
 														break;
 													}
-
 													
 											}
 											else {
