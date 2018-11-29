@@ -44,25 +44,36 @@ DEFVAR LF@%retval
 MOVE LF@%retval nil@nil
 STRLEN GF@$$var_integer LF@%1
 LT GF@$$var_double GF@$$var_integer LF@%2
-JUMPIFEQ label_substr bool@true GF@$$var_double
+JUMPIFEQ label_nil_substr bool@true GF@$$var_double
 MOVE GF@$$var_integer int@0
-LT GF@$$var_integer LF@%3 GF@$$var_integer
-JUMPIFEQ label_substr bool@true GF@$$var_integer
-MOVE GF@$$var_integer int@0
-SUB LF@%2 LF@%2 int@1
+LT GF@$$var_double LF@%3 GF@$$var_integer
+JUMPIFEQ label_nil_substr bool@true GF@$$var_double
+STRLEN GF@$$var_integer LF@%1
+SUB GF@$$var_integer GF@$$var_integer LF@%2
+GT GF@$$var_double LF@%3 GF@$$var_integer
+JUMPIFEQ label_substr_over GF@$$var_double bool@true
+MOVE GF@$result nil@nil
 LABEL label_substr_read
-EQ GF@$$var_integer LF@%3 int@0
-JUMPIFEQ label_substr bool@true GF@$$var_integer
-GETCHAR GF@$$var_string LF@%1 LF@%2
-CONCAT GF@$result GF@$$var_string GF@$$var_string
-SUB LF@%3 LF@%3 int@1
+EQ GF@$$var_double LF@%3 LF@%2
+JUMPIFEQ label_substr bool@true GF@$$var_double
+GETCHAR GF@$result LF@%1 LF@%2
+CONCAT GF@$$var_string GF@$$var_string GF@$result
+ADD LF@%2 LF@%2 int@1
 JUMP label_substr_read
+LABEL label_substr_over
+STRLEN GF@$$var_integer LF@%1
+SUB GF@$$var_integer GF@$$var_integer LF@%2
+LABEL label_over_read
+EQ GF@$$var_double GF@$$var_integer int@0
+JUMPIFEQ label_substr bool@true GF@$$var_double
+GETCHAR GF@$result LF@%1 LF@%2
+CONCAT GF@$$var_string GF@$$var_string GF@$result
+ADD LF@%2 LF@%2 int@1
+SUB GF@$$var_integer GF@$$var_integer int@1
+JUMP label_over_read
 LABEL label_substr
-MOVE GF@$$var_integer int@0
-LABEl label_end_substr
-MOVE GF@$$var_double float@0x0p+0
-MOVE GF@$$var_string string@
 MOVE LF@%retval GF@$$var_string
+LABEL label_nil_substr
 POPFRAME
 RETURN
 LABEL $$main
@@ -85,8 +96,9 @@ DEFVAR GF@$type2
 CREATEFRAME
 PUSHFRAME
 DEFVAR LF@a
-MOVE GF@$result float@0x1.c28f5c28f5c29p-4
-MOVE LF@a GF@$result
-READ LF@a float
+READ LF@a int
 WRITE LF@a
+MOVE GF@$result LF@a
+IDIV GF@$result GF@$result int@5
+MOVE LF@a GF@$result
 EXIT int@0
