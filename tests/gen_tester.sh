@@ -48,6 +48,11 @@ if [[ "$1" == "-n" ]];then
   filegen="-n"
 fi
 
+if [[ "$EUID" -ne 0 ]];then
+  echo "Please run as root"
+  exit 1
+fi
+
 echo "Testing return values from interpret..."
 echo "Running all test dirs from ../tests with expected return value of 0..."
 echo ""
