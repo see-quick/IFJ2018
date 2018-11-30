@@ -1,5 +1,5 @@
 #Blokovy komentar bez =end
 
-def id
+id = 5
 =begin
 

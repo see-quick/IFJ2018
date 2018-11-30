@@ -1,5 +1,6 @@
 # Sum ord values in string		
 
+    b = "c"
     a = "hgdfhDFGkf5665678"
     i = 1
 	lengthA = length(a)

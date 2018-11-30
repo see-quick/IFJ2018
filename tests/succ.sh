@@ -59,7 +59,7 @@ echo "Test data for expressions: TESTED $TESTNUMBER tests, PASSED: $SUCCTESTS, F
 #SEMANTICDATA
 OUTPUT=$(bash tester.sh ifj semanticData 2>/dev/null | tail -n 5)
 TESTNUMBER=$(echo $OUTPUT | cut -c8-10)
-SUCCTESTS=$(echo $OUTPUT | cut -c26-27)
+SUCCTESTS=$(echo $OUTPUT | cut -c26-28)
 FAILEDTESTS=$((TESTNUMBER-SUCCTESTS))
 
 TOTALTESTS=$((TESTNUMBER+TOTALTESTS))
@@ -110,23 +110,23 @@ var1 " \
 
 echo "Test data for testData: TESTED $TESTNUMBER tests, PASSED: $SUCCTESTS, FAILED: $FAILEDTESTS Totally: ${green}$total%${reset}"
 
-#genDATA
-#OUTPUT=$(sudo bash gen_tester.sh -g 2>/dev/null | tail -n 1)
-#TESTNUMBER=$(echo $OUTPUT | cut -c8-10)
-#SUCCTESTS=$(echo $OUTPUT | cut -c26-27)
-#FAILEDTESTS=$((TESTNUMBER-SUCCTESTS))
+# genDATA
+OUTPUT=$(sudo bash tester.sh ifj genData 2>/dev/null | tail -n 5)
+TESTNUMBER=$(echo $OUTPUT | cut -c8-10)
+SUCCTESTS=$(echo $OUTPUT | cut -c26-27)
+FAILEDTESTS=$((TESTNUMBER-SUCCTESTS))
 
-#TOTALTESTS=$((TESTNUMBER+TOTALTESTS))
-#TOTALFAILED=$((FAILEDTESTS+TOTALFAILED))
-#TOTALSUCC=$((SUCCTESTS+TOTALSUCC))
+TOTALTESTS=$((TESTNUMBER+TOTALTESTS))
+TOTALFAILED=$((FAILEDTESTS+TOTALFAILED))
+TOTALSUCC=$((SUCCTESTS+TOTALSUCC))
 
-#total=$(echo " scale=2;
-#var1 = $SUCCTESTS * 100;
-#var1 = var1 / $TESTNUMBER;
-#var1 " \
-#| bc)
+total=$(echo " scale=2;
+var1 = $SUCCTESTS * 100;
+var1 = var1 / $TESTNUMBER;
+var1 " \
+| bc)
 
-#echo "Test data for genData: TESTED $TESTNUMBER tests, PASSED: $SUCCTESTS, FAILED: $FAILEDTESTS Totally: ${green}$total%${reset}"
+echo "Test data for genData: TESTED $TESTNUMBER tests, PASSED: $SUCCTESTS, FAILED: $FAILEDTESTS Totally: ${green}$total%${reset}"
 
 #TOTAL NUMBER OF TESTS + STATISTICS
 total=$(echo " scale=2;

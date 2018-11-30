@@ -36,7 +36,15 @@ extern tDataFunction gData;
 extern bool is_LF;
 
 unsigned short labelCounter = 0;
-
+unsigned short divCounter = 0;
+unsigned short int2floatCounter1 = 0;
+unsigned short int2floatCounter2 = 0;
+unsigned short int2floatCounter3 = 0;
+unsigned short int2floatCounter4 = 0;
+unsigned short ifstringCounter = 0;
+unsigned short label2Counter2 = 0;
+unsigned short label3Counter3 = 0;
+unsigned short nilEndCounter = 0;
 
 // PRECENDENCE TABLE
 
@@ -379,6 +387,10 @@ void generatingConcreteInstruction(tList* list, tStack *stack, int type, char * 
                 instr3.type = LF;
                 instr3.value.s = stack->arrayOfItems[stack->finderOfParenthesis + positionForConcreteInstruction].nameOfTheVariable;
             }
+            else if(isFirstVariable == true){
+                instr3.type = LF;
+                instr3.value.s = stack->arrayOfItems[stack->finderOfParenthesis + positionForConcreteInstruction].nameOfTheVariable;
+            }
             else { instr3.type = I;
                 instr3.value.i = stack->arrayOfItems[stack->finderOfParenthesis + positionForConcreteInstruction].value.i; // tady bude [+1], value.d, value.s ...
             }
@@ -469,31 +481,41 @@ void generateInstructionForType(tList* list, tStack *stack, int type, char * ins
 
 void generateIntDivisionError(tList * list, tStack *stack, int positionForConcreteInstruction){
     instr_type = INSTRUCT_JUMPIFEQ;
-    instr1.value.s = "$label_err_9";
+    instr1.value.s = generate_param("$label_err_9", divCounter++);
     instr2.type = LF;
     instr2.value.s =  stack->arrayOfItems[stack->finderOfParenthesis + positionForConcreteInstruction].nameOfTheVariable;
     instr3.type = I;
     instr3.value.i = 0;
     insert_item(list,&instr_type, &instr1, &instr2, &instr3);
+
+    instr_type = INSTRUCT_JUMP;
+    instr1.value.s = generate_param("MATH_OPERATION", labelCounter);
+    insert_item(list,&instr_type, &instr1, &instr2, &instr3);
+
     // LABEL ERR 9
     instr_type = INSTRUCT_LABEL;
-    instr1.value.s = "$label_err_9";
+    instr1.value.s = generate_param("$label_err_9", divCounter);
     insert_item(list,&instr_type, &instr1, &instr2, &instr3);
     // INSTRUCTION_EXIT
     instruction_exit(ERR_DIVISION);
+
+    instr_type = INSTRUCT_LABEL;
+    instr1.value.s = generate_param("MATH_OPERATION", labelCounter++);
+    insert_item(list,&instr_type, &instr1, &instr2, &instr3);
 }
 
 
-void generateInstructionForNones(tList* list, tStack *stack, char * instruction_type){
+void generateInstructionForNones(tList* list, tStack *stack, tInstructionTypes instruction_type){
     (void)instruction_type;
+
 
     instr_type = INSTRUCT_TYPE;
     instr1.type = GF;
     instr1.value.s = "$type1";
     instr2.type = LF;
     instr2.value.s = stack->arrayOfItems[stack->finderOfParenthesis + 1].nameOfTheVariable;
-
     insert_item(list,&instr_type, &instr1, &instr2, &instr3);
+
     instr_type = INSTRUCT_TYPE;
     instr1.type = GF;
     instr1.value.s = "$type2";
@@ -503,7 +525,7 @@ void generateInstructionForNones(tList* list, tStack *stack, char * instruction_
 
 
     instr_type = INSTRUCT_JUMPIFEQ;
-    instr1.value.s = "$if_string";
+    instr1.value.s = generate_param("$if_string", ++ifstringCounter);
     instr2.type = GF;
     instr2.value.s = "$type1";
     instr3.type = GF;
@@ -511,7 +533,7 @@ void generateInstructionForNones(tList* list, tStack *stack, char * instruction_
     insert_item(list, &instr_type, &instr1, &instr2, &instr3);
 
     instr_type = INSTRUCT_JUMPIFEQ;
-    instr1.value.s = "$int_2_float1";
+    instr1.value.s = generate_param("$int_2_float2", ++int2floatCounter2);
     instr2.type = GF;
     instr2.value.s = "$type1";
     instr3.type = S;
@@ -519,7 +541,7 @@ void generateInstructionForNones(tList* list, tStack *stack, char * instruction_
     insert_item(list, &instr_type, &instr1, &instr2, &instr3);
 
     instr_type = INSTRUCT_JUMPIFEQ;
-    instr1.value.s = "$int_2_float2";
+    instr1.value.s = generate_param("$int_2_float4", ++int2floatCounter4);
     instr2.type = GF;
     instr2.value.s = "$type1";
     instr3.type = S;
@@ -529,10 +551,11 @@ void generateInstructionForNones(tList* list, tStack *stack, char * instruction_
     instruction_exit(ERR_INCOMPATIBLE_TYPE);
 
     instr_type = INSTRUCT_LABEL;
-    instr1.value.s = "$int_2_float1";
+    instr1.value.s = generate_param("$int_2_float4", int2floatCounter4);
+    insert_item(list, &instr_type, &instr1, &instr2, &instr3);
 
     instr_type = INSTRUCT_JUMPIFEQ;
-    instr1.value.s = "$label_3";
+    instr1.value.s = generate_param("$int_2_float3", ++int2floatCounter3);
     instr2.type = GF;
     instr2.value.s = "$type2";
     instr3.type = S;
@@ -541,7 +564,7 @@ void generateInstructionForNones(tList* list, tStack *stack, char * instruction_
 
 
     instr_type = INSTRUCT_JUMPIFEQ;
-    instr1.value.s = "$label_3";
+    instr1.value.s = generate_param("$label_3", ++label3Counter3);
     instr2.type = GF;
     instr2.value.s = "$type2";
     instr3.type = S;
@@ -551,7 +574,7 @@ void generateInstructionForNones(tList* list, tStack *stack, char * instruction_
     instruction_exit(ERR_INCOMPATIBLE_TYPE);
 
     instr_type = INSTRUCT_LABEL;
-    instr1.value.s = "$int_2_float1";
+    instr1.value.s = generate_param("$int_2_float1", ++int2floatCounter1);
     insert_item(list, &instr_type, &instr1, &instr2, &instr3);
 
     instr_type = INSTRUCT_INT2FLOAT;
@@ -562,15 +585,15 @@ void generateInstructionForNones(tList* list, tStack *stack, char * instruction_
     insert_item(list, &instr_type, &instr1, &instr2, &instr3);
 
     instr_type = INSTRUCT_JUMP;
-    instr1.value.s = "$label_3";
+    instr1.value.s = generate_param("$label_3", label3Counter3);
     insert_item(list, &instr_type, &instr1, &instr2, &instr3);
 
     instr_type = INSTRUCT_LABEL;
-    instr1.value.s = "$if_string";
+    instr1.value.s = generate_param("$if_string", ifstringCounter);
     insert_item(list, &instr_type, &instr1, &instr2, &instr3);
 
     instr_type = INSTRUCT_JUMPIFEQ;
-    instr1.value.s = "$label_2";
+    instr1.value.s = generate_param("$label_2", ++label2Counter2);
     instr2.type = GF;
     instr2.value.s = "$type1";
     instr3.type = S;
@@ -578,14 +601,15 @@ void generateInstructionForNones(tList* list, tStack *stack, char * instruction_
     insert_item(list, &instr_type, &instr1, &instr2, &instr3);
 
     instr_type = INSTRUCT_JUMPIFEQ;
-    instr1.value.s = "$label_3";
+    instr1.value.s = generate_param("$label_3", label3Counter3);
     instr2.type = GF;
     instr2.value.s = "$type1";
     instr3.type = S;
     instr3.value.s = "int";
     insert_item(list, &instr_type, &instr1, &instr2, &instr3);
 
-    instr1.value.s = "$label_3";
+    instr_type = INSTRUCT_JUMPIFEQ;
+    instr1.value.s = generate_param("$label_3", label3Counter3);
     instr2.type = GF;
     instr2.value.s = "$type1";
     instr3.type = S;
@@ -593,7 +617,7 @@ void generateInstructionForNones(tList* list, tStack *stack, char * instruction_
     insert_item(list, &instr_type, &instr1, &instr2, &instr3);
 
     instr_type = INSTRUCT_LABEL;
-    instr1.value.s = "$label_2";
+    instr1.value.s = generate_param("$label_2", label2Counter2);
     insert_item(list, &instr_type, &instr1, &instr2, &instr3);
 
     instr_type = INSTRUCT_CONCAT;
@@ -605,11 +629,16 @@ void generateInstructionForNones(tList* list, tStack *stack, char * instruction_
     instr3.value.s = stack->arrayOfItems[stack->finderOfParenthesis + 3].nameOfTheVariable;
     insert_item(list, &instr_type, &instr1, &instr2, &instr3);
 
-    instr_type = INSTRUCT_LABEL;
-    instr1.value.s = "$label_3";
+    instr_type = INSTRUCT_JUMP;
+    instr1.value.s = generate_param("$nil_end", ++nilEndCounter);
     insert_item(list, &instr_type, &instr1, &instr2, &instr3);
 
-    instr_type = INSTRUCT_ADD;
+
+    instr_type = INSTRUCT_LABEL;
+    instr1.value.s =  generate_param("$label_3", label3Counter3);
+    insert_item(list, &instr_type, &instr1, &instr2, &instr3);
+
+    instr_type = instruction_type;
     instr1.type = GF;
     instr1.value.s = "$result";
     instr2.type = LF;
@@ -619,12 +648,16 @@ void generateInstructionForNones(tList* list, tStack *stack, char * instruction_
 
     insert_item(list, &instr_type, &instr1, &instr2, &instr3);
 
+    instr_type = INSTRUCT_JUMP;
+    instr1.value.s = generate_param("$nil_end", nilEndCounter);
+    insert_item(list, &instr_type, &instr1, &instr2, &instr3);
+
     instr_type = INSTRUCT_LABEL;
-    instr1.value.s = "$int_2_float2";
+    instr1.value.s = generate_param("$int_2_float2", int2floatCounter2);
     insert_item(list, &instr_type, &instr1, &instr2, &instr3);
 
     instr_type = INSTRUCT_JUMPIFEQ;
-    instr1.value.s = "$label3";
+    instr1.value.s = generate_param("$int_2_float1", int2floatCounter1);
     instr2.type = GF;
     instr2.value.s = "$type2";
     instr3.type = S;
@@ -632,7 +665,7 @@ void generateInstructionForNones(tList* list, tStack *stack, char * instruction_
     insert_item(list, &instr_type, &instr1, &instr2, &instr3);
 
     instr_type = INSTRUCT_JUMPIFEQ;
-    instr1.value.s = "$int_2_float3";
+    instr1.value.s = "$label3";
     instr2.type = GF;
     instr2.value.s = "$type2";
     instr3.type = S;
@@ -642,19 +675,24 @@ void generateInstructionForNones(tList* list, tStack *stack, char * instruction_
     instruction_exit(ERR_INCOMPATIBLE_TYPE);
 
     instr_type = INSTRUCT_LABEL;
-    instr1.value.s = "$int_2_float3";
+    instr1.value.s = generate_param("$int_2_float3", int2floatCounter3);
     insert_item(list, &instr_type, &instr1, &instr2, &instr3);
 
     instr_type = INSTRUCT_INT2FLOAT;
     instr1.type = LF;
-    instr1.value.s = stack->arrayOfItems[stack->finderOfParenthesis + 1].nameOfTheVariable;
+    instr1.value.s = stack->arrayOfItems[stack->finderOfParenthesis + 3].nameOfTheVariable;
     instr2.type = LF;
     instr2.value.s = stack->arrayOfItems[stack->finderOfParenthesis + 3].nameOfTheVariable;
     insert_item(list, &instr_type, &instr1, &instr2, &instr3);
 
     instr_type = INSTRUCT_JUMP;
-    instr1.value.s = "$label_3";
+    instr1.value.s =  generate_param("$label_3", label3Counter3);
     insert_item(list, &instr_type, &instr1, &instr2, &instr3);
+
+    instr_type = INSTRUCT_LABEL;
+    instr1.value.s = generate_param("$nil_end", nilEndCounter);
+    insert_item(list, &instr_type, &instr1, &instr2, &instr3);
+
 }
 
 // @varName pravidlo id = <sth>
@@ -861,7 +899,7 @@ expr_return parse_expr(LocalMap* lMap, tList* list, bool is_bool){
                                             generateInstructionForType(list, stack, S, "CONCAT", 3, 1);
                                         }
                                         else if (stack->arrayOfItems[stack->finderOfParenthesis + 3].type == NONE){
-                                            generateInstructionForNones(list, stack, "ADD");
+                                            generateInstructionForNones(list, stack, INSTRUCT_ADD);
                                         }
                                     isFirstVariable = false;
                                     isThirdVariable = false;
@@ -1065,7 +1103,7 @@ expr_return parse_expr(LocalMap* lMap, tList* list, bool is_bool){
                                             return resultOfPrece;
                                         }
                                         else if (stack->arrayOfItems[stack->finderOfParenthesis + 3].type == NONE){
-                                            generateInstructionForNones(list, stack, "SUB");
+                                            generateInstructionForNones(list, stack, INSTRUCT_SUB);
                                         }
                                     isFirstVariable = false;
                                     isThirdVariable = false;
@@ -1244,7 +1282,7 @@ expr_return parse_expr(LocalMap* lMap, tList* list, bool is_bool){
                                             return resultOfPrece;
                                         }
                                         else if (stack->arrayOfItems[stack->finderOfParenthesis + 3].type == NONE){
-                                            generateInstructionForNones(list, stack, "MUL");
+                                            generateInstructionForNones(list, stack, INSTRUCT_MUL);
                                         }
                                     isFirstVariable = false;
                                     isThirdVariable = false;
@@ -1428,7 +1466,7 @@ expr_return parse_expr(LocalMap* lMap, tList* list, bool is_bool){
                                             return resultOfPrece;
                                         }
                                         else if (stack->arrayOfItems[stack->finderOfParenthesis + 3].type == NONE){
-                                            generateInstructionForNones(list, stack, "DIV");
+                                            generateInstructionForNones(list, stack, INSTRUCT_DIV);
                                         }
                                     isFirstVariable = false;
                                     isThirdVariable = false;
@@ -1457,16 +1495,23 @@ expr_return parse_expr(LocalMap* lMap, tList* list, bool is_bool){
                                     resultOfPrece.bool_result = false;
                                     return resultOfPrece;
 
+
+
                                 } else if ((stack->arrayOfItems[stack->finderOfParenthesis + 1].type == INTEGER) &&
                                            (stack->arrayOfItems[stack->finderOfParenthesis + 3].type == INTEGER)) {
+
                                     if(stack->arrayOfItems[stack->finderOfParenthesis + 3].isVariable){ isThirdVariable = true; }
                                     else{ isThirdVariable = false; }
+        
 
                                     if (isThirdVariable == true ){
+                                        generateIntDivisionError(list, stack, 3);
                                         instr3.type = LF;
                                         instr3.value.s = stack->arrayOfItems[stack->finderOfParenthesis + 3].nameOfTheVariable;
+                                        
                                     }
-                                    else { instr3.type = I;
+                                    else { 
+                                        instr3.type = I;
                                         instr3.value.i = stack->arrayOfItems[stack->finderOfParenthesis + 3].value.i;
                                         if (instr3.value.i == 0){
                                             resultOfPrece.result = ERR_DIVISION;
@@ -1477,7 +1522,7 @@ expr_return parse_expr(LocalMap* lMap, tList* list, bool is_bool){
                                     dataIDF.type = INTEGER;
                                     setFirstAndSecondVariableToGenerate(INSTRUCT_IDIV);
 
-                                    dataIDF.value.i = stack->arrayOfItems[stack->finderOfParenthesis + 1].value.i / stack->arrayOfItems[stack->finderOfParenthesis + 3].value.i;
+                                    //dataIDF.value.i = stack->arrayOfItems[stack->finderOfParenthesis + 1].value.i / stack->arrayOfItems[stack->finderOfParenthesis + 3].value.i;
                                     insert_item(list, &instr_type, &instr1, &instr2, &instr3);
                                     //generovanie IDIV %s@%s %s@%s %s@%s
                                     isThirdVariable = false;
@@ -1632,7 +1677,7 @@ expr_return parse_expr(LocalMap* lMap, tList* list, bool is_bool){
                                             generateInstructionForType(list, stack, S, "LT", 3, 1);
                                         }
                                         else if (stack->arrayOfItems[stack->finderOfParenthesis + 3].type == NONE){
-                                            generateInstructionForNones(list, stack, "LT");
+                                            generateInstructionForNones(list, stack, INSTRUCT_LT);
                                         }
                                     isFirstVariable = false;
                                     isThirdVariable = false;
@@ -1648,9 +1693,6 @@ expr_return parse_expr(LocalMap* lMap, tList* list, bool is_bool){
                                         }
                                         else if (stack->arrayOfItems[stack->finderOfParenthesis + 1].type == STRING){
                                             generateInstructionForType(list, stack, S, "LT", 3, 1);
-                                        }
-                                        else if (stack->arrayOfItems[stack->finderOfParenthesis + 1].type == NONE){
-                                            generateInstructionForNones(list, stack, "LT");
                                         }
                                     isFirstVariable = false;
                                     isThirdVariable = false;
@@ -1810,6 +1852,7 @@ expr_return parse_expr(LocalMap* lMap, tList* list, bool is_bool){
                             if ((stack->arrayOfNumbers[stack->finderOfParenthesis + 3]) != EMPTY_CHAR) {
 
                                  if (stack->arrayOfItems[stack->finderOfParenthesis + 1].type == NONE ){
+                                     isFirstVariable = true;
 
                                         if (stack->arrayOfItems[stack->finderOfParenthesis + 3].type == INTEGER){
                                             generateInstructionForType(list, stack, I, "GT", 3, 1);
@@ -1821,22 +1864,22 @@ expr_return parse_expr(LocalMap* lMap, tList* list, bool is_bool){
                                             generateInstructionForType(list, stack, S, "GT", 3, 1);
                                         }
                                         else if (stack->arrayOfItems[stack->finderOfParenthesis + 3].type == NONE){
-                                            generateInstructionForNones(list, stack, "GT");
+                                            generateInstructionForNones(list, stack, INSTRUCT_GT);
                                         }
-
+                                     isFirstVariable = false;
+                                     isThirdVariable = false;
                                 }
                                 else if (stack->arrayOfItems[stack->finderOfParenthesis + 3].type == NONE ){
+                                     isThirdVariable = true;
                                         if (stack->arrayOfItems[stack->finderOfParenthesis + 1].type == INTEGER)
-                                            generateInstructionForType(list, stack, I, "GT", 1, 3);
+                                            generateInstructionForType(list, stack, I, "GT", 3, 1);
                                         else if (stack->arrayOfItems[stack->finderOfParenthesis + 1].type == FLOAT)
-                                            generateInstructionForType(list, stack, F, "GT", 1, 3);
+                                            generateInstructionForType(list, stack, F, "GT", 3, 1);
                                         else if (stack->arrayOfItems[stack->finderOfParenthesis + 1].type == STRING)
-                                            generateInstructionForType(list, stack, S, "GT", 1, 3);
-                                        else if (stack->arrayOfItems[stack->finderOfParenthesis + 1].type == NONE){
-                                            generateInstructionForNones(list, stack, "GT");
-                                        }
-
-
+                                            generateInstructionForType(list, stack, S, "GT", 3, 1);
+                                        
+                                     isFirstVariable = false;
+                                     isThirdVariable = false;
                                 }
 
                                 else if ((stack->arrayOfItems[stack->finderOfParenthesis + 1].type == STRING) &&
@@ -2007,7 +2050,7 @@ expr_return parse_expr(LocalMap* lMap, tList* list, bool is_bool){
                                             setFirstAndSecondForBoolean(list, stack, INSTRUCT_LT, 1);
                                         }
                                         else if (stack->arrayOfItems[stack->finderOfParenthesis + 3].type == NONE){
-                                            generateInstructionForNones(list, stack, "LT");
+                                            generateInstructionForNones(list, stack, INSTRUCT_LT);
                                         }
 
                                 }
@@ -2018,11 +2061,6 @@ expr_return parse_expr(LocalMap* lMap, tList* list, bool is_bool){
                                             setFirstAndSecondForBoolean(list, stack, INSTRUCT_LT, 3);
                                         else if (stack->arrayOfItems[stack->finderOfParenthesis + 1].type == STRING)
                                             setFirstAndSecondForBoolean(list, stack, INSTRUCT_LT, 3);
-                                        else if (stack->arrayOfItems[stack->finderOfParenthesis + 1].type == NONE){
-                                            generateInstructionForNones(list, stack, "LT");
-                                        }
-
-
                                 }
 
                                 else if ((stack->arrayOfItems[stack->finderOfParenthesis + 1].type == STRING) &&
@@ -2266,7 +2304,7 @@ expr_return parse_expr(LocalMap* lMap, tList* list, bool is_bool){
                                             setFirstAndSecondForBoolean(list, stack, INSTRUCT_GT, 1);
                                         }
                                         else if (stack->arrayOfItems[stack->finderOfParenthesis + 3].type == NONE){
-                                            generateInstructionForNones(list, stack, "GT");
+                                            generateInstructionForNones(list, stack, INSTRUCT_GT);
                                         }
 
                                 }
@@ -2277,11 +2315,6 @@ expr_return parse_expr(LocalMap* lMap, tList* list, bool is_bool){
                                             setFirstAndSecondForBoolean(list, stack, INSTRUCT_GT, 3);
                                         else if (stack->arrayOfItems[stack->finderOfParenthesis + 1].type == STRING)
                                             setFirstAndSecondForBoolean(list, stack, INSTRUCT_GT, 3);
-                                        else if (stack->arrayOfItems[stack->finderOfParenthesis + 1].type == NONE){
-                                            generateInstructionForNones(list, stack, "GT");
-                                        }
-
-
                                 } 
                                 else if ((stack->arrayOfItems[stack->finderOfParenthesis + 1].type == STRING) &&
                                     (stack->arrayOfItems[stack->finderOfParenthesis + 3].type == STRING)) {
@@ -2511,7 +2544,7 @@ expr_return parse_expr(LocalMap* lMap, tList* list, bool is_bool){
                         case eEQUAL: // ==
                             if ((stack->arrayOfNumbers[stack->finderOfParenthesis + 3]) != EMPTY_CHAR) {
                                 if (stack->arrayOfItems[stack->finderOfParenthesis + 1].type == NONE ){
-
+                                    isFirstVariable = true;
                                         if (stack->arrayOfItems[stack->finderOfParenthesis + 3].type == INTEGER){
                                             generateInstructionForType(list, stack, I, "EQ", 3, 1);
                                         }
@@ -2522,20 +2555,22 @@ expr_return parse_expr(LocalMap* lMap, tList* list, bool is_bool){
                                             generateInstructionForType(list, stack, S, "EQ", 3, 1);
                                         }
                                         else if (stack->arrayOfItems[stack->finderOfParenthesis + 3].type == NONE){
-                                            generateInstructionForNones(list, stack, "EQ");
+                                            generateInstructionForNones(list, stack, INSTRUCT_EQ);
                                         }
+                                    isFirstVariable = false;
+                                    isThirdVariable = false;
 
                                 }
                                 else if (stack->arrayOfItems[stack->finderOfParenthesis + 3].type == NONE ){
+                                    isThirdVariable = true;
                                         if (stack->arrayOfItems[stack->finderOfParenthesis + 1].type == INTEGER)
                                             generateInstructionForType(list, stack, I, "EQ", 1, 3);
                                         else if (stack->arrayOfItems[stack->finderOfParenthesis + 1].type == FLOAT)
                                             generateInstructionForType(list, stack, F, "EQ", 1, 3);
                                         else if (stack->arrayOfItems[stack->finderOfParenthesis + 1].type == STRING)
                                             generateInstructionForType(list, stack, S, "EQ", 1, 3);
-                                        else if (stack->arrayOfItems[stack->finderOfParenthesis + 1].type == NONE){
-                                            generateInstructionForNones(list, stack, "EQ");
-                                        }
+                                    isFirstVariable = false;
+                                    isThirdVariable = false;
                                 }
 
                                 else if ((stack->arrayOfItems[stack->finderOfParenthesis + 1].type == STRING) &&
@@ -2689,7 +2724,7 @@ expr_return parse_expr(LocalMap* lMap, tList* list, bool is_bool){
                         case eNEQUAL: // !=
                             if ((stack->arrayOfNumbers[stack->finderOfParenthesis + 3]) != EMPTY_CHAR) {
                                 if (stack->arrayOfItems[stack->finderOfParenthesis + 1].type == NONE ){
-
+                                    isFirstVariable = true;
                                         if (stack->arrayOfItems[stack->finderOfParenthesis + 3].type == INTEGER){
                                             generateInstructionForType(list, stack, I, "EQ", 3, 1);
                                         }
@@ -2700,28 +2735,38 @@ expr_return parse_expr(LocalMap* lMap, tList* list, bool is_bool){
                                             generateInstructionForType(list, stack, S, "EQ", 3, 1);
                                         }
                                         else if (stack->arrayOfItems[stack->finderOfParenthesis + 3].type == NONE){
-                                            generateInstructionForNones(list, stack, "EQ");
+                                            generateInstructionForNones(list, stack, INSTRUCT_EQ);
                                         }
 
                                         instr_type = INSTRUCT_NOT;
+                                        instr1.type = GF;
+                                        instr1.value.s = "$result\0";
+                                        instr2.type = GF;
                                         instr2.value.s = "$result\0";
                                         insert_item(list, &instr_type, &instr1, &instr2, &instr3);
+                                    isFirstVariable = false;
+                                    isThirdVariable = false;
 
                                 }
                                 else if (stack->arrayOfItems[stack->finderOfParenthesis + 3].type == NONE ){
-                                        if (stack->arrayOfItems[stack->finderOfParenthesis + 1].type == INTEGER)
+                                    isThirdVariable = true;
+                                        if (stack->arrayOfItems[stack->finderOfParenthesis + 1].type == INTEGER){
+                                            //printf("Som tu...\n");
                                             generateInstructionForType(list, stack, I, "EQ", 1, 3);
+                                        }
                                         else if (stack->arrayOfItems[stack->finderOfParenthesis + 1].type == FLOAT)
                                             generateInstructionForType(list, stack, F, "EQ", 1, 3);
                                         else if (stack->arrayOfItems[stack->finderOfParenthesis + 1].type == STRING)
                                             generateInstructionForType(list, stack, S, "EQ", 1, 3);
-                                        else if (stack->arrayOfItems[stack->finderOfParenthesis + 1].type == NONE){
-                                            generateInstructionForNones(list, stack, "EQ");
-                                        }
 
                                         instr_type = INSTRUCT_NOT;
+                                        instr1.type = GF;
+                                        instr1.value.s = "$result\0";
+                                        instr2.type = GF;
                                         instr2.value.s = "$result\0";
                                         insert_item(list, &instr_type, &instr1, &instr2, &instr3);
+                                    isFirstVariable = false;
+                                    isThirdVariable = false;
                                 }
                                 
                                 else if ((stack->arrayOfItems[stack->finderOfParenthesis + 1].type == STRING) &&

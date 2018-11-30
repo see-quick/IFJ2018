@@ -51,6 +51,12 @@ elif [[ ! -z "$1" && ! -z "$2" ]]; then
       testfile=$(find $testpath/$currentdir -type f -printf "%f\n" | awk NR==$linef)  #nazov testovacieho suboru
       testtype=${testfile:0:6} #extrakt nazvu testu
 
+      testCheck=$(echo $testfile | rev)
+      testCheck=${testCheck:0:2}
+      if [ "$testCheck" == "ni" ] || [ "$testCheck" == "tu" ]; then #skip vsetky subory ktore maju priponu .in alebo .out
+        continue
+      fi
+
       if [ "$testtype" == "error1" ]; then  #vsetky testy obsahujuce chybu maju na zaciatku error. error1->chyba v programu v rámci lexikální analýzy (chybná struktura aktuálního lexému).
         timeout 1 $prog < $testpath/$currentdir/$testfile > /dev/null 2>&1  #presmerovanie vystupu lexeru
         retval=$(echo $?)

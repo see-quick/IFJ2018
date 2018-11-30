@@ -69,7 +69,7 @@ const char* keyWords[] = {
     "not",
     "nil",
     "then", "while",
-    "inputs", "inputsi", "inputsf",
+    "inputs", "inputi", "inputf",
     "print", "length", "substr",
     "ord", "chr",
 };

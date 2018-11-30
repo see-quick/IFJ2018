@@ -27,9 +27,11 @@ def taylor_log(x, n)
 end
 
 	d = inputi
+	print "\n"
 	d = taylor_log(d, 10)
 	print d, "\n"
 
 	d = inputi
+	print "\n"
 	d = taylor_log(d, 20)
 	print d, "\n"
