@@ -36,7 +36,7 @@ bool in_while = false;
 int while_counter = 0;
 int function_counter = 0;
 int return_type = -1;
-bool in_stat = false;
+bool in_stat = false; // false - volani fuknce bez prirazeni, true - s prirazenim
 bool in_print = false;
 
 
@@ -55,6 +55,10 @@ GlobalMap* gMap;		     // globalni tabulka symbolu
 tDataFunction gData;
 int paramCount = 0;          // pocet parametru funkce
 int argCount = 0;            // pocet argumentu pri volani funkce
+unsigned short labelCountOrd = 0;
+unsigned short labelCountChr = 0;
+unsigned short labelSubstrCount1 = 0;
+unsigned short labelSubstrCount2= 0;
 
 /*********************************************************************/
 
@@ -115,12 +119,19 @@ void insert_build_in_functions(){
 char * generate_param(char *string, unsigned short d){
 	char *c = (char*)malloc(sizeof(char) * 2);
     sprintf(c, "%hu", (unsigned short)d+1);
-	size_t length = strlen(string);
-	char *generate = malloc(length + 1 + 1);
+	// size_t length = strlen(string);
+	char *generate = malloc(strlen(string) + strlen(c) + 1);
 	strcpy(generate, string);
-	generate[length] = *c;
-	generate[length + 1] = '\0';
-	free(c);
+	strcat(generate, c);
+
+	//generate[length] = *c;
+
+	// printf("!!!!!!!!!!!!!!!!!! %s\n", generate);
+	// printf("%s\n", c);
+	// printf("%s\n", generate);
+
+	// generate[length + 1] = '\0';
+	// free(c);
 	return generate;
 }
 
@@ -175,6 +186,7 @@ int term(void){
 			instr1.value.s = generate_param("%", argCount);
 
 			insert_item(ilist, &instr_type, &instr1, &instr2, &instr3);
+
 			instr_type = INSTRUCT_MOVE;
 			instr1.type = TF;
 			instr1.value.s = generate_param("%", argCount);
@@ -215,7 +227,6 @@ int term(void){
 					insert_item(ilist, &instr_type, &instr1, &instr2, &instr3);
 				}
 			}
-	
 			token = getToken();
 			if(!error_lex()){
 				instruction_exit(ERROR_LEX);
@@ -281,7 +292,7 @@ int check_length_substr_ord_build_in(){
 									insert_item(ilist, &instr_type, &instr1, &instr2, &instr3);
 
 									instr_type = INSTRUCT_JUMPIFEQ;
-									instr1.value.s = "$label_true";
+									instr1.value.s = generate_param("$label_true", ++labelCountOrd);
 									instr2.type = GF;
 									instr2.value.s = "$tmp2";
 									instr3.type = S;
@@ -291,7 +302,7 @@ int check_length_substr_ord_build_in(){
 									instruction_exit(ERR_INCOMPATIBLE_TYPE);
 
 									instr_type = INSTRUCT_LABEL;
-									instr1.value.s = "$label_true";
+									instr1.value.s = generate_param("$label_true", labelCountOrd);
 
 									insert_item(ilist, &instr_type, &instr1, &instr2, &instr3);
 								}
@@ -340,7 +351,7 @@ int check_chr_build_in(){
 												insert_item(ilist, &instr_type, &instr1, &instr2, &instr3);
 
 												instr_type = INSTRUCT_JUMPIFEQ;
-												instr1.value.s = "$label_true_chr";
+												instr1.value.s = generate_param("$label_true_chr", ++labelCountChr);
 												instr2.type = GF;
 												instr2.value.s = "$tmp2";
 												instr3.type = S;
@@ -350,7 +361,7 @@ int check_chr_build_in(){
 												instruction_exit(ERR_INCOMPATIBLE_TYPE);
 
 												instr_type = INSTRUCT_LABEL;
-												instr1.value.s = "$label_true_chr";
+												instr1.value.s = generate_param("$label_true_chr", labelCountChr);
 
 												insert_item(ilist, &instr_type, &instr1, &instr2, &instr3);
 
@@ -441,7 +452,7 @@ int check_substr_ord_build_in(int param){
 													switch(param){
 														case 1:
 															instr_type = INSTRUCT_JUMPIFEQ;
-															instr1.value.s = "$label_true_2";
+															instr1.value.s = generate_param("$label_true_2", ++labelSubstrCount1);
 															instr2.type = GF;
 															instr2.value.s = "$tmp2";
 															instr3.type = S;
@@ -451,14 +462,14 @@ int check_substr_ord_build_in(int param){
 															instruction_exit(ERR_INCOMPATIBLE_TYPE);
 
 															instr_type = INSTRUCT_LABEL;
-															instr1.value.s = "$label_true_2";
+															instr1.value.s = generate_param("$label_true_2", labelSubstrCount1);
 
 															insert_item(ilist, &instr_type, &instr1, &instr2, &instr3);
 														break;
 
 														case 2:
 															instr_type = INSTRUCT_JUMPIFEQ;
-															instr1.value.s = "$label_true_3";
+															instr1.value.s = generate_param("$label_true_3", ++labelSubstrCount2);
 															instr2.type = GF;
 															instr2.value.s = "$tmp2";
 															instr3.type = S;
@@ -468,12 +479,11 @@ int check_substr_ord_build_in(int param){
 															instruction_exit(ERR_INCOMPATIBLE_TYPE);
 
 															instr_type = INSTRUCT_LABEL;
-															instr1.value.s = "$label_true_3";
+															instr1.value.s = generate_param("$label_true_3", labelSubstrCount2);
 
 															insert_item(ilist, &instr_type, &instr1, &instr2, &instr3);
 														break;
 													}
-
 													
 											}
 											else {
@@ -703,7 +713,13 @@ int check_input(){
 		}
 
 		lData.type = INTEGER;
-		local_map_put(localMap, variable_name, lData);
+		if (!is_LF){
+			local_map_put(localMap, variable_name, lData);
+		}else {
+			gData = global_map_get_value(gMap, function_name);
+			local_map_put(gData.lMap, variable_name, lData);
+		}
+		
 	 
 	 	instr1.value.s = variable_name;
 		instr_type = INSTRUCT_INPUT_I;
@@ -715,7 +731,12 @@ int check_input(){
 		else {instr1.type = LF;}
 
 		lData.type = FLOAT;
-		local_map_put(localMap, variable_name, lData);
+		if (!is_LF){
+			local_map_put(localMap, variable_name, lData);
+		}else {
+			gData = global_map_get_value(gMap, function_name);
+			local_map_put(gData.lMap, variable_name, lData);
+		}
 
 		instr1.value.s = variable_name;
 		instr_type = INSTRUCT_INPUT_F;
@@ -727,7 +748,12 @@ int check_input(){
 
 		lData.type = STRING;
 		//lData.type = NONE;
-		local_map_put(localMap, variable_name, lData);
+		if (!is_LF){
+			local_map_put(localMap, variable_name, lData);
+		}else {
+			gData = global_map_get_value(gMap, function_name);
+			local_map_put(gData.lMap, variable_name, lData);
+		}
 
 		instr1.value.s = variable_name;
 		instr_type = INSTRUCT_INPUT_S;
@@ -791,9 +817,17 @@ int call_left_bracket(tDataFunction *tmp){
 		insert_item(ilist, &instr_type, &instr1, &instr2, &instr3);
 
 		if (!in_stat){
+			// dynamick prirazeni promenne typu navratove hodnoty
 			gData = global_map_get_value(gMap, call_name);
 			lData.type = gData.returnType;
-			local_map_put(localMap, variable_name, lData);
+			if (!is_LF){
+				local_map_put(localMap, variable_name, lData);
+			} else {
+				gData = global_map_get_value(gMap, function_name);
+				local_map_put(gData.lMap, variable_name, lData);
+			}
+			
+
 
 			instr_type = INSTRUCT_MOVE;
 			instr1.type = LF;
@@ -849,9 +883,15 @@ int call_without_bracket(tDataFunction *tmp){
 	insert_item(ilist, &instr_type, &instr1, &instr2, &instr3);
 
 	if (!in_stat){
+		// dynamick prirazeni promenne typu navratove hodnoty
 		gData = global_map_get_value(gMap, call_name);
 		lData.type = gData.returnType;
-		local_map_put(localMap, variable_name, lData);
+		if (!is_LF){
+			local_map_put(localMap, variable_name, lData);
+		} else {
+			gData = global_map_get_value(gMap, function_name);
+			local_map_put(gData.lMap, variable_name, lData);
+		}
 
 		instr_type = INSTRUCT_MOVE;
 		instr1.type = LF;
@@ -912,7 +952,13 @@ int call_function(){
 			// dynamick prirazeni promenne typu navratove hodnoty
 			gData = global_map_get_value(gMap, call_name);
 			lData.type = gData.returnType;
-			local_map_put(localMap, variable_name, lData);
+			if (!is_LF){
+				local_map_put(localMap, variable_name, lData);
+			} else {
+				gData = global_map_get_value(gMap, function_name);
+				local_map_put(gData.lMap, variable_name, lData);
+			}
+			
 
 			return_type = tmp->returnType;
 		}
@@ -978,12 +1024,38 @@ int sth(){
 						}
 					}
 
-					instr_type = INSTRUCT_MOVE;
-					instr1.type = GF;
-					instr1.value.s = "$result\0";
-					instr2.type = LF;
-					instr2.value.s = gToken.data.str;
-					insert_item(ilist, &instr_type, &instr1, &instr2, &instr3);
+					if (!is_LF){
+						lData = local_map_get_value(localMap, variable_name);
+					}else {
+						gData = global_map_get_value(gMap, function_name);
+						lData = local_map_get_value(gData.lMap, variable_name);
+					}
+					
+					if (strcmp(variable_name, gToken.data.str) == 0 && lData.type == NONE){
+						
+							instr_type = INSTRUCT_MOVE;
+							instr1.type = LF;
+							instr1.value.s = gToken.data.str;
+							instr2.type = N;
+							instr2.value.s = "nil";
+							insert_item(ilist, &instr_type, &instr1, &instr2, &instr3);
+
+							instr_type = INSTRUCT_MOVE;
+							instr1.type = GF;
+							instr1.value.s = "$result\0";
+							instr2.type = LF;
+							instr2.value.s = gToken.data.str;
+							insert_item(ilist, &instr_type, &instr1, &instr2, &instr3);
+					
+					}
+					else {
+						instr_type = INSTRUCT_MOVE;
+						instr1.type = GF;
+						instr1.value.s = "$result\0";
+						instr2.type = LF;
+						instr2.value.s = gToken.data.str;
+						insert_item(ilist, &instr_type, &instr1, &instr2, &instr3);
+					}
 
 					// je to promenna prirazenu typu a = b
 					res = parse_expr(localMap, ilist, false);
@@ -2225,7 +2297,17 @@ int func(){
 
 	// konec funkce
 
-	if (return_type != -1){
+	if (strcmp(call_name, "") != 0){
+		if (return_type != -1){
+			instr_type = INSTRUCT_MOVE;
+			instr1.type = LF;
+			instr1.value.s = "%retval";
+			instr2.type = TF;
+			instr2.value.s = "%retval";
+
+			insert_item(ilist, &instr_type, &instr1, &instr2, &instr3);
+		}
+	}else {
 		instr_type = INSTRUCT_MOVE;
 		instr1.type = LF;
 		instr1.value.s = "%retval";
@@ -2234,6 +2316,7 @@ int func(){
 
 		insert_item(ilist, &instr_type, &instr1, &instr2, &instr3);
 	}
+
 
 	// ukladani typu navratove hodnoty do globalni mapy
 	gData.returnType = return_type;
