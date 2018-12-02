@@ -111,7 +111,7 @@ var1 " \
 echo "Test data for testData: TESTED $TESTNUMBER tests, PASSED: $SUCCTESTS, FAILED: $FAILEDTESTS Totally: ${green}$total%${reset}"
 
 # genDATA
-OUTPUT=$(sudo bash tester.sh ifj genData 2>/dev/null | tail -n 5)
+OUTPUT=$(bash tester.sh ifj genData 2>/dev/null | tail -n 5)
 TESTNUMBER=$(echo $OUTPUT | cut -c8-10)
 SUCCTESTS=$(echo $OUTPUT | cut -c26-27)
 FAILEDTESTS=$((TESTNUMBER-SUCCTESTS))
@@ -144,7 +144,7 @@ echo ""
 echo "Testing code generation, this might take few seconds..."
 
 
-OUTPUT=$(sudo bash gen_tester.sh -n 2>/dev/null | tail -n 1)
+OUTPUT=$(bash gen_tester.sh -n 2>/dev/null | tail -n 1)
 TESTNUMBER=$(echo $OUTPUT | cut -c8-10)
 SUCCTESTS=$(echo $OUTPUT | cut -c26-29)
 

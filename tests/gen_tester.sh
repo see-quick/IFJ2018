@@ -17,7 +17,7 @@
 
 usage() {
   echo  "Run program simply without any arguments: bash gen_tester.sh"
-  echo  "For proper functionality you have to be logged as sudo or root !!!"
+  # echo  "For proper functionality you have to be logged as sudo or root !!!"
   echo  "Options:"
   echo  "        -h --help display this information."
   echo  "        -s for silent run -> interpret errors will be displayed"
@@ -48,10 +48,10 @@ if [[ "$1" == "-n" ]];then
   filegen="-n"
 fi
 
-if [[ "$EUID" -ne 0 ]];then
-  echo "Please run as root"
-  exit 1
-fi
+# if [[ "$EUID" -ne 0 ]];then
+#   echo "Please run as root"
+#   exit 1
+# fi
 
 echo "Testing return values from interpret..."
 echo "Running all test dirs from ../tests with expected return value of 0..."
@@ -91,9 +91,9 @@ function testRunner() {
         fi
 
         if [[ "$silent" == "-s" ]]; then
-          timeout 1 sudo ./ic18int test.code > /dev/null 2>&1
+          timeout 1 ./ic18int test.code > /dev/null 2>&1
         else
-          timeout 1 sudo ./ic18int test.code 1>/dev/null
+          timeout 1 ./ic18int test.code 1>/dev/null
         fi
         retval=$(echo $?)
         if [ "$retval" -eq "124" ]; then
@@ -156,7 +156,7 @@ for ((n=0; n<$lines;n++)); do #loop over test dir
         infile="$testfile.in"
         outfile="$testfile.out"
 
-        timeout 1 sudo ./ic18int test.code < $testpath/$currentdir/$infile > $tmpout
+        timeout 1 ./ic18int test.code < $testpath/$currentdir/$infile > $tmpout
         retval=$(echo $?)
         if [ "$retval" -eq "124" ]; then
           echo "${red}[TEST FAILED]${reset} Program got stucked killed process after 3 sec"

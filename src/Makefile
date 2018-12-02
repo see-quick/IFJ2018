@@ -17,6 +17,6 @@ interpret:
 	$(ALL)
 	./$(EXE) < vstup.code > vystupny.code
 	sudo ./ic18int vystupny.code > interpret.out
-	
+
 test:
-	@cd ../tests/; sudo bash succ.sh; cd ../src/
+	@cd ../tests/; bash succ.sh; cd ../src/
