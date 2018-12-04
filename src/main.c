@@ -6,13 +6,10 @@
  * Popis: Hlavni vykonavaci funkce programu
  *
  *
- * Datum:
- *
- * Autori:   Maros Orsak       vedouci 
- *           Polishchuk Kateryna     <xpolis03@fit.vutbr.cz>           
- *           Igor Ignac           
- *           Marek Rohel       
-
+ * Autori:   Maros Orsak            	xorsak02@stud.fit.vutbr.cz
+ *           Polishchuk Kateryna     	xpolis03@stud.fit.vutbr.cz
+ *           Igor Ignac                 xignac00@stud.fit.vutbr.cz
+ *           Marek Rohel            	xrohel01@stud.fit.vutbr.cz
 */
 
 /*Pouzite knihovny */
@@ -38,7 +35,11 @@ extern tInstructionData instr1;
 extern tInstructionData instr2;
 extern tInstructionData instr3;
 
-
+/**
+ * Hlavna vykonavacia funckcia main()
+ * Inicializacia listu, globalnej mapy, volanie parseru, generovanie instrukcii
+ * @return SUCCESS v pripade spravneho ukončenia, inak chybove navratove kody definovane v zadani ifj18
+ */
 int main() {
    
   int result = SUCCESS;
@@ -62,18 +63,6 @@ int main() {
   instr_type = INSTRUCT_SUBSTR;
   insert_item(pom_list, &instr_type, &instr1, &instr2, &instr3);
 
-  // instr_type = INSTRUCT_LABEL;
-  // instr1.value.s = "a";
-  // insert_item(pom_list, &instr_type, &instr1, &instr2, &instr3);
-
-  // instr_type = INSTRUCT_EXIT;
-  // instr1.type = I;
-  // instr1.value.i = SEM_ERR;
-  // insert_item(pom_list, &instr_type, &instr1, &instr2, &instr3);
-
-  // instr_type = INSTRUCT_RETURN;
-  // insert_item(pom_list, &instr_type, &instr1, &instr2, &instr3);
-
   reverse(&(pom_list->first));
   set_active(pom_list);
   parse_instructions(pom_list);      
@@ -83,8 +72,6 @@ int main() {
   if (result == SUCCESS){
       instruction_exit(result);
   }
-
-
 
   reverse(&(function_statements_list->first));
   set_active(function_statements_list);

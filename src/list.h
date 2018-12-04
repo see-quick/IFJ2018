@@ -3,14 +3,13 @@
  * Projekt:  Implementace prekladace imperativniho jazyka IFJ18
  * Soubor:   list.h
  *
- * Popis:  hlavickovy subor
+ * Popis:  hlavickovy subor pre list s instrukciami
  *
- * Datum: 22.9.2018 23:25
  *
- * Autori:   Maros Orsak       vedouci
- *           Polishchuk Kateryna     <xpolis03@fit.vutbr.cz>
- *           Igor Ignac
- *           Marek Rohel
+ * Autori:   Maros Orsak            	xorsak02@stud.fit.vutbr.cz
+ *           Polishchuk Kateryna     	xpolis03@stud.fit.vutbr.cz
+ *           Igor Ignac                 xignac00@stud.fit.vutbr.cz
+ *           Marek Rohel            	xrohel01@stud.fit.vutbr.cz
 */
 
 #include <stdio.h>
