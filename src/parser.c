@@ -5,14 +5,10 @@
  *
  * Popis: Syntakticka a semanticka analyza
  *
- *
- * Datum:
- *
- * Autori:   Maros Orsak       vedouci
- *           Polishchuk Kateryna     <xpolis03@fit.vutbr.cz>
- *           Igor Ignac
- *           Marek Rohel
-
+ * Autori:   Maros Orsak            	xorsak02@stud.fit.vutbr.cz
+ *           Polishchuk Kateryna     	xpolis03@stud.fit.vutbr.cz
+ *           Igor Ignac                 xignac00@stud.fit.vutbr.cz
+ *           Marek Rohel            	xrohel01@stud.fit.vutbr.cz
 */
 
 #include <stdio.h>
@@ -26,7 +22,6 @@
 
 int token;        	         // aktualni token
 
-
 bool is_LF = false;
 bool zavorka = false;
 char * function_name;
@@ -39,14 +34,11 @@ int return_type = -1;
 bool in_stat = false; // false - volani fuknce bez prirazeni, true - s prirazenim
 bool in_print = false;
 
-
 /*********************************************************************/
 /*LOKALNI TABULKA SYMBOLU*/
 LocalMap* localMap;
 tDataIDF lData;
 /*********************************************************************/
-
-
 
 /*********************************************************************/
 /* GLOBALNI TABULKA SYMBOLU */
@@ -62,10 +54,6 @@ unsigned short labelSubstrCount2= 0;
 
 /*********************************************************************/
 
-
-
-
-
 /*********************************************************************/
 /*GLOBALNI PROMENNE PRO UKLADANI INSTRUKCI DO PASKY TRIADRESNEHO KODU*/
 tList * ilist;               // instruction list
@@ -80,8 +68,9 @@ tInstructionData instr2;
 tInstructionData instr3;
 /*********************************************************************/
 
-
-
+/**
+ * Funkcia, ktora inicializuje vsetky build_in funkcie
+ */
 void insert_build_in_functions(){
 	gData.paramCount = 1;
 	gData.returnType = INTEGER;
@@ -115,7 +104,12 @@ void insert_build_in_functions(){
     global_map_put(gMap, "inputf", gData);
 }
 
-
+/**
+ * Funckia, ktora generuje unikatny nazov navestia, funckia atd.
+ * @param string konkretny nazov navestia, funckie atd.
+ * @param d cislo (suffix nazvu navestia, fce)
+ * @return vracia vytvorene unikatne navestie, funkciu atd.
+ */
 char * generate_param(char *string, unsigned short d){
 	char *c = (char*)malloc(sizeof(char) * 2);
     sprintf(c, "%hu", (unsigned short)d+1);
@@ -123,25 +117,19 @@ char * generate_param(char *string, unsigned short d){
 	char *generate = malloc(strlen(string) + strlen(c) + 1);
 	strcpy(generate, string);
 	strcat(generate, c);
-
-	//generate[length] = *c;
-
-	// printf("!!!!!!!!!!!!!!!!!! %s\n", generate);
-	// printf("%s\n", c);
-	// printf("%s\n", generate);
-
-	// generate[length + 1] = '\0';
-	// free(c);
 	return generate;
 }
 
+/**
+ * Function which generating instruction EXIT for terminating of the program
+ * @param ret_val 0 - if succes
+ */
 void instruction_exit(int ret_val){
 	instr_type = INSTRUCT_EXIT;
 	instr1.type = I;
 	instr1.value.i = ret_val;
 	insert_item(ilist, &instr_type, &instr1, &instr2, &instr3);
 }
-
 
 int error_lex(void){
 	if(token == ERROR_LEX || token == LEX_UNKNOWN){

@@ -3,14 +3,13 @@
  * Projekt:  Implementace prekladace imperativniho jazyka IFJ18
  * Soubor:   instr_parse.c
  *
- * Popis:  zdrojovy subor
+ * Popis:  zdrojovy subor parseru instrukcii
  *
- * Datum: 29.9.2018 10:18
  *
- * Autori:   Maros Orsak       vedouci
- *           Polishchuk Kateryna     <xpolis03@fit.vutbr.cz>
- *           Igor Ignac
- *           Marek Rohel
+ * Autori:   Maros Orsak            	xorsak02@stud.fit.vutbr.cz
+ *           Polishchuk Kateryna     	xpolis03@stud.fit.vutbr.cz
+ *           Igor Ignac                 xignac00@stud.fit.vutbr.cz
+ *           Marek Rohel            	xrohel01@stud.fit.vutbr.cz
 */
 #include "instr_parse.h"
 #include "list.h"
@@ -19,9 +18,9 @@
 #include <ctype.h>
 
 
-int while_count = 0;
-int if_count = 0;
-int arg_count;
+int while_count = 0;        // počítadlo cyklov while
+int if_count = 0;           // počítadlo if
+int arg_count;              // počítadlo argumentov
 
 /**
  * Replace v retazci
@@ -43,7 +42,6 @@ void replace_str(char **str, char *orig, char *rep) {
   sprintf(buffer+(p-(*str)), "%s%s", rep, p+strlen(orig));
   buffer[strlen(buffer)] = '\0';
 
-  // free((*str));
   *str = buffer;
 }
 

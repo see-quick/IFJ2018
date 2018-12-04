@@ -5,14 +5,11 @@
  *
  * Popis: hlavickovy soubor scanner.h
  *
- *
- * Datum:
- *
- * Autori:   Maros Orsak       vedouci
- *           Polishchuk Kateryna     <xpolis03@fit.vutbr.cz>
- *           Igor Ignac
- *           Marek Rohel
 
+ * Autori:   Maros Orsak            	xorsak02@stud.fit.vutbr.cz
+ *           Polishchuk Kateryna     	xpolis03@stud.fit.vutbr.cz
+ *           Igor Ignac                 xignac00@stud.fit.vutbr.cz
+ *           Marek Rohel            	xrohel01@stud.fit.vutbr.cz
 */
 
 
