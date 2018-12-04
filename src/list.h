@@ -109,18 +109,17 @@ typedef enum
 
 } tInstructionTypes;
 
-/** **/
 typedef enum
 {
-    GF = 700,    //pre ID
-    LF = 701,    //pre ID
-    TF = 702,    //pre ID
-    I = 703,     // napr:int@10
-    F = 704,     // napr:float@2.33
-    S = 705,      // string@ahoj
-    FCE = 706,     //pre funkcie
-    EMPTY = 707, //prazdna adresa
-    N = 708    // napr:nil@nil   <--
+    GF = 700,    // Identificator Global frame
+    LF = 701,    // Identificator Local frame
+    TF = 702,    // Identificator Temporary frame
+    I = 703,     // Number int@13
+    F = 704,     // Float  %a format
+    S = 705,     // String
+    FCE = 706,   // pre funkcie
+    EMPTY = 707, // prazdna adresa
+    N = 708      // napr:nil@nil   <--
 } tDatType;
 
 typedef struct value

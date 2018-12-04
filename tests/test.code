@@ -90,15 +90,9 @@ DEFVAR GF@$type2
 CREATEFRAME
 PUSHFRAME
 DEFVAR LF@a
-MOVE GF@$result int@10
+READ LF@a float
+WRITE LF@a
+MOVE GF@$result float@0x1.4d70a3d70a3d7p+2
+ADD GF@$result GF@$result LF@a
 MOVE LF@a GF@$result
-LABEL while_label1
-MOVE GF@$result LF@a
-GT GF@$result GF@$result int@5
-JUMPIFEQ while_label1_end GF@$result bool@false
-MOVE GF@$result LF@a
-ADD GF@$result GF@$result int@1
-MOVE LF@a GF@$result
-JUMP while_label1
-LABEL while_label1_end
 EXIT int@0

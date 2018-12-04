@@ -19,7 +19,7 @@
 #include <stdbool.h>
 #include "string.h"
 
-#define MAX_SIZE_OF_HASH_TABLE 11 // cislo musi byt prvocislo
+#define MAX_SIZE_OF_HASH_TABLE 101 // cislo musi byt prvocislo
 
 typedef char* String; // (toto bude kluc)
 
@@ -43,7 +43,7 @@ typedef union DataTypes
     bool nil;
 } dType;
 
-/** stucture for data of indetificator (for local map) **/
+/** struktura pre data indentifikatorov (lokalna mapa) **/
 typedef struct DataIdentificator { // (toto bude obsah pre localnu mapu)
     Types type;                     // typ identifikatora
     dType value;                    // hodnota identifikatora
@@ -66,7 +66,7 @@ typedef struct LocalMap{
 }LocalMap;
 
 
-/** stucture for data of function (for global map) **/
+/** struktura pre data funkcie (globalna mapa) **/
 typedef struct DataFunction {
     Types type;                     // typ parametrov
     Types returnType;               // navratova hodnota
@@ -81,7 +81,6 @@ typedef struct GlobalMapItem{
     tDataFunction globalData;   // obsah pre globalnu mapu
     struct GlobalMapItem* ptrnext;  // ukazatel na dalsi synonym
 } GlobalMapItem;
-
 
 typedef struct GlobalMap{
     int size;

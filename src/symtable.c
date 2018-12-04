@@ -506,7 +506,5 @@ void global_map_print( GlobalMap* ptrMap ) {
     printf("------------------------------------\n");
     printf("Items count %i   The longest list %i\n", sumcnt, maxlen);
     printf("------------------------------------\n");
-
-
     /************************ KONIEC FUNKCII PRE GLOBALNU MAPU ****************************/
 }

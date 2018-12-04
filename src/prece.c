@@ -43,7 +43,6 @@ unsigned short label3Counter3 = 0;
 unsigned short nilEndCounter = 0;
 
 // PRECENDENCE TABLE
-
 prece_states prece_table [SIZEOFTABLE][SIZEOFTABLE] = {
 /*        +    -    *    /    <    >   <=   >=   ==   !=   i    (    )    $   ,   f          <------- ACT TOKEN */
 /* + */ { G ,  G,   L,   L,   G,   G,  G,   G,   G,   G,   L,   L,   G,   G,  G,  L},
@@ -64,14 +63,21 @@ prece_states prece_table [SIZEOFTABLE][SIZEOFTABLE] = {
 /* f */ {Err, Err, Err, Err, Err, Err,Err,Err, Err , Err , Err, EQ, Err, Err,Err,Err},
 };
 
+/**
+ * Funckia ktora inicializuje, mapovu śtruktúru kde sa ukladajú dočasne informácie o tokene
+ */
 void setEmptyDataIDF() {
     dataIDF.type = 500;
     dataIDF.defined = false;
     dataIDF.value.nil = true;
 }
 
-
-/* KVOLI INDEXOVANIU NA PRECEDENCNI TABULKU */
+/**
+ * KVOLI INDEXOVANIU NA PRECEDENCNI TABULKU
+ * @param indexer konkretne cislo tokenu ziskane z parseru
+ * @param lMap localna mapa
+ * @return vracia prekonvertovany token na index pre precedencnu tabulku
+ */
 int indexerOfPreceTable (int indexer, LocalMap* lMap)
 {
     int type = indexer;          // vyberieme si co je aktualny token a budeme ho indexovat
@@ -132,6 +138,12 @@ int indexerOfPreceTable (int indexer, LocalMap* lMap)
     return type;
 }
 
+/**
+ * Funckia, ktorá vytvára MOVE inštrukciu , v prípade ak sa jedná o bool
+ * @param list list tokenov
+ * @param is_bool pomocny flag
+ * @return  MOVE inštrukcia alebo nić na základe návratovej hodnoty
+ */
 bool move(tList *list, bool is_bool){
     if (is_bool){
         instr_type = INSTRUCT_MOVE;
@@ -191,6 +203,10 @@ char* convert_to_char(int token){
     return "\0";
 }
 
+/**
+ * Nastavanie 1. a 2. premennej na $result premennu
+ * @param instruction_type konkretna inštrukcia (napr: ADD, SUB..)
+ */
 void setFirstAndSecondVariableToGenerate(int instruction_type){
     instr_type = instruction_type;
     instr1.type = GF;
@@ -199,6 +215,13 @@ void setFirstAndSecondVariableToGenerate(int instruction_type){
     instr2.value.s = "$result\0";
 }
 
+/**
+ * Funckia, ktora vygeneruje instruckie pre boolean
+ * @param list list inštrukcií
+ * @param stack zásobník dát
+ * @param instruction_type konkrétna inštrukcia
+ * @param positionForConcreteInstruction pozicia v zasobniku +1 or +3 E -> E([1]) + E([3])
+ */
 void setFirstAndSecondForBoolean(tList*list, tStack* stack, tInstructionTypes instruction_type, int positionForConcreteInstruction){
     instr_type = instruction_type;
     instr1.type = GF;
@@ -238,6 +261,11 @@ void generateType(tList* list, tStack * stack){
     insert_item(list, &instr_type, &instr1, &instr2, &instr3);
 }
 
+/**
+ * Fukcia, ktora generuje navestia JUMP
+ * @param list list instrukci
+ * @param type
+ */
 void generateLabelJumps(tList* list, int type){
     switch(type){
         case I:
@@ -290,8 +318,8 @@ void generateLabelJumps(tList* list, int type){
 }
 
 /**
- * Generating float label
- * @param list concrete list
+ * Generovanie float label
+ * @param list konkrenty list
  */
 void generatingFloatLabel(tList* list){
     instr_type = INSTRUCT_LABEL;
@@ -300,8 +328,8 @@ void generatingFloatLabel(tList* list){
 }
 
 /**
- * Generating int label
- * @param list concrete list
+ * Generovanie int label
+ * @param list konkrenty list
  */
 void generatingIntLabel(tList* list){
     instr_type = INSTRUCT_LABEL;
@@ -310,8 +338,8 @@ void generatingIntLabel(tList* list){
 }
 
 /**
- * Generating string label
- * @param list concrete list
+ * Generovanie string label
+ * @param list konkrenty list
  */
 void generatingStringLabel(tList* list){
     instr_type = INSTRUCT_LABEL;
@@ -320,10 +348,10 @@ void generatingStringLabel(tList* list){
 }
 
 /**
- * Generating conversion int to float
- * @param list concrete list
- * @param stack concrete stack
- * @param position position in stack +1 or +3 E -> E([1]) + E([3])
+ * Generovanie konverzie int to float
+ * @param list konkrenty list
+ * @param stack konkrenty stack
+ * @param position pozicia v zasobniku +1 or +3 E -> E([1]) + E([3])
  */
 void generatingIntToFloat(tList* list, tStack *stack, int positionForIntToFloatInstruction ){
     instr1.type = GF;
@@ -349,7 +377,7 @@ void generatingIntToFloat(tList* list, tStack *stack, int positionForIntToFloatI
 }
 
 /*
- * Function which will decide between type of instruction and then sets all ADD <var> <symb> <symb> and insert to the list
+ * Funckia, ktora rozhodne medzi typov instrukcie a potom nastavi vsetky argumenty (ADD <var <symb> <symb> a vlozi ich do listu)
  */
 void generatingConcreteInstruction(tList* list, tStack *stack, int type, char * instruction_type, int positionForConcreteInstruction){
 
@@ -373,9 +401,6 @@ void generatingConcreteInstruction(tList* list, tStack *stack, int type, char * 
         setFirstAndSecondVariableToGenerate(INSTRUCT_EQ);
     }
     else setFirstAndSecondVariableToGenerate(INSTRUCT_ADD);
-
-    // todo
-
 
     switch(type){
         case I:
@@ -436,32 +461,32 @@ void generatingConcreteInstruction(tList* list, tStack *stack, int type, char * 
 }
 
 /**
- * Function which doing all job of generating
- * @param list concrete list
- * @param stack concrete stack
- * @param type type -> I, S, F or NONE ?
+ * Funckia, ktora robi celu pracu generovania
+ * @param list konkretny list
+ * @param stack konkretny zasobnik
+ * @param type type -> I, S, F alebo NONE ?
  * @param instruction_type ADD, SUB etc.
- * @param position position in stack +1 or +3 E -> E([1]) + E([3])
+ * @param position pozicia v zasobniku +1 or +3 E -> E([1]) + E([3])
  */
 void generateInstructionForType(tList* list, tStack *stack, int type, char * instruction_type, int positionForConcreteInstruction, int positionForIntToFloatInstruction){
-    // this generating concrete type
+    // toto generuje konkretny typ
     generateType(list, stack);
-    // this generating concrete labels
+    // toto generuje konkretny navestie
     generateLabelJumps(list,type);
-    // error for INCOMPATIBLE_TYPE
+    // error pre INCOMPATIBLE_TYPE
     instruction_exit(ERR_INCOMPATIBLE_TYPE);
 
-    // for float generating
+    // pre float generovanie
     if(type == F){
-        // generating ADD_float label
+        // generovanie ADD_float label
         generatingIntLabel(list);
         // TOTO JE KONVERZIA... INT TO FLOAT...
         generatingIntToFloat(list, stack, positionForIntToFloatInstruction);
 
-        // generating ADD_int label
+        // generovanie ADD_int label
         generatingFloatLabel(list);
     } else if (type == I) {
-        // generating ADD_float label
+        // generovanie ADD_float label
         generatingIntLabel(list);
     }
     else{
@@ -469,12 +494,13 @@ void generateInstructionForType(tList* list, tStack *stack, int type, char * ins
     }
 
     // ZISKANIE KONKRETNEHO TYPU INSTRUKCIE
-    // generating concrete instructions f.e. ADD, SUB etc...
+    // generovanie konkretny instrukcie f.e. ADD, SUB etc...
     generatingConcreteInstruction(list, stack, type, instruction_type, positionForConcreteInstruction);
 }
 
-
-
+/**
+ * Funckia, ktora sluzi na generovania erroru pri deleni nulou
+ */
 void generateIntDivisionError(tList * list, tStack *stack, int positionForConcreteInstruction){
     instr_type = INSTRUCT_JUMPIFEQ;
     instr1.value.s = generate_param("$label_err_9", divCounter++);
@@ -500,7 +526,12 @@ void generateIntDivisionError(tList * list, tStack *stack, int positionForConcre
     insert_item(list,&instr_type, &instr1, &instr2, &instr3);
 }
 
-
+/**
+ * Genrovanie instrukcii, pre stav NIL a NIL
+ * @param list konkrentny list
+ * @param stack konkretny zasobnik
+ * @param instruction_type konkrenta instrukcia
+ */
 void generateInstructionForNones(tList* list, tStack *stack, tInstructionTypes instruction_type){
     (void)instruction_type;
 
@@ -693,6 +724,20 @@ void generateInstructionForNones(tList* list, tStack *stack, tInstructionTypes i
 
 // @varName pravidlo id = <sth>
 // @lMap je lokalni Mapa
+/**
+ * JADRO celej precedenčnej analýzy
+ *  1) Na zaciatku celej precedencnej analyzy inicializuje vsekty potrebne struktury ako zasobnik, expr_return
+ *  2) Nasledne zacneme cyklus v ktorom si ziskame indexy do precedencnej tabulky (ktore prechadzaju urcitymi konvertovmi)
+ *  3) Po indexoch rozlisujeme a filtrujeme konkrenty token
+ *  4) AK ho priradime tak na zaklade zasobnikej situacie zvoli pravidlo < > = Err
+ *  5) Po zvoleni pravidla sa prevedie konkrenta logiku celej casti
+ *  6) Ukončujeme v pripade zlej postupnosti, nespravnosti typova alebo aj ked prideme do bodu ked budeme mat na
+ *  zasobniku iba jeden non-terminal $E$
+ * @param lMap locálna mapa
+ * @param list konkrétny list
+ * @param is_bool flag zda sa jedna o bool
+ * @return vracia strukturu expr_return
+ */
 expr_return parse_expr(LocalMap* lMap, tList* list, bool is_bool){
 
     /* INICIALIZACIA STRUKTUR */
@@ -884,7 +929,6 @@ expr_return parse_expr(LocalMap* lMap, tList* list, bool is_bool){
                                         isFirstVariable = true;
 
                                         if (stack->arrayOfItems[stack->finderOfParenthesis + 3].type == INTEGER){
-//                                            printf("Som tu...\n");
                                             generateInstructionForType(list, stack, I, "ADD", 3, 1);
                                         }
                                         else if (stack->arrayOfItems[stack->finderOfParenthesis + 3].type == FLOAT){
@@ -1517,8 +1561,6 @@ expr_return parse_expr(LocalMap* lMap, tList* list, bool is_bool){
                                     }
                                     dataIDF.type = INTEGER;
                                     setFirstAndSecondVariableToGenerate(INSTRUCT_IDIV);
-
-                                    //dataIDF.value.i = stack->arrayOfItems[stack->finderOfParenthesis + 1].value.i / stack->arrayOfItems[stack->finderOfParenthesis + 3].value.i;
                                     insert_item(list, &instr_type, &instr1, &instr2, &instr3);
                                     //generovanie IDIV %s@%s %s@%s %s@%s
                                     isThirdVariable = false;
@@ -1639,9 +1681,7 @@ expr_return parse_expr(LocalMap* lMap, tList* list, bool is_bool){
                                     insert_item(list, &instr_type, &instr1, &instr2, &instr3);
                                     // generovanie  DIV %s@%s %s@%s %s@%s
 
-
-
-                                } else {   //printf("semanticky error BOOL \n");
+                                } else {
                                     resultOfPrece.result = ERR_INCOMPATIBLE_TYPE;
                                     resultOfPrece.bool_result = false;
                                     return resultOfPrece;

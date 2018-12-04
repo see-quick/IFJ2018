@@ -18,9 +18,9 @@
 #include <ctype.h>
 
 
-int while_count = 0;
-int if_count = 0;
-int arg_count;
+int while_count = 0;        // počítadlo cyklov while
+int if_count = 0;           // počítadlo if
+int arg_count;              // počítadlo argumentov
 
 /**
  * Replace v retazci

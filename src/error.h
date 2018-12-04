@@ -3,7 +3,7 @@
  * Projekt:  Implementace prekladace imperativniho jazyka IFJ18
  * Soubor:   error.h
  *
- * Popis: Chybove stavy programu
+ * Popis: Hlavičkový súbor chybove stavy programu
  *
  *
  * Autori:   Maros Orsak            	xorsak02@stud.fit.vutbr.cz
