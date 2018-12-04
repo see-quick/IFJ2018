@@ -5,7 +5,6 @@
  *
  * Popis: Hlavičkový súbor chybove stavy programu
  *
- *
  * Autori:   Maros Orsak            	xorsak02@stud.fit.vutbr.cz
  *           Polishchuk Kateryna     	xpolis03@stud.fit.vutbr.cz
  *           Igor Ignac                 xignac00@stud.fit.vutbr.cz
