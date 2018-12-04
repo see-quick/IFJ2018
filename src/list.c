@@ -19,10 +19,8 @@ extern tList * function_statements_list;
 extern bool is_LF;
 
 /**
- * @brief Printne upozornenie, ze doslo k chybe
- *
  * Tato funkcia bude volana pri vsetkych chybach nad listom
- * @return -1 on error
+ * @return 99 on error
  */
 int list_error() {
   instruction_exit(INT_ERR);

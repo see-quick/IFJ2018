@@ -726,7 +726,7 @@ void generateInstructionForNones(tList* list, tStack *stack, tInstructionTypes i
 // @lMap je lokalni Mapa
 /**
  * JADRO celej precedenčnej analýzy
- *  1) Na zaciatku celej precedencnej analyzy inicializuje vsekty potrebne struktury ako zasobnik, expr_return
+ *  1) Na zaciatku celej precedencnej analyzy inicializuje vsetky potrebne struktury ako zasobnik, expr_return
  *  2) Nasledne zacneme cyklus v ktorom si ziskame indexy do precedencnej tabulky (ktore prechadzaju urcitymi konvertovmi)
  *  3) Po indexoch rozlisujeme a filtrujeme konkrenty token
  *  4) AK ho priradime tak na zaklade zasobnikej situacie zvoli pravidlo < > = Err

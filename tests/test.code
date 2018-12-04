@@ -90,9 +90,8 @@ DEFVAR GF@$type2
 CREATEFRAME
 PUSHFRAME
 DEFVAR LF@a
+MOVE GF@$result float@0x1.c28f5c28f5c29p-4
+MOVE LF@a GF@$result
 READ LF@a float
 WRITE LF@a
-MOVE GF@$result float@0x1.4d70a3d70a3d7p+2
-ADD GF@$result GF@$result LF@a
-MOVE LF@a GF@$result
 EXIT int@0

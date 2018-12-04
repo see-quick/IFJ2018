@@ -19,14 +19,14 @@
 /*******Struktury*********/
 /*************************/
 typedef struct{
-  char *str;
-  unsigned int length;
-  unsigned int memory;
+  char *str; // data stringu
+  unsigned int length; // delka 
+  unsigned int memory; // alokovana pamet'
 } tString;
 
 typedef struct{
-  unsigned int row;
-  tString data;
+  unsigned int row; // cislo radku pro debugovani
+  tString data; 
 } tToken;
 
 
@@ -43,12 +43,7 @@ int strClear(tString *);
 // Nakopirovani data tokenu do pole char *
 int strCopy(tString *, char *);
 // Nakopirovani pole do pole
-int strCopyStr(tString *, tString *);
-int strCopyArr(tString *, char[]);
 int strCompare (tString *, tString *);
-char *getStr(tString *);
-
-int strClear (tString *str);
 
 
 

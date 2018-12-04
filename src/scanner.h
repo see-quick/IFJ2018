@@ -127,8 +127,8 @@
 
 
 
-
-tToken gToken;
+// globalni tokeny
+tToken gToken; 
 int token;
 
 

@@ -22,17 +22,17 @@
 
 int token;        	         // aktualni token
 
-bool is_LF = false;
-bool zavorka = false;
-char * function_name;
-char * variable_name;
-char *call_name;
-bool in_while = false;
-int while_counter = 0;
-int function_counter = 0;
-int return_type = -1;
+bool is_LF = false;          // promenna, ktera rika, jestli jsme se funkci
+bool zavorka = false;        // pomocna promenna pro kontrolu spravnosti zavorek
+char * function_name;        // nazev funkce , ve ktere se aktualne nachazime
+char * variable_name;        // nazev promenne do ktere se prirazuje
+char *call_name;             // nazev funkce, kterou volame
+bool in_while = false;       // pomocna promenna, rika, jestli je statement v cyklu
+int while_counter = 0;       // pocet while vnoreni
+int function_counter = 0;    // pocet funkci
+int return_type = -1;       
 bool in_stat = false; // false - volani fuknce bez prirazeni, true - s prirazenim
-bool in_print = false;
+bool in_print = false; // rika, jestli je to funkce print()
 
 /*********************************************************************/
 /*LOKALNI TABULKA SYMBOLU*/
@@ -57,10 +57,10 @@ unsigned short labelSubstrCount2= 0;
 /*********************************************************************/
 /*GLOBALNI PROMENNE PRO UKLADANI INSTRUKCI DO PASKY TRIADRESNEHO KODU*/
 tList * ilist;               // instruction list
-tList * while_list;
-tList * tmp_list;
-tList * variables_list;
-tList * position_of_main;
+tList * while_list;          // list pro ukladani statements, ktere jsou v telu whilu
+tList * tmp_list;            // pomocny list pro swap listu 
+tList * variables_list;      // seznam promennych definovanych v telu while/if
+   
 tList * function_statements_list;
 tInstructionTypes instr_type;
 tInstructionData instr1;
@@ -131,6 +131,8 @@ void instruction_exit(int ret_val){
 	insert_item(ilist, &instr_type, &instr1, &instr2, &instr3);
 }
 
+
+// funkce zkontrolujem pokud nenastala lexikalni chyba
 int error_lex(void){
 	if(token == ERROR_LEX || token == LEX_UNKNOWN){
 		return 0;
@@ -139,6 +141,7 @@ int error_lex(void){
 	return 1;
 }
 
+// Funkce zkontroluje jestli nenastava interni chyba
 int error_int(void){
 	if(token == INT_ERR){
 		return 0;
@@ -146,12 +149,16 @@ int error_int(void){
 	return 1;
 }
 
+// Zkontroluje jestli typ tokenu je ten, ktery ocekavame
 int checkTokenType(int tokenType){ //funkce na kotnrolu typu tokenu
 	return (token == tokenType) ? 1 : 0;
 }
 
 
-
+/*
+* Pravidlo pro argument pri volani funkce
+* Muze byt identifikator, cislo, relane cislo, radek
+*/
 int term(void){
 	int result = SUCCESS;
 
@@ -161,49 +168,58 @@ int term(void){
 		case LEX_REAL_NUMBER:
 		case LEX_STRING:
 			// semanticka akce
-			// if LEX_ID -> zkontrolovat zda je promenna definovana
-			// pokud je to LEX_ID, LEX_NUMBER, LEX_REAL, LEX_STRING 
+			// if LEX_ID -> zkontrolovat zda je promenna definovana 
 
 			if(!in_print){
+				// zkontrolujeme argumenty prave pro vestavene funkce
 				if ( (result = check_substr_ord_build_in(argCount)) != SUCCESS) return result;
 			}
 
-
+			// pokud to neni vestavena funkce, vygenerujeme unikalni promennu, do ktere ulozime argument
+			// treba TF@%param1
 			instr_type = INSTRUCT_DEFVAR;
 			instr1.type = TF;
 			instr1.value.s = generate_param("%", argCount);
 
 			insert_item(ilist, &instr_type, &instr1, &instr2, &instr3);
 
+			// presuneme hodnotu argumentu do teto promenne
 			instr_type = INSTRUCT_MOVE;
 			instr1.type = TF;
 			instr1.value.s = generate_param("%", argCount);
 
-
+			// pokud je celociselny, vygenerovat urcitou instrukci pro int
 			if (token == LEX_NUMBER){
 				instr2.type = I; //integer
 				instr2.value.i = atoi(gToken.data.str);
 				insert_item(ilist, &instr_type, &instr1, &instr2, &instr3);
 
 			}
+			// pokud je cislo relane, vygenerovat urcitou instrukci pro float
 			else if (token == LEX_REAL_NUMBER){
 				instr2.type = F; //float
 				instr2.value.f = atof(gToken.data.str);
 				insert_item(ilist, &instr_type, &instr1, &instr2, &instr3);
 			}
+			// pokud je radek, vygenerovat urcitou instrukci pro string
 			else if (token == LEX_STRING){
 				instr2.type = S; //string
 				instr2.value.s = gToken.data.str;
 				insert_item(ilist, &instr_type, &instr1, &instr2, &instr3);
 			}
+			// pokud je identifikator
 			else if (token == LEX_ID){
+				// zkontrolovat jestli se nachazi v globalni tabulce
 				if (!local_map_contain(localMap, gToken.data.str)){
 				 	if (is_LF){
+				 		// pokud jsme ve funkci, podivame se do lokalni mapy teto funkce
+				 		// pokud je to lokalni promenna funkce
 						gData = global_map_get_value(gMap, function_name);
 						if (!local_map_contain(gData.lMap, gToken.data.str)){
 							instruction_exit(SEM_ERR);
 							return SEM_ERR;
 						}
+						// pokud promenna neni definovala - > jedna se o semantickou chybu
 					} else{
 						instruction_exit(SEM_ERR);
 						return SEM_ERR;
@@ -215,6 +231,7 @@ int term(void){
 					insert_item(ilist, &instr_type, &instr1, &instr2, &instr3);
 				}
 			}
+			// nacteme token pro dalsi pravidlo
 			token = getToken();
 			if(!error_lex()){
 				instruction_exit(ERROR_LEX);
@@ -227,6 +244,7 @@ int term(void){
 		break;
 
 		default:
+			// zkontrolujeme jestli pocet argumentu pri volani odpovida poctu parametru
 			if (global_map_contain(gMap, call_name)){
 				gData = global_map_get_value(gMap, call_name);
 				if (argCount != gData.paramCount){
@@ -234,6 +252,7 @@ int term(void){
 					return ERR_PARAMS_COUNT;
 				}
 				else {
+					// jiny token chyba
 					instruction_exit(SYN_ERR);
 					return SYN_ERR;
 				}
@@ -249,29 +268,40 @@ int term(void){
 }
 
 
+
+/*
+*	Funkce zkontroluje typ parametru vestavenych funkci
+* Prvni paramentr funkci length, substr, ord musi byt radek
+*/
 int check_length_substr_ord_build_in(){
 	if (  ( (strcmp(call_name, "length")) == 0 )  ||  ( (strcmp(call_name, "substr")) == 0 ) ||  ( (strcmp(call_name, "ord")) == 0 ) ) {
-		if (token != LEX_STRING){
-			if (token != LEX_ID){
-				instruction_exit(ERR_INCOMPATIBLE_TYPE);
+		if (token != LEX_STRING){ // pokud neni radek
+			if (token != LEX_ID){ // pokud je to definovana promenna
+				instruction_exit(ERR_INCOMPATIBLE_TYPE); // jinak se jedna o nekompatibilni typy
 				return ERR_INCOMPATIBLE_TYPE;
 			}
 			else {
+				// jestli lokalni mapa hlavniho telo programu obsahuje tuto promennou
 				if (!local_map_contain(localMap, gToken.data.str)){
 					if (is_LF){
+						// pokud jsme ve funkci, podivame se na jeji lokalni promenne
 						gData = global_map_get_value(gMap, function_name);
 						if (!local_map_contain(gData.lMap, gToken.data.str)){
+							// pokud neni definovana -> jedna se o semantickou chybu
 							instruction_exit(SEM_ERR);
 							return SEM_ERR;
 						}
 						else {
+							// pokud jsme ve funkci
 							lData = local_map_get_value(gData.lMap, gToken.data.str);
+							// pokud typ promenne je string
 							if (lData.type != STRING){
 								if ( lData.type != NONE ){
 									instruction_exit(ERR_INCOMPATIBLE_TYPE);
 									return ERR_INCOMPATIBLE_TYPE;
 								}
 								else {
+									// zkusime zjistit typ promenne dynamicky a porovnat jestli je to string
 									instr_type = INSTRUCT_TYPE;
 									instr1.type = GF;
 									instr1.value.s = "$tmp2";
@@ -299,6 +329,7 @@ int check_length_substr_ord_build_in(){
 					}
 				}
 				else{
+					// jinak nekomplatibilni typy
 						lData = local_map_get_value(localMap, gToken.data.str);
 						if (lData.type != STRING){
 							instruction_exit(ERR_INCOMPATIBLE_TYPE);
@@ -311,26 +342,35 @@ int check_length_substr_ord_build_in(){
 	return SUCCESS;
 }
 
-
+/*
+*	Funkce zkontroluje typ parametru vestavene funkce chr
+*  Prvni paramentr funkce chr musi byt cislo
+*/
 int check_chr_build_in(){
 	if ((strcmp(call_name, "chr"))==0){
-				if (token != LEX_NUMBER){
-					if (token != LEX_ID){
-						instruction_exit(ERR_INCOMPATIBLE_TYPE);
+				if (token != LEX_NUMBER){ // pokud neni cislo
+					if (token != LEX_ID){ // ani identifikator
+						instruction_exit(ERR_INCOMPATIBLE_TYPE); // jedna se o semantickou chybu
 						return ERR_INCOMPATIBLE_TYPE;
 					}
 					else {
+						// pokud lokalni mapa neobsahuje promennou
 						if (!local_map_contain(localMap, gToken.data.str)){
 							if (is_LF){
+								// pokud jsme ve funkci, podivame se na jeji lokalni promenne
 								gData = global_map_get_value(gMap, function_name);
 								if (!local_map_contain(gData.lMap, gToken.data.str)){
+									// pokud promenna neni definovana jedna se o semantickou chybu
 									instruction_exit(SEM_ERR);
 									return SEM_ERR;
 								}
 								else {
+									// pokud jsme ve funkci
+									// zjistime typ promenne, musi byt integer
 									lData = local_map_get_value(gData.lMap, gToken.data.str);
 									if (lData.type != INTEGER){
 										if (lData.type == NONE){
+											// pokud je nil, zjistime typ dynamicky a porovname ho s int
 												instr_type = INSTRUCT_TYPE;
 												instr1.type = GF;
 												instr1.value.s = "$tmp2";
@@ -362,11 +402,13 @@ int check_chr_build_in(){
 
 										}
 										else {
+											// jinak se jedna o nekompatibilni typ
 											instruction_exit(ERR_INCOMPATIBLE_TYPE);
 											return ERR_INCOMPATIBLE_TYPE;
 										}
 									}
 									else {
+										// zkontrolujeme range tohoto cisla, pokud neni spravny jedna se o chybe cislo 6
 										int i = atoi(gToken.data.str);
 										if (i >= 299 || i < 0){
 											instruction_exit(ERR_SEMANTIC);
@@ -377,8 +419,10 @@ int check_chr_build_in(){
 							}
 						}
 						else{
+							// pokud nejsme ve funkci, ale v hlavnim telu
 								lData = local_map_get_value(localMap, gToken.data.str);
 								if (lData.type != INTEGER){
+									// pokud promenna ma jiny typ nez integer -> nekomplatibilni typy
 									instruction_exit(ERR_INCOMPATIBLE_TYPE);
 									return ERR_INCOMPATIBLE_TYPE;
 								}
@@ -392,6 +436,7 @@ int check_chr_build_in(){
 						}
 					}
 				} else {
+					// zkontrolujeme range
 					int i = atoi(gToken.data.str);
 					if (i >= 299){
 						instruction_exit(ERR_SEMANTIC);
@@ -403,33 +448,42 @@ int check_chr_build_in(){
 }
 
 
+/*
+* Funkce zkontroluje druhy a treti argumenty pri volani funkce substr a ord, musi byt integery
+*/
 int check_substr_ord_build_in(int param){
 	switch(param){
 		case 1:
 		case 2:
 			if (param == 2 &&  ( (strcmp(call_name, "ord")) == 0 ) ){
+				// pokud ord ma vic nez 2 argumenty -> spatny pocet argumentu
 				instruction_exit(ERR_PARAMS_COUNT);
 				return ERR_PARAMS_COUNT;
 			}
 			else{
 				if (  ( (strcmp(call_name, "substr")) == 0 ) ||  ( (strcmp(call_name, "ord")) == 0 ) ) {
-					if (token != LEX_NUMBER){
-						if (token != LEX_ID){
-							instruction_exit(ERR_INCOMPATIBLE_TYPE);
+					if (token != LEX_NUMBER){ // druhy argument musi byt integer
+						if (token != LEX_ID){ // pokud to neni ani identifikator
+							instruction_exit(ERR_INCOMPATIBLE_TYPE); // jedna se o nekompatibini typy
 							return ERR_INCOMPATIBLE_TYPE;
 						}
 						else {
+							// pokud lokalni mapa neobsahuje promennou
 							if (!local_map_contain(localMap, gToken.data.str)){
 								if (is_LF){
+									// pokud jsme ve funkci
 									gData = global_map_get_value(gMap, function_name);
+									// a v jeji lokalni tabulce neni 
 									if (!local_map_contain(gData.lMap, gToken.data.str)){
-										instruction_exit(SEM_ERR);
+										instruction_exit(SEM_ERR); // -> jedna se o semantickou chybu, promenna neni definovana
 										return SEM_ERR;
 									}
 									else {
+
+										// pokud jsme ve funkci
 										lData = local_map_get_value(gData.lMap, gToken.data.str);
-										if (lData.type != INTEGER){
-											if (lData.type == NONE){
+										if (lData.type != INTEGER){ // pokud typ promenne neni integer
+											if (lData.type == NONE){ // zkusime zjistit typ dynamocky a vygenerujeme instrukce pro porovnani typu s int
 													instr_type = INSTRUCT_TYPE;
 													instr1.type = GF;
 													instr1.value.s = "$tmp2";
@@ -475,6 +529,7 @@ int check_substr_ord_build_in(int param){
 													
 											}
 											else {
+												// jinak se jedna o nekompatibilni typy
 												instruction_exit(ERR_INCOMPATIBLE_TYPE);
 												return ERR_INCOMPATIBLE_TYPE;
 											}
@@ -483,6 +538,7 @@ int check_substr_ord_build_in(int param){
 								}
 							}
 							else{
+								// nekomplatibilni typy
 									lData = local_map_get_value(localMap, gToken.data.str);
 									if (lData.type != INTEGER){
 										instruction_exit(ERR_INCOMPATIBLE_TYPE);
@@ -501,12 +557,20 @@ int check_substr_ord_build_in(int param){
 	return SUCCESS;
 }
 
+
+/*
+* Funkce rekurzivne vola funkce term() a kontroluje syntakticou spravnost argumentu
+* pri volani funkce a take realizuje semanticke kontroly pro kontrolu definice promenne
+*/
 int term_list2(bool zavorka){
 	int result;
 
 	switch(token){
-		//<PM-LIST2> -> , id/lex_number/lex_real_number/lex_string <PM-LIST2>
+
+		//<TERM-LIST2> -> , <TERM> <TERM-LIST2>
 		case LEX_COMMA:
+
+		// je carka
 			token = getToken();
 			if(!error_lex()){
 				instruction_exit(ERROR_LEX);
@@ -515,6 +579,7 @@ int term_list2(bool zavorka){
 				return INT_ERR;
 			}
 
+			// zavola pravidlo term()
 			result = term();
 
 			argCount++;
@@ -524,14 +589,16 @@ int term_list2(bool zavorka){
 			}
 
 
-			//nacteno z param()
+			// rekurzivne vola sama sebe pro kontrolu dalsich argumentu
 			return term_list2(zavorka);
 
 		break;
 
+		// pokud je prava zavorna
 		case LEX_R_BRACKET:
 			if (zavorka){return SUCCESS;}
 			else {
+				// pokud leva zavorka nebyla, a prava byla -> syntakticka chyba
 				instruction_exit(SYN_ERR);
 				return SYN_ERR;
 			}
@@ -542,6 +609,7 @@ int term_list2(bool zavorka){
 		case LEX_EOF:
 			if (!zavorka){return SUCCESS;}
 			else{
+				// pokud leva zavorka byla, a prava nebyla -> syntakticka chyba
 					instruction_exit(SYN_ERR);
 					return SYN_ERR;
 			}
@@ -554,6 +622,12 @@ int term_list2(bool zavorka){
 	}
 }
 
+/*
+*	 Funkce zkontroluje syntaktickou spravnou prvniho argumentu pri volani funkce
+*    Argument muze byt identifikator, cislo, realne cislo a nebo radek
+*    Zavola dalsi funkci term_list2()
+*/
+
 int term_list(bool zavorka){
 	int result = SUCCESS;
 
@@ -565,42 +639,46 @@ int term_list(bool zavorka){
 
 			// semanticka akce
 			// if LEX_ID -> zkontrolovat zda je promenna definovana
-			// pokud je to LEX_ID, LEX_NUMBER, LEX_REAL, LEX_STRING , podle typu vytvorit vnitrni promennou s hodnotou argumentu
-
 			if (!in_print){
+				// pokud volana funkce je vestavene, zavolame pravidlo pro kontrolu typu vestavenych funkce
 				if ( (result = check_length_substr_ord_build_in()) != SUCCESS) return result;
 				if ( (result = check_chr_build_in()) != SUCCESS) return result;
 			}
 
+			// definujeme unikatni promennu pro argument
+			// naprikla TF@%param1
 			instr_type = INSTRUCT_DEFVAR;
 			instr1.type = TF;
 			instr1.value.s = generate_param("%", argCount);
 
-
+			// presuneme hodnotu argumentu do teto promenne
 			insert_item(ilist, &instr_type, &instr1, &instr2, &instr3);
 			instr_type = INSTRUCT_MOVE;
 			instr1.type = TF;
 			instr1.value.s = generate_param("%", argCount);
 
-
+			// pokud je cislo, vygenerujeme urcitou instrukci pro int
 			if (token == LEX_NUMBER){
 				instr2.type = I; //integer
 				instr2.value.i = atoi(gToken.data.str);
 			}
+			// pokud je to realne cislo, vygenerujeme urcitou instrukci pro float
 			else if (token == LEX_REAL_NUMBER){
 				instr2.type = F; //float
 				instr2.value.f = atof(gToken.data.str);
 			}
+			// pokud je to radek, vygenerujeme instrukci pro string
 			else if (token == LEX_STRING){
 				instr2.type = S; //string
 				instr2.value.s = gToken.data.str;
 			}
+			// pokud je to identifikator, zkontrolujeme jeslti je definovana
 			else if (token == LEX_ID){
 				if (!local_map_contain(localMap, gToken.data.str)){
-				 	if (is_LF){
+				 	if (is_LF){ // pokud jsme ve funkci a jeji lokalni mapa neobsahuje tuto promennou
 						gData = global_map_get_value(gMap, function_name);
 						if (!local_map_contain(gData.lMap, gToken.data.str)){
-							instruction_exit(SEM_ERR);
+							instruction_exit(SEM_ERR); // jedna je o semantickou chybus
 							return SEM_ERR;
 						}
 					}
@@ -629,10 +707,11 @@ int term_list(bool zavorka){
 				return INT_ERR;
 			}
 		
-
+			// funkce zavola dalsi providlo
 			return term_list2(zavorka);
 		break;
 
+		// pokud je prava zavorka, ale leva nebyla -> syntakticka chyba
 		case LEX_R_BRACKET:
 			if (zavorka){ return SUCCESS;}
 			else { 
@@ -644,6 +723,7 @@ int term_list(bool zavorka){
 
 		case LEX_EOL:
 		case LEX_EOF:
+		// pokud byla leva zavorka, ale nebyla prava -> syntakticka chyba
 			if (!zavorka){return SUCCESS;}
 			else{ 
 				instruction_exit(SYN_ERR);
@@ -653,10 +733,12 @@ int term_list(bool zavorka){
 
 
 		default:
+		// neco jineho syntakticka chyba
 			instruction_exit(SYN_ERR);
 			return SYN_ERR;
 	}
 
+	// cteme dalsi token
 	token = getToken();
 	if(!error_lex()){
 		instruction_exit(ERROR_LEX);
@@ -670,16 +752,19 @@ int term_list(bool zavorka){
 
 }
 
-
+/*
+* Funkce generuje insturke MOVE po ukonceni precedenci analyzy
+* @expr_return je struktura, ktera obsahuje navratovy typ
+*/
 int move_value(expr_return res){
 	instr_type = INSTRUCT_MOVE;
 
-	lData.type = res.data_type;
-	if (is_LF){
+	lData.type = res.data_type; // navratovy typ z precedenci analyzy
+	if (is_LF){// ve funkce
 		gData = global_map_get_value(gMap, function_name);
 		local_map_put(gData.lMap, variable_name, lData);
 	}
-	else{
+	else{ // v hlavnim telu
 		local_map_put(localMap, variable_name, lData);
 	}
 
@@ -691,6 +776,9 @@ int move_value(expr_return res){
 	return SUCCESS;
 }
 
+/*
+*	 Funkce kontroluje syntaktickout spravnost funkci inputi, inputf, inputs
+*/
 int check_input(){
 	if ( (strcmp(call_name, "inputi") == 0 ) ){
 
@@ -754,9 +842,12 @@ int check_input(){
 	return 1;
 }
 
-
+/*
+*	 Funkce pro spravnost volani funkce s levou zavorkou
+*/
 int call_left_bracket(tDataFunction *tmp){
 	int result;
+	// cteni tokenu
 	token = getToken();
 	if(!error_lex()){
 		instruction_exit(ERROR_LEX);
@@ -765,6 +856,7 @@ int call_left_bracket(tDataFunction *tmp){
 		return INT_ERR;
 	}
 
+	// vytvareni ramce
 	instr_type = INSTRUCT_CREATEFREAME;
 	insert_item(ilist, &instr_type, &instr1, &instr2, &instr3);
 
@@ -782,13 +874,14 @@ int call_left_bracket(tDataFunction *tmp){
 		return SYN_ERR;
 	}
 
+	// pokud pocet formalnich parametru neni stejny jako pocet argumentu
 	if ( tmp->paramCount != argCount ){
 		instruction_exit(ERR_PARAMS_COUNT);
 		return ERR_PARAMS_COUNT;
 	}
 
 	// pro dalsi volani funkce
-	argCount = 0;
+	argCount = 0; // obnovime promennou
 
 	if (!in_stat){
 		result = check_input();
@@ -816,7 +909,7 @@ int call_left_bracket(tDataFunction *tmp){
 			}
 			
 
-
+			// instrukce MOVE
 			instr_type = INSTRUCT_MOVE;
 			instr1.type = LF;
 			instr1.value.s = variable_name;
@@ -824,10 +917,11 @@ int call_left_bracket(tDataFunction *tmp){
 			instr2.value.s = "%retval";
 			insert_item(ilist, &instr_type, &instr1, &instr2, &instr3);
 		}
-
+		// navratovy typ funkce 
 		return_type = tmp->returnType;
 	}
 
+	// cteni dalsiho tokenu
 	token = getToken();
 	if(!error_lex()){
 		instruction_exit(ERROR_LEX);
@@ -840,6 +934,10 @@ int call_left_bracket(tDataFunction *tmp){
 
 }
 
+
+/*
+* 	Funkce pro kontrolu spravnosti volani funkce bez zavorek
+*/
 int call_without_bracket(tDataFunction *tmp){
 	int result; 
 
@@ -894,13 +992,16 @@ int call_without_bracket(tDataFunction *tmp){
 	return SUCCESS;
 }
 
-
+/*
+*	Funkce pro kontrolu spravnosti volani funkce
+*/
 int call_function(){
 	int result;
 	// je funkce	
 	tDataFunction * tmp;				
-	call_name = gToken.data.str;
-	tmp = global_map_get_pointer_to_value(gMap, call_name);
+	call_name = gToken.data.str; 
+
+	tmp = global_map_get_pointer_to_value(gMap, call_name); // zjistime polozku globalni mapy pro volanou funkci
 
 
 	token = getToken();
@@ -929,6 +1030,7 @@ int call_function(){
 
 			insert_item(ilist, &instr_type, &instr1, &instr2, &instr3);
 
+			// promenna pro navratovou hodnotu funkce
 			instr_type = INSTRUCT_MOVE;
 			instr1.type = LF;
 			instr1.value.s = variable_name;
@@ -982,6 +1084,13 @@ int call_function(){
 }
 
 
+/*
+* FUNKCE REALIZUJICI JEDNO Z NEJDULEZITEJSICH PRAVIDEL 
+* ID = <STH>
+* <STH> muze byt identifikator, volani uzivatelem definovane funkce
+* volani vestavene funkce
+* volani funkci inputi, inputs, inputf
+*/
 
 int sth(){
 	int result = SUCCESS;
@@ -1012,7 +1121,7 @@ int sth(){
 						}
 					}
 
-					if (!is_LF){
+					if (!is_LF){ // pokud jsme se funkci
 						lData = local_map_get_value(localMap, variable_name);
 					}else {
 						gData = global_map_get_value(gMap, function_name);
@@ -1119,7 +1228,7 @@ int sth(){
 				insert_item(ilist, &instr_type, &instr1, &instr2, &instr3);
 			}
 
-
+			// volani precedencni analyzy
 			res = parse_expr(localMap, ilist, false);
 			result = res.result;
 
@@ -1127,6 +1236,7 @@ int sth(){
 
 
 			if(res.bool_result){
+				// pokud je to nevalidni prirazeni
 				instruction_exit(ERR_SEMANTIC);
 				return ERR_SEMANTIC;
 			}
@@ -1134,6 +1244,7 @@ int sth(){
 
 			if (res.data_type == FUNCTION){
 				// volani funkce 
+				// volani funkce v ramci prirazeni, cast rozsireni FUNEXP
 						tmp = global_map_get_pointer_to_value(gMap, gToken.data.str);
 
         	    		token = getToken();
@@ -1261,6 +1372,13 @@ int sth(){
 	return result;
 }
 
+/*
+*	FUNKCE REALIZUJICI PRAVIDLO PRO
+* 	ID = <STH>
+*   IF <EXPR> THEN <ST-LIST> ELSE <ST-LIST> END
+* 	WHILE <EXPR> DO <ST-LIST> END
+*   PRINT 
+*/
 int stat(){
 	int result = SUCCESS;
 	expr_return res;
@@ -2459,7 +2577,6 @@ int parse(GlobalMap* globalMap, tList *list) {
 	tmp_list = list_init();
 	variables_list = list_init();
 	function_statements_list = list_init();
-	position_of_main = list_init();
 
 	do{
 		if((token = getToken()) == ERROR_LEX) {

@@ -22,18 +22,17 @@
 GlobalMap* gMap;		     // globalni tabulka symbolu
 
 
-int error_lex(void);
-int error_int(void);
+int error_lex(void); // kontrola pokud nastala lexikalni chyba
+int error_int(void); // kontrola pokud nastala interni chyba
 
 /**
-** Pomocna funkce na kotnrolu typu tokenu
+** Pomocna funkce na kontrolu typu tokenu
 ** @ int type - typ tokenu
 **/
 int checkTokenType(int);
 
-int parse(GlobalMap* , tList *);
 
-
+// funkce pro kontrolu parametru vestavenych funkci
 int check_substr_ord_build_in(int param);
 int check_chr_build_in();
 int check_length_substr_ord_build_in();
@@ -47,16 +46,26 @@ int prog(void);
 int main_p(void);
 int st_list();
 int stat();
+// funkce pro generovani instrukce MOVE
 int move_value(expr_return res);
+// funkce pro pravidlo prirazeni id = <sth>
 int sth();
+// funkce pro kontrolu spravnosti formalnich parametru
 int pm_list();
 int pm_list2();
+// funkce pro kontrolu spravnosti argumentu
 int term_list(bool);
 int term_list2(bool);
+// pravidlo pro kontrolu syntakticke spravnosti funkci
 int func();
+// funkce pro vkladani vestavenych funkci do globalni tabulky symbolu
 void insert_build_in_functions();
+// funkce pro generovani intrukce EXIT
 void instruction_exit(int);
+// generuje unikatni index na konci retezce
 char * generate_param(char *, unsigned short );
+// zacatek parseru
+int parse(GlobalMap* , tList *);
 
 #endif
 
