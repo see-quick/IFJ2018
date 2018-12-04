@@ -23,7 +23,8 @@ int if_count = 0;           // počítadlo if
 int arg_count;              // počítadlo argumentov
 
 /**
- * Replace v retazci
+ * @brief Replace v retazci
+ *
  * @param str nas retazec s ktorym pracujeme
  * @param orig retazec ktory hladame
  * @param rep retaec za ktory ho vymenime
@@ -42,11 +43,13 @@ void replace_str(char **str, char *orig, char *rep) {
   sprintf(buffer+(p-(*str)), "%s%s", rep, p+strlen(orig));
   buffer[strlen(buffer)] = '\0';
 
+  // free((*str));
   *str = buffer;
 }
 
 /**
- * Ulahcenie vypisu podla typu instrukcie
+ * @brief Ulahcenie vypisu podla typu instrukcie
+ *
  * @param instruction instrukcia
  * @return cislo v enume prevedene na retazec
  */
@@ -87,10 +90,11 @@ char* instruct_type(tDatType instruction) {
       break;
   }
 
-  return NULL; 
+  return NULL;
 }
 /*
- * Printuje symbol na zaklade jeho typu(int,id,float..)
+ * @brief Printuje symbol na zaklade jeho typu(int,id,float..)
+ *
  * @param instr_operand data a typ instrukcie
  */
 void print_symb(tInstructionData instr_operand)  {
@@ -100,8 +104,8 @@ void print_symb(tInstructionData instr_operand)  {
   else if (instr_operand.type == F) printf("%a",instr_operand.value.f);
   else
   {
-     //escape seq ---- > \000
-     //handle '\n' and others
+     /* escape seq ---- > \000 */
+     /* handle '\n' and others */
     if (instr_operand.value.s == NULL){
         return;
     }
@@ -109,7 +113,7 @@ void print_symb(tInstructionData instr_operand)  {
       while((strstr(instr_operand.value.s, "\n") != NULL)) {
         replace_str(&instr_operand.value.s, "\n", "\\010");
       }
-    }     
+    }
     if (strstr(instr_operand.value.s, "\t") != NULL) {
       while ((strstr(instr_operand.value.s, "\t") != NULL)) {
         replace_str(&instr_operand.value.s, "\t", "\\009");
@@ -140,7 +144,8 @@ void print_symb(tInstructionData instr_operand)  {
 }
 
 /*
- * Printuje symbol na zaklade jeho typu(int,id,float..) --> pomocna funkcia
+ * @brief Printuje symbol na zaklade jeho typu(int,id,float..) --> pomocna funkcia
+ *
  * @param instr_operand data a typ instrukcie
  */
 void print_multiple_symb(tInstructionData instr_operand)  {
@@ -150,7 +155,8 @@ void print_multiple_symb(tInstructionData instr_operand)  {
 }
 
 /*
- * Urci typ instrukcie a vrati jej nazov na zaklade enumu
+ * @brief Urci typ instrukcie a vrati jej nazov na zaklade enumu
+ *
  * @param act_instr instrukcia ktoru skumame
  */
 void print_arit_instr(tNode *act_instr) {
@@ -197,7 +203,8 @@ void print_arit_instr(tNode *act_instr) {
 
 
 /**
- * Append `list` to root list
+ * @brief Append `list` to root list
+ *
  * @param root Main list
  * @param list Appended list
  * @return True on success, otherwise False
@@ -215,7 +222,8 @@ void append_list(tList* root, tList* list) {
 
 
 /*
- * Parsuje list s instrukciami a printuje na stdout instrukcie v IFJcode18
+ * @brief Parsuje list s instrukciami a printuje na stdout instrukcie v IFJcode18
+ *
  * @param instr_list list s instrukciami
  * @warning predtym ako sa zavola parse_instructions musis/musite zavolat reverse() a set_active() na list
  */
@@ -634,7 +642,7 @@ void parse_instructions(tList *instr_list)  {
           printf("JUMP $label_substr_read\n");
 
 
-      
+
 
           printf("LABEL $label_substr\n");
           printf("MOVE LF@%%retval GF@$result\n");
@@ -656,7 +664,7 @@ void parse_instructions(tList *instr_list)  {
             printf("LABEL while_label1_end\n");
           }else {
             printf("LABEL while_label%d_end\n",while_count--);
-          }  
+          }
       break;
 
       case INSTRUCT_IF_THEN:
@@ -678,7 +686,7 @@ void parse_instructions(tList *instr_list)  {
             printf("LABEL if_label1_end\n");
           }else {
             printf("LABEL if_label%d_end\n",if_count--);
-          }  
+          }
       break;
 
 

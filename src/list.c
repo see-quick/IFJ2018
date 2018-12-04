@@ -5,10 +5,11 @@
  *
  * Popis:  zdrojovy subor pre list s instrukciami
  *
+ * Datum: 29.9.2018 10:18
  *
  * Autori:   Maros Orsak            	xorsak02@stud.fit.vutbr.cz
  *           Polishchuk Kateryna     	xpolis03@stud.fit.vutbr.cz
- *           Igor Ignac                 xignac00@stud.fit.vutbr.cz
+ *           Igor Ignac               xignac00@stud.fit.vutbr.cz
  *           Marek Rohel            	xrohel01@stud.fit.vutbr.cz
 */
 
@@ -20,7 +21,8 @@ extern tList * function_statements_list;
 extern bool is_LF;
 
 /**
- * Printne upozornenie, ze doslo k chybe
+ * @brief Printne upozornenie, ze doslo k chybe
+ *
  * Tato funkcia bude volana pri vsetkych chybach nad listom
  * @return -1 on error
  */
@@ -30,7 +32,8 @@ int list_error() {
 }
 
 /**
- * Inicializuje list
+ * @brief Inicializuje list
+ *
  * @param filename nazov suboru kam ukladame instrukcie
  * @return prazdny list
  */
@@ -47,7 +50,8 @@ tList* list_init ()  {
 }
 
 /**
- * Vlozenie instrukcie do listu
+ * @brief Vlozenie instrukcie do listu
+ *
  * @param instr_list list instrukcii
  * @param instr_name nazov instrukcie
  * @param addr1 adresa prveho operandu(neterminalu) instrukcie
@@ -84,7 +88,8 @@ void insert_item(tList *instr_list, tInstructionTypes *instr_name , tInstruction
 
 
 /**
- * Uvolnuje vsetky prvky listu
+ * @brief Uvolnuje vsetky prvky listu
+ *
  * @param instr_list list ktory chceme zrusit
  */
 void dispose_list(tList *instr_list) {
@@ -102,7 +107,8 @@ void dispose_list(tList *instr_list) {
 }
 
 /**
- * Vrati hodnotu aktivneho prvku
+ * @brief Vrati hodnotu aktivneho prvku
+ *
  * @param instr_list list instrukcii
  * @return instrukcia
 */
@@ -116,7 +122,8 @@ tNode* return_instruct(tList *instr_list) {
 }
 
 /**
- * Posunieme aktivitu na nasledujuci prvok po aktivnom prvku
+ * @brief Posunieme aktivitu na nasledujuci prvok po aktivnom prvku
+ *
  * @param instr_list instrukcii
 */
 void move_activity(tList *instr_list) {
@@ -129,7 +136,8 @@ void move_activity(tList *instr_list) {
 }
 
 /**
- * Nastavenie aktivity listu na prvy prvok
+ * @brief Nastavenie aktivity listu na prvy prvok
+ *
  * @param instr_list list ktoreho aktivitu nastavujeme
  */
 
@@ -140,7 +148,8 @@ void set_active(tList *instr_list)  {
 }
 
 /**
- * Reverzacia listu na opacne poradie
+ * @brief Reverzacia listu na opacne poradie
+ *
  * @param head_ref prvy prvok zoznamu
  */
 void reverse(struct Node** head_ref)  {
@@ -159,9 +168,10 @@ void reverse(struct Node** head_ref)  {
     *head_ref = prev;
 }
 /*
- * Prejde cely list a hlada instrukciu na temporary frame
+ * @brief Prejde cely list a hlada instrukciu na temporary frame
+ *
  * @param instr_list list instrukcii
- * @return instrukcia na TF existuje -> 1 inak vracia 0
+ * @return  instrukcia na TF existuje -> 1 inak vracia 0
  */
 int temporary_exists(tList *instr_list)  {
   tNode *list_head = instr_list->first;
@@ -180,9 +190,10 @@ int temporary_exists(tList *instr_list)  {
 }
 
 /*
- *  Prejde cely list a hlada ci uz zadana premenna bola deklarovana
- *  @param instr_list list instrukcii
- *  @param variable_name meno premennej
+ *  @brief  Prejde cely list a hlada ci uz zadana premenna bola deklarovana
+ *
+ *  @param  instr_list list instrukcii
+ *  @param  variable_name meno premennej
  *  @return vracia 1(true) ak dana premenna existuje inak 0
  */
 int variable_exists(tList *instr_list, char * variable_name)
@@ -207,7 +218,8 @@ int variable_exists(tList *instr_list, char * variable_name)
   return exists;
 }
 /**
- * Zistuje co sme naplnili do unionu instrukcie a printuje to
+ * @brief Zistuje co sme naplnili do unionu instrukcie a printuje to
+ *
  * @param order first/second/third instruction operand
  * @param instr_operand hodnota z unionu(integer,double..)
  * @param instr_type typ instrukcie(GF,LF..)
@@ -219,7 +231,8 @@ void operand_type(char* order, tValue instr_operand, tDatType instr_type)  {
 }
 
 /**
- * Vytlacenie vsetkych instrukcii listu
+ * @brief Vytlacenie vsetkych instrukcii listu
+ *
  * @param instr_list list ktory chceme vytlacit
  */
 void print_list_elements(tList *instr_list) {
@@ -253,4 +266,4 @@ void print_list_elements(tList *instr_list) {
   free(tmp_list);
   printf("\n\nEnd of the list\n-----------------\n");
 }
-/* Koniec list.c */
+/** Koniec list.c **/
