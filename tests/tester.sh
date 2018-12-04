@@ -74,14 +74,11 @@ elif [[ ! -z "$1" && ! -z "$2" ]]; then
       ##### Syntax tests  #####
       elif [ "$testtype" == "error2" ]; then #testy oznacene error2 --> chyba v programu v rámci syntaktické analýzy (chybná syntaxe programu).
         timeout 1 $prog < $testpath/$currentdir/$testfile > /dev/null 2>&1
-        ##retval=$(echo $?)
-
         retval=`echo $?`
+
         if [ "$retval" -eq "124" ]; then
             echo "${red}[TEST FAILED]${reset} Program got stucked killed process after 3 sec"
         fi
-        #echo "RETURNED : $?"
-        #echo "RETURNED: $?"
         if [ "$retval" -eq "2" ]; then
           ((testsucc++))
           echo "${green}[TEST PASSED]${reset}"
@@ -197,7 +194,7 @@ elif [[ ! -z "$1" && ! -z "$2" ]]; then
     done
   done
 
-  #tests succession
+  #Totalna uspesnost testov v zlozke
   tests=$((testfail+testsucc))
   total=$(echo " scale=2;
   var1 = $testsucc * 100;

@@ -17,7 +17,6 @@
 
 usage() {
   echo  "Run program simply without any arguments: bash gen_tester.sh"
-  # echo  "For proper functionality you have to be logged as sudo or root !!!"
   echo  "Options:"
   echo  "        -h --help display this information."
   echo  "        -s for silent run -> interpret errors will be displayed"
@@ -27,6 +26,7 @@ usage() {
   exit 1
 }
 
+#setting colors for later output
 red=`tput setaf 1`
 green=`tput setaf 2`
 reset=`tput sgr0`
@@ -40,18 +40,15 @@ if [[ "$1" == "-h" || "$1" == "--help" && -z $2 ]]; then
   usage
 fi
 
+#silent run -> ic18int error outputs supressed
 if [[ "$1" == "-s" ]];then
   silent="-s"
 fi
 
+#disable filegeneration
 if [[ "$1" == "-n" ]];then
   filegen="-n"
 fi
-
-# if [[ "$EUID" -ne 0 ]];then
-#   echo "Please run as root"
-#   exit 1
-# fi
 
 echo "Testing return values from interpret..."
 echo "Running all test dirs from ../tests with expected return value of 0..."
@@ -62,6 +59,11 @@ touch test.code #temporary file for generated output of ./ifj
 testsucc=0  #counter for succ tests
 testfail=0  #counter for failed tests
 
+##
+# @brief  Run all tests from test directory which doesnt have standard .out and .in files
+#
+# @param  $1  test directory with tests
+##
 function testRunner() {
 
   testpath=$1
@@ -117,6 +119,11 @@ function testRunner() {
   done
 }
 
+##
+# @brief  Run all tests from test directory with sample .in and .out files to comparision
+#
+# @param  $1  test directory with tests
+##
 function genTester {
 testpath=$1
 
@@ -198,7 +205,7 @@ done
 rm $tmpout
 }
 
-#TESTS FOR code_gen in prece.c for @Maros
+#TESTS FOR code_gen only in prece.c for @Maros
 if [[ "$1" == "-e" ]]; then
   testDIR="preceGen"
   filegen="-n"
@@ -237,7 +244,7 @@ fi
 
 
 
-#tests succession
+#tests total succession
 tests=$((testfail+testsucc))
 total=$(echo " scale=2;
 var1 = $testsucc * 100;

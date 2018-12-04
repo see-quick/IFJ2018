@@ -20,7 +20,7 @@ usage() {
   exit 1
 }
 
-
+#setting colors for informative usage
 red=`tput setaf 1`
 green=`tput setaf 2`
 reset=`tput sgr0`
@@ -30,30 +30,34 @@ reset=`tput sgr0`
 #           ---> RUN TESTS TO SEE MEMORY ERRORS!!
 export MALLOC_CHECK_=0
 
+#help message option
 if [[ "$1" == "-h" || "$1" == "--help" && -z $2 ]]; then
   usage
 elif [[ ! -z $1 ]]; then
   usage
 fi
 
+##### Running script tester.sh for every test directory #####
+
 #EXPRESSIONS
 OUTPUT=$(bash tester.sh ifj expressionsData 2>/dev/null | tail -n 5)
-TESTNUMBER=$(echo $OUTPUT | cut -c8-10)
-SUCCTESTS=$(echo $OUTPUT | cut -c26-27)
-FAILEDTESTS=$((TESTNUMBER-SUCCTESTS))
+TESTNUMBER=$(echo $OUTPUT | cut -c8-10) #extracting amount of test ran
+SUCCTESTS=$(echo $OUTPUT | cut -c26-27) #extracting amount of tests which succeded
+FAILEDTESTS=$((TESTNUMBER-SUCCTESTS)) #extracting amount of tests which failed
 
 # Overall tests + succ and failed ones
 TOTALTESTS=$TESTNUMBER
 TOTALFAILED=$FAILEDTESTS
 TOTALSUCC=$SUCCTESTS
 
-#tests succession
+#tests success calculation
 total=$(echo " scale=2;
 var1 = $SUCCTESTS * 100;
 var1 = var1 / $TESTNUMBER;
 var1 " \
 | bc)
 
+#output of partial result
 echo "Test data for expressions: TESTED $TESTNUMBER tests, PASSED: $SUCCTESTS, FAILED: $FAILEDTESTS Totally: ${green}$total%${reset}"
 
 #SEMANTICDATA
@@ -147,14 +151,9 @@ echo "Testing code generation, this might take few seconds..."
 OUTPUT=$(bash gen_tester.sh -n 2>/dev/null | tail -n 1)
 TESTNUMBER=$(echo $OUTPUT | cut -c8-10)
 SUCCTESTS=$(echo $OUTPUT | cut -c26-29)
-
-#test if we have number
-#re='^[0-9]+$'
-#if ! [[ $SUCCTESTS =~ $re ]]; then
-#  SUCCTESTS=0
-#fi
 FAILEDTESTS=$((TESTNUMBER-SUCCTESTS))
 
+#Count total success of tests
 TOTALTESTSGEN=$((TESTNUMBER+TOTALTESTSGEN))
 TOTALFAILEDGEN=$((FAILEDTESTS+TOTALFAILEDGEN))
 TOTALSUCCGEN=$((SUCCTESTS+TOTALSUCCGEN))
