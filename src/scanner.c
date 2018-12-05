@@ -5,14 +5,10 @@
  *
  * Popis: Lexikalni anazyla, zalocena na konecnem automatu s koncovymi stavy
  *
- *
- * Datum:
- *
- * Autori:   Maros Orsak       vedouci
- *           Polishchuk Kateryna     <xpolis03@fit.vutbr.cz>
- *           Igor Ignac
- *           Marek Rohel
-
+ * Autori:   Maros Orsak            	xorsak02@stud.fit.vutbr.cz
+ *           Polishchuk Kateryna     	xpolis03@stud.fit.vutbr.cz
+ *           Igor Ignac                 xignac00@stud.fit.vutbr.cz
+ *           Marek Rohel            	xrohel01@stud.fit.vutbr.cz
 */
 
 #include "scanner.h"
@@ -29,6 +25,11 @@ int digit_check = 0;
 /*************Funkce pro prace se strukturou token********/
 /*********************************************************/
 
+
+/*
+* Inicializace globalniho tokenu
+* @return 0, pokud pamet byla spravne alokovana, jina 99 - intern chyba
+*/
 int initToken(){
     gToken.row = 1;
 
@@ -37,10 +38,16 @@ int initToken(){
     return SUCCESS;
 }
 
+/*
+* Funkce pridava symbol int character do data tokenu
+*/
 void pushToken(int character){
     strAdd(&(gToken.data), (char)character);
 }
 
+/*
+* Funkce vypisuje data tokenu, debugovaci funkce
+*/
 void returnToken(){
     char* word = gToken.data.str;
     int length = gToken.data.length;
@@ -51,10 +58,17 @@ void returnToken(){
     printf("\n");
 }
 
+/*
+* Funkce vyprazdni strukturu pro data tokenu
+*/
 void resetToken(){
     strFree(&(gToken.data));
 }
 
+
+/*
+* Funkce uvoln'uje pamet tokenu
+*/
 void freeToken(){
     if (gToken.data.str != NULL){
         free(gToken.data.str);
@@ -63,6 +77,10 @@ void freeToken(){
    gToken.data.length = 0;
 }
 
+
+/*
+* Struktura, obsahujici nazvy vsech klicovych a rezervovanych slov,vestavenych funkci
+*/
 const char* keyWords[] = {
     "def" ,"do", "else",
     "end","if",
@@ -97,25 +115,25 @@ int getToken(){
     //Reset tokenu do pocatecniho stavu
     resetToken();
 
-    int state = S_START;
+    int state = S_START; // pocatecni stav
 
     bool flag = false;
     int zero_cnt = 0;
 
-    int c, ascii_cnt;
+    int c, ascii_cnt; // pomocne pormenne pro zpracovani ASCII retezcu
     char ascii_val[2];
     int temp;
 
     //Hlavni nacitaci smycka
     while(1){
 
-        c = getchar();
+        c = getchar(); // nacte symbol z stdin
         switch(state){
             case S_START:
                 if(isspace(c)){
                     if (c == '\n') {
                         gToken.row++;
-                        state = S_EOL;
+                        state = S_EOL; // pokud je EOL
                         continue;
                     }
                     else {
@@ -159,13 +177,17 @@ int getToken(){
                 }                     // Cislo
                 else if(islower(c) || c == '_'){ pushToken(c); state = S_ID; }               // Identifikator (a-z, '_')
                 else{
-                    pushToken(c);                                                            //Chybny znak
+                    pushToken(c);                                                            // Chybny znak
                     return LEX_UNKNOWN;
                 }
 
 
                 break;
 
+            /************************************************************/
+            /************************************************************/
+            // Zacatek blokoveho komentare, pravidla pro =begin ...
+            // =end
             case S_COMMENT_BLOCK_B:
                 if (c == 'e'){
                     state = S_COMMENT_BLOCK_E;
@@ -230,6 +252,10 @@ int getToken(){
               else state = S_COMMENT_BLOCK_N_NEWLINE;
             break;
 
+            /************************************************************/
+
+            // Telo blokoveho komentare 
+
             case S_COMMENT_BLOCK_IN:
               if(c == 'e'){
                 state = S_COMMENT_BLOCK_IN_E;
@@ -238,6 +264,7 @@ int getToken(){
                 state = S_COMMENT_BLOCK_N;
               }
             break;
+
 
             case S_COMMENT_BLOCK_IN_E:
               if(c == 'n'){
@@ -266,6 +293,7 @@ int getToken(){
                 }
             break;
 
+            // Ukonceni blokoveho komentare =end
             case S_COMMENT_END_E:
                 if (c == 'n') {state = S_COMMENT_END_N;}
                 else {
@@ -292,6 +320,8 @@ int getToken(){
                     state = S_IGNORE_END_COMMENT;
                 }
             break;
+            /************************************************************/
+            /************************************************************/
 
             case S_EQUAL:
                 if (c == '='){
@@ -325,6 +355,7 @@ int getToken(){
             //Cislo - cela cast
             case S_NUMBER:
                     if(isdigit(c)){
+                        // ignorujeme vsechny nuly v cislu
                         if(c == '0' && zero_cnt > 1 && flag) return ERROR_LEX;
                         else if(c == '0') zero_cnt++;
                         pushToken(c);
@@ -414,23 +445,26 @@ int getToken(){
                 digit_check = 0;
                 break;
 
+
+
+            // Pravidlo pro identifikator, nesmi zacinat z velkeho pismena
             case S_ID:
                 if (isalnum(c) || c == '_'){
                   pushToken(c);
                   state = S_ID;
                 }
-                else if(c == '!' || c == '?'){
+                else if(c == '!' || c == '?'){ // nazev funkce 
                     pushToken(c);
                     state = S_ID_F_END;
                 }
                 else{
                   ungetc(c, stdin);
-                  if ( (temp = isKeyword(&(gToken.data))) != SUCCESS)
+                  if ( (temp = isKeyword(&(gToken.data))) != SUCCESS) // klicove slovo
                      { DLInsertFirst(&tlist, gToken.data.str); return temp; }
                   else { expr = true; DLInsertFirst(&tlist, gToken.data.str); return LEX_ID; }
                 }
                 break;
-                
+            // koce indentifikatoriu id!, id?    
             case S_ID_F_END:
                 if (isspace(c) || ',' || ')'){ // is delimiter
                     ungetc(c, stdin);
@@ -498,6 +532,8 @@ int getToken(){
                         pushToken(c);
                 break;
 
+
+            // Escape sekvekce
             case S_STRING_ESCAPED:
                 if(c == 'n'){
                     state = S_STRING;
@@ -530,6 +566,7 @@ int getToken(){
                     return ERROR_LEX;
                 break;
 
+            // ASCII retezec
             case S_STRING_ASCII:
                 if ((c >= '0' && c <= '9') || (c >= 'a' && c <= 'f') || (c >= 'A' && c <= 'F')) {
                     if (ascii_cnt < 2)
@@ -564,6 +601,8 @@ int getToken(){
                     return ERROR_LEX;
                 }
                 break;
+
+            // Vykricnik 
 
             case S_AS_EXCM:
                 if(c == '='){

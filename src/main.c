@@ -5,14 +5,10 @@
  *
  * Popis: Hlavni vykonavaci funkce programu
  *
- *
- * Datum:
- *
- * Autori:   Maros Orsak       vedouci 
- *           Polishchuk Kateryna     <xpolis03@fit.vutbr.cz>           
- *           Igor Ignac           
- *           Marek Rohel       
-
+ * Autori:   Maros Orsak            	xorsak02@stud.fit.vutbr.cz
+ *           Polishchuk Kateryna     	xpolis03@stud.fit.vutbr.cz
+ *           Igor Ignac                 xignac00@stud.fit.vutbr.cz
+ *           Marek Rohel            	xrohel01@stud.fit.vutbr.cz
 */
 
 /*Pouzite knihovny */
@@ -25,66 +21,63 @@
 #include "instr_parse.h"
 #include "list.h"
 
-extern char * function_name;
-extern char * variable_name;
-extern char * call_name;
+// pro spravne uvolneni pameti
+extern char * function_name; // nazev funkce, ve ktere se aktualni nachazime
+extern char * variable_name; // nazev promenne, do ktere se prirazuje
+extern char * call_name; // nazev funkce, kterou volame
+
 extern tList * while_list;
-extern tList * variables_list;
-extern tList * function_statements_list;
-tList * pom_list;
+extern tList * variables_list; // seznam promennych definovanych uvnitr if/while
+extern tList * function_statements_list; // seznam funkci, umistime na zacatek
+tList * pom_list; // pomocny ukazatel pro swapovani listu
 
-extern tInstructionTypes instr_type;
-extern tInstructionData instr1;
-extern tInstructionData instr2;
-extern tInstructionData instr3;
+extern tInstructionTypes instr_type; // typ instrukce
+extern tInstructionData instr1; // address1
+extern tInstructionData instr2; // address2
+extern tInstructionData instr3; // address3
 
-
+/**
+ * Hlavna vykonavacia funckcia main()
+ * Inicializacia listu, globalnej mapy, volanie parseru, generovanie instrukcii
+ * @return SUCCESS v pripade spravneho ukončenia, inak chybove navratove kody definovane v zadani ifj18
+ */
 int main() {
    
   int result = SUCCESS;
 
-  tList *list = list_init();
-  pom_list = list_init();
+  tList *list = list_init(); // inicializace seznamu instrukci
+  pom_list = list_init(); // inicialnizace pomocneho listu
 
-  GlobalMap* globalMap;
+  GlobalMap* globalMap; // inicializace globalni mapy
   globalMap = global_map_init(MAX_SIZE_OF_HASH_TABLE);
 
+
+  // hlavicka .IFJcode18
   instr_type = INSTRUCT_HEAD;
   insert_item(pom_list, &instr_type, &instr1, &instr2, &instr3);
 
+  // vestavene funkce v ramci generovani kodu
+  /********************************************************/
   instr_type = INSTRUCT_LENGTH;
   insert_item(pom_list, &instr_type, &instr1, &instr2, &instr3);
   instr_type = INSTRUCT_CHR;
   insert_item(pom_list, &instr_type, &instr1, &instr2, &instr3);
   instr_type = INSTRUCT_ORD;
   insert_item(pom_list, &instr_type, &instr1, &instr2, &instr3);
-
   instr_type = INSTRUCT_SUBSTR;
   insert_item(pom_list, &instr_type, &instr1, &instr2, &instr3);
-
-  // instr_type = INSTRUCT_LABEL;
-  // instr1.value.s = "a";
-  // insert_item(pom_list, &instr_type, &instr1, &instr2, &instr3);
-
-  // instr_type = INSTRUCT_EXIT;
-  // instr1.type = I;
-  // instr1.value.i = SEM_ERR;
-  // insert_item(pom_list, &instr_type, &instr1, &instr2, &instr3);
-
-  // instr_type = INSTRUCT_RETURN;
-  // insert_item(pom_list, &instr_type, &instr1, &instr2, &instr3);
 
   reverse(&(pom_list->first));
   set_active(pom_list);
   parse_instructions(pom_list);      
+  /********************************************************/
 
 
+  // zacatek parsovani
   result = parse(globalMap, list);
   if (result == SUCCESS){
       instruction_exit(result);
   }
-
-
 
   reverse(&(function_statements_list->first));
   set_active(function_statements_list);
@@ -92,8 +85,11 @@ int main() {
 
   reverse(&(list->first));
   set_active(list);
-  parse_instructions(list);
+  parse_instructions(list); // vypis listu s instrukcemi
 
+
+  // Spravne uvolnovani pameti
+  /********************************************************/
   global_map_free(globalMap);
 
   dispose_list(list);
@@ -111,5 +107,6 @@ int main() {
   if (call_name != NULL ){ free(call_name); }
   if (variable_name != NULL){ free(variable_name); }
 
+  /********************************************************/
   return result;  
 }

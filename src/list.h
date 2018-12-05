@@ -3,14 +3,12 @@
  * Projekt:  Implementace prekladace imperativniho jazyka IFJ18
  * Soubor:   list.h
  *
- * Popis:  hlavickovy subor
+ * Popis:  hlavickovy subor pre list s instrukciami
  *
- * Datum: 22.9.2018 23:25
- *
- * Autori:   Maros Orsak       vedouci
- *           Polishchuk Kateryna     <xpolis03@fit.vutbr.cz>
- *           Igor Ignac
- *           Marek Rohel
+ * Autori:   Maros Orsak            	xorsak02@stud.fit.vutbr.cz
+ *           Polishchuk Kateryna     	xpolis03@stud.fit.vutbr.cz
+ *           Igor Ignac                 xignac00@stud.fit.vutbr.cz
+ *           Marek Rohel            	xrohel01@stud.fit.vutbr.cz
 */
 
 #include <stdio.h>
@@ -110,18 +108,17 @@ typedef enum
 
 } tInstructionTypes;
 
-/** **/
 typedef enum
 {
-    GF = 700,    //pre ID
-    LF = 701,    //pre ID
-    TF = 702,    //pre ID
-    I = 703,     // napr:int@10
-    F = 704,     // napr:float@2.33
-    S = 705,      // string@ahoj
-    FCE = 706,     //pre funkcie
-    EMPTY = 707, //prazdna adresa
-    N = 708    // napr:nil@nil   <--
+    GF = 700,    // Identificator Global frame
+    LF = 701,    // Identificator Local frame
+    TF = 702,    // Identificator Temporary frame
+    I = 703,     // Number int@13
+    F = 704,     // Float  %a format
+    S = 705,     // String
+    FCE = 706,   // pre funkcie
+    EMPTY = 707, // prazdna adresa
+    N = 708      // napr:nil@nil   <--
 } tDatType;
 
 typedef struct value

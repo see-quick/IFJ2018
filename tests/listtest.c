@@ -1,7 +1,7 @@
 /**
  * Predmet:  IFJ
  * Projekt:  Implementace prekladace imperativniho jazyka IFJ18
- * Soubor:   list.c
+ * Soubor:   listtest.c
  *
  * Popis:  zdrojovy subor
  *
@@ -18,6 +18,7 @@
 
 int main(int argc, char const *argv[]) {
 
+  /*  Initializing list */
   tList* list = list_init();
   tInstructionData instr1;
   tInstructionData instr2;
@@ -30,6 +31,7 @@ int main(int argc, char const *argv[]) {
   tNode *tmp_instr1;
   tNode *tmp_instr2;
 
+  /*  Creating an instruction */
   instr1.type = I;
   instr1.value.i = 5;
   instr2.type = LF;
@@ -44,16 +46,15 @@ int main(int argc, char const *argv[]) {
   instr6.type = GF;
   instr6.value.s = "tmp";
 
-
-
   instr_type = INSTRUCT_ADD;
 
-  /*  Inserting into list */
+  /*  Inserting instructions to list */
   insert_item(list, &instr_type, &instr1, &instr2, &instr3);
   insert_item(list, &instr_type, &instr4, &instr5, &instr6);
   insert_item(list, &instr_type, &instr4, &instr5, &instr6);
   insert_item(list, &instr_type, &instr4, &instr5, &instr6);
-  set_active(list); //nastavime list ako aktivny
+  set_active(list); //set list as active
+
   /*  Getting instruction */
   tmp_instr1 = return_instruct(list);
   printf("---TESTING LIST---\n");
@@ -62,21 +63,26 @@ int main(int argc, char const *argv[]) {
   printf("NEXT: %d\n", list->first->next->data.address3.type);
   printf("RETURNED VALUE: %d\n", tmp_instr1->data.address3.type);
   printf("Moving activity...\n");
+
   /*  Moving activity */
   move_activity(list);
   printf("ACTIVE: %d\n",list->act->data.address3.type);
+
   /*  Getting instruction */
   tmp_instr2 = return_instruct(list);
   printf("RETURNED VALUE: %d\n", tmp_instr2->data.address3.type);
   printf("LAST NODE OF THE LIST: %d\n", list->last->data.address3.type);
   printf("---END OF TEST---\n\n");
-  /*  Print */
+
+  /*  Print whole list  */
   printf("Printing whole list...\n\n");
   print_list_elements(list);
   printf("\n\n\n");
-  reverse(&(list->first));  //reverse listu
-  print_list_elements(list);
 
+  reverse(&(list->first));  //reverse list
+  print_list_elements(list);  //print again
+
+  /*  Creating another instruction  */
   instr_type = INSTRUCT_DEFVAR;
   instr1.type = GF;
   instr1.value.s = "variable";
@@ -85,8 +91,10 @@ int main(int argc, char const *argv[]) {
   instr3.type = EMPTY;
   instr3.value.f = 0;
 
+  /*  Adding another instruction  */
   insert_item(list, &instr_type, &instr1, &instr2, &instr3);
 
+  /*  Search if variable already exists in the list */
   char * name = "variable";
   if(variable_exists(list, name))
   {
@@ -94,8 +102,11 @@ int main(int argc, char const *argv[]) {
   }
   else printf("NO\n");
 
+  /*  Deleting list and freeing memory  */
   dispose_list(list);
-
   free(list);
+
   return 0;
 }
+
+/** End of file listtest.c **/
